@@ -1,5 +1,5 @@
 {
-  "name": "groovy3",
+  "name": "vexflow-test2",
   "version": "1.0.0",
   "description": "Groovy React Rebuild",
   "main": "index.js",
@@ -22,8 +22,8 @@
     "eslint": "^5.16.0",
     "eslint-config-airbnb": "^17.1.0",
     "eslint-import-resolver-typescript": "^1.1.1",
-    "parcel": "^1.12.3",
-    "parcel-bundler": "^1.12.3",
+    "parcel": "^1.12.4",
+    "parcel-bundler": "^1.12.4",
     "prettier": "^1.17.1",
     "stylus": "^0.54.7",
     "typescript": "^3.4.5"
@@ -32,6 +32,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint --fix",
     "watch": "npm run clean && npm run copy && parcel --port 3000 --no-hmr ./src/index.html",
+    "watch2": "parcel --port 3000 --no-hmr ./src/index.html",
     "build": "parcel build --no-source-maps --out-dir public/ --public-url / ./src/index.html",
     "copy": "cp -r ./assets ./dist/assets",
     "clean": "rm -rf .cache/* && rm -rf dist/*"

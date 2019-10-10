@@ -58,7 +58,7 @@ const init3 = (div: HTMLDivElement) => {
     // tupletsRatioed: true, // unconventional; renders ratios for tuplets (3:2 instead of 3 for triplets)
   });
 
-  openSheetMusicDisplay.load('./assets/mozk545a.musicxml').then(
+  openSheetMusicDisplay.load('./assets/test.xml').then(
     function () {
       // This gives you access to the osmd object in the console. Do not use in productive code
       // window.osmd = openSheetMusicDisplay;
