@@ -1,4 +1,17 @@
+// import sequencer from 'heartbeat-sequencer';
+import sequencer from './heartbeat';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
+
+type TypeNoteData = {
+  noteNumber: number,
+  step: string,
+  octave: number,
+  duration: number,
+  ticks: number,
+  part: string,
+  voice: number,
+  staff: number,
+}
 
 const parse = (xmlDoc: XMLDocument, ppq: number) => {
   if (xmlDoc === null) {
@@ -23,18 +36,18 @@ const parse = (xmlDoc: XMLDocument, ppq: number) => {
 const parsePartWise = (xmlDoc: XMLDocument, ppq: number) => {
   const nsResolver = xmlDoc.createNSResolver(xmlDoc.ownerDocument === null ? xmlDoc.documentElement : xmlDoc.ownerDocument.documentElement);
   const partIterator = xmlDoc.evaluate('//score-part', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null);
-  const data = {};
+  const data: { [id: string]: { [id: string]: TypeNoteData[] } } = {};
+  const tiedNotes: { [id: string]: TypeNoteData } = {};
 
   let partNode;
   while (partNode = partIterator.iterateNext()) {
     // get id and name of the part
-    const id = xmlDoc.evaluate('@id', partNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
+    const partId = xmlDoc.evaluate('@id', partNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
     const name = xmlDoc.evaluate('part-name', partNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
-
-    console.log(name)
-
+    // console.log('part', partId);
+    data[partId] = {};
     let ticks = 0;
-    const measureIterator = xmlDoc.evaluate('//part[@id="' + id + '"]/measure', partNode, nsResolver, XPathResult.ANY_TYPE, null);
+    const measureIterator = xmlDoc.evaluate('//part[@id="' + partId + '"]/measure', partNode, nsResolver, XPathResult.ANY_TYPE, null);
     let measureNode;
     let divisions = 1;
     let numerator = 4;
@@ -42,15 +55,19 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number) => {
     let tmp;
     while (measureNode = measureIterator.iterateNext()) {
       const measureNumber = xmlDoc.evaluate('@number', measureNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
-      tmp = xmlDoc.evaluate('attributes/divisions', partNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
+      if (typeof data[partId][measureNumber] === 'undefined') {
+        data[partId][measureNumber] = [];
+      }
+      tmp = xmlDoc.evaluate('attributes/divisions', measureNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
       if (!isNaN(tmp)) {
         divisions = tmp;
+        console.log('divisions', divisions);
       }
-      tmp = xmlDoc.evaluate('attributes/time/beats', partNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
+      tmp = xmlDoc.evaluate('attributes/time/beats', measureNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
       if (!isNaN(tmp)) {
         numerator = tmp;
       }
-      tmp = xmlDoc.evaluate('attributes/time/beat-type', partNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
+      tmp = xmlDoc.evaluate('attributes/time/beat-type', measureNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
       if (!isNaN(tmp)) {
         denominator = tmp;
       }
@@ -61,6 +78,9 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number) => {
       while (noteNode = noteIterator.iterateNext()) {
         // console.log(noteNode);
         let noteDuration = 0;
+        let voice = -1;
+        let staff = -1;
+
         let tieStart = false;
         let tieStop = false;
         const tieIterator = xmlDoc.evaluate('tie', noteNode, nsResolver, XPathResult.ANY_TYPE, null);
@@ -76,82 +96,101 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number) => {
 
         const rest = xmlDoc.evaluate('rest', noteNode, nsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
         const chord = xmlDoc.evaluate('chord', noteNode, nsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        const grace = xmlDoc.evaluate('grace', noteNode, nsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        // console.log('grace', grace)
+
         if (rest !== null) {
-          //console.log(rest);
           noteDuration = xmlDoc.evaluate('duration', noteNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
           ticks += (noteDuration / divisions) * ppq;
-        } else if (noteNode.nodeName === 'note') {
+          // console.log('rest', ticks);
+        } else if (noteNode.nodeName === 'note' && grace === null) {
           const step = xmlDoc.evaluate('pitch/step', noteNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
           const alter = xmlDoc.evaluate('pitch/alter', noteNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
-          const voice = xmlDoc.evaluate('voice', noteNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
-          const stave = xmlDoc.evaluate('stave', noteNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
           const octave = xmlDoc.evaluate('pitch/octave', noteNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
+          tmp = xmlDoc.evaluate('voice', noteNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
+          if (!isNaN(tmp)) {
+            voice = tmp;
+          }
+          tmp = xmlDoc.evaluate('staff', noteNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
+          if (!isNaN(tmp)) {
+            staff = tmp;
+          }
           noteDuration = xmlDoc.evaluate('duration', noteNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
           // const noteType = xmlDoc.evaluate('type', noteNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
           let noteName = step;
 
-          if (step !== '') {
-            if (!isNaN(alter)) {
-              switch (alter) {
-                case -2:
-                  noteName += 'bb';
-                  break;
-                case -1:
-                  noteName += 'b';
-                  break;
-                case 1:
-                  noteName += '#';
-                  break;
-                case 2:
-                  noteName += '##';
-                  break;
-              }
+          if (!isNaN(alter)) {
+            switch (alter) {
+              case -2:
+                noteName += 'bb';
+                break;
+              case -1:
+                noteName += 'b';
+                break;
+              case 1:
+                noteName += '#';
+                break;
+              case 2:
+                noteName += '##';
+                break;
             }
-            /*
-            const noteNumber = getNoteNumber(noteName, octave);
-            ticks += (noteDuration / divisions) * ppq;
-            if (chord !== null) {
-              ticks -= (noteDuration / divisions) * ppq;
-            }
+          }
 
-            //console.log('tie', tieStart, tieStop);
 
-            if (tieStart === false && tieStop === false) {
-              // no ties
-              events.push(noteOn, noteOff);
-              //console.log('no ties', measureNumber, voice, noteNumber, tiedNotes);
-            } else if (tieStart === true && tieStop === false) {
-              // start of tie
-              tiedNotes[voice + '-' + noteNumber] = noteOff;
-              events.push(noteOn, noteOff);
-              //console.log('start', measureNumber, voice, noteNumber, tiedNotes);
-            } else if (tieStart === true && tieStop === true) {
-              // tied to yet another note
-              tiedNotes[voice + '-' + noteNumber].ticks += (noteDuration / divisions) * ppq;
-              //console.log('thru', measureNumber, voice, noteNumber, tiedNotes);
-            } else if (tieStart === false && tieStop === true) {
-              // end of tie
-              tiedNotes[voice + '-' + noteNumber].ticks += (noteDuration / divisions) * ppq;
-              delete tiedNotes[voice + '-' + noteNumber];
-              //console.log('end', measureNumber, voice, noteNumber, tiedNotes);
-            }
-            //console.log(noteNumber, ticks);
-            */
+          const noteNumber = sequencer.getNoteNumber(noteName, octave);
+          const note = {
+            step,
+            octave,
+            noteNumber,
+            ticks,
+            duration: (noteDuration / divisions) * ppq,
+            part: partId,
+            voice,
+            staff,
+          };
+          // console.log('note', ticks, noteDuration, divisions, ppq);
+          ticks += (noteDuration / divisions) * ppq;
+          if (chord !== null) {
+            ticks -= (noteDuration / divisions) * ppq;
+          }
+          // console.log('note', noteNumber, ticks);
+
+          data[partId][measureNumber].push(note);
+          //console.log('tie', tieStart, tieStop);
+
+          if (tieStart === false && tieStop === false) {
+            // no ties
+            //console.log('no ties', measureNumber, voice, noteNumber, tiedNotes);
+          } else if (tieStart === true && tieStop === false) {
+            // start of tie
+            tiedNotes[`N_${staff}-${voice}-${noteNumber}`] = note;
+            //console.log('start', measureNumber, voice, noteNumber, tiedNotes);
+          } else if (tieStart === true && tieStop === true) {
+            // tied to yet another note
+            tiedNotes[`N_${staff}-${voice}-${noteNumber}`].duration += (noteDuration / divisions) * ppq;
+            //console.log('thru', measureNumber, voice, noteNumber, tiedNotes);
+          } else if (tieStart === false && tieStop === true) {
+            // end of tie
+            tiedNotes[`N_${staff}-${voice}-${noteNumber}`].duration += (noteDuration / divisions) * ppq;
+            delete tiedNotes[`N_${staff}-${voice}-${noteNumber}`];
+            //console.log('end', measureNumber, voice, noteNumber, tiedNotes);
           }
 
         } else if (noteNode.nodeName === 'backup') {
           noteDuration = xmlDoc.evaluate('duration', noteNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
           ticks -= (noteDuration / divisions) * ppq;
+          // console.log('backup', ticks);
           //console.log(noteDuration, divisions);
         } else if (noteNode.nodeName === 'forward') {
           noteDuration = xmlDoc.evaluate('duration', noteNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
           ticks += (noteDuration / divisions) * ppq;
+          // console.log('forward', ticks);
           //console.log(noteDuration, divisions);
         }
-        //console.log(ticks);
       }
     }
   }
+  console.log(data);
 }
 
 const parseTimeWise = (doc: XMLDocument) => {
@@ -174,6 +213,8 @@ const openSheetMusicDisplay = new OpenSheetMusicDisplay(c, {
 window.openSheetMusicDisplay = openSheetMusicDisplay;
 
 const init = async () => {
+  console.log(sequencer);
+  await sequencer.ready();
   await fetch(url)
     .then(response => response.text())
     .then(str => {
@@ -193,4 +234,3 @@ const init = async () => {
 }
 
 init();
-
