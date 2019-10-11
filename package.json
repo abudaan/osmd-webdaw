@@ -4,6 +4,7 @@
   "description": "Groovy React Rebuild",
   "main": "index.js",
   "dependencies": {
+    "fast-xml-parser": "^3.13.0",
     "fetch-helpers": "^9.0.0",
     "glamor": "^2.20.40",
     "heartbeat-sequencer": "file:../heartbeat",
