@@ -1,9 +1,9 @@
 import sequencer from 'heartbeat-sequencer';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
-import { from, of, forkJoin } from 'rxjs';
-import { map, filter, tap, switchMap, mergeMap, reduce, groupBy, toArray, mergeAll } from 'rxjs/operators';
+import { from, of, forkJoin, zip } from 'rxjs';
+import { map, filter, tap, switchMap, mergeMap, reduce, groupBy, toArray, mergeAll, concatAll } from 'rxjs/operators';
 import flatten from 'ramda/es/flatten';
-
+import Vex from 'vexflow';
 
 type TypeNoteData = {
   noteNumber: number,
@@ -257,7 +257,7 @@ const init = async () => {
   const [osmd, hints] = await loadMusicXMLFile('./assets/mozk545a_musescore.musicxml');
   // const notes = c.getElementsByClassName('vf-stavenote');
   // console.log(notes);
-  console.log(osmd.graphic.measureList);
+  console.log(osmd.graphic);
   from(osmd.graphic.measureList)
     // path: openSheetMusicDisplay.GraphicSheet.MeasureList[0][0].staffEntries[0].graphicalVoiceEntries[0].notes[0];
     .pipe(
@@ -272,8 +272,13 @@ const init = async () => {
           })
         })
       }),
+      reduce((acc, val) => {
+        acc.push(val.flat(3));
+        return acc;
+      }, []),
     ).subscribe(data => {
-      console.log(data);
+      console.log(data[0][0].getAttribute("el"));
+      // console.log(data[0][0] instanceof Vex.Flow.StaveNote);
     });
 }
 
