@@ -1,5 +1,5 @@
 import sequencer from 'heartbeat-sequencer';
-import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
+import { OpenSheetMusicDisplay, GraphicalMusicSheet, GraphicalNote } from 'opensheetmusicdisplay';
 import { from, of, forkJoin, zip } from 'rxjs';
 import { map, filter, tap, switchMap, mergeMap, reduce, groupBy, toArray, mergeAll, concatAll } from 'rxjs/operators';
 import flatten from 'ramda/es/flatten';
@@ -21,6 +21,7 @@ type TypeMusicXML = {
     [id: string]: TypeNoteData[]
   }
 } | null;
+
 
 const parse = (xmlDoc: XMLDocument, ppq: number): TypeMusicXML => {
   if (xmlDoc === null) {
@@ -250,6 +251,7 @@ const loadMusicXMLFile = (url: string): Promise<[OpenSheetMusicDisplay, TypeMusi
   });
 }
 
+const ppq = 960;
 const init = async () => {
   await sequencer.ready();
   await loadMIDIFile('./assets/mozk545a_musescore.mid');
@@ -261,23 +263,30 @@ const init = async () => {
   from(osmd.graphic.measureList)
     // path: openSheetMusicDisplay.GraphicSheet.MeasureList[0][0].staffEntries[0].graphicalVoiceEntries[0].notes[0];
     .pipe(
-      map(measure => {
-        return measure.map(m => {
-          return m.staffEntries.map(s => {
-            return s.graphicalVoiceEntries.map(v => {
-              return v.notes.map(n => {
-                return n.vfnote[0];
+      // tap(m => { console.log(m); }),
+      map((staves, i) => {
+        return staves.map(s => {
+          return s.staffEntries.map(se => {
+            return se.graphicalVoiceEntries.map(ve => {
+              // return ve.notes;
+              return ve.notes.map((n: GraphicalNote) => {
+                const relPosInMeasure = n.sourceNote.voiceEntry.timestamp.realValue;
+                return {
+                  vfnote: n.vfnote[0],
+                  ticks: (i * ppq) + (relPosInMeasure * ppq),
+                  noteNumber: n.sourceNote.halfTone,
+                };
               });
             });
-          })
-        })
+          });
+        });
       }),
       reduce((acc, val) => {
         acc.push(val.flat(3));
         return acc;
       }, []),
     ).subscribe(data => {
-      console.log(data[0][0].getAttribute("el"));
+      console.log(data);
       // console.log(data[0][0] instanceof Vex.Flow.StaveNote);
     });
 }
