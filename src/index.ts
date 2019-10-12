@@ -1,6 +1,9 @@
-// import sequencer from 'heartbeat-sequencer';
-import sequencer from './heartbeat';
+import sequencer from 'heartbeat-sequencer';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
+import { from, of, forkJoin } from 'rxjs';
+import { map, filter, tap, switchMap, mergeMap, reduce, groupBy, toArray, mergeAll } from 'rxjs/operators';
+import flatten from 'ramda/es/flatten';
+
 
 type TypeNoteData = {
   noteNumber: number,
@@ -13,9 +16,15 @@ type TypeNoteData = {
   staff: number,
 }
 
-const parse = (xmlDoc: XMLDocument, ppq: number) => {
+type TypeMusicXML = {
+  [partId: string]: {
+    [id: string]: TypeNoteData[]
+  }
+} | null;
+
+const parse = (xmlDoc: XMLDocument, ppq: number): TypeMusicXML => {
   if (xmlDoc === null) {
-    return;
+    return null;
   }
   let type;
   if (xmlDoc.firstChild !== null && xmlDoc.firstChild.nextSibling !== null) {
@@ -25,18 +34,18 @@ const parse = (xmlDoc: XMLDocument, ppq: number) => {
 
   if (type === 'score-partwise') {
     return parsePartWise(xmlDoc, ppq);
-  } else if (type === 'score-timewise') {
-    return parseTimeWise(xmlDoc);
-  } else {
-    console.log('unknown type', type);
-    return false;
   }
+  if (type === 'score-timewise') {
+    return parseTimeWise(xmlDoc);
+  }
+  // console.log('unknown type', type);
+  return null;
 }
 
-const parsePartWise = (xmlDoc: XMLDocument, ppq: number) => {
+const parsePartWise = (xmlDoc: XMLDocument, ppq: number): TypeMusicXML => {
   const nsResolver = xmlDoc.createNSResolver(xmlDoc.ownerDocument === null ? xmlDoc.documentElement : xmlDoc.ownerDocument.documentElement);
   const partIterator = xmlDoc.evaluate('//score-part', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null);
-  const data: { [id: string]: { [id: string]: TypeNoteData[] } } = {};
+  const data: TypeMusicXML = {};
   const tiedNotes: { [id: string]: TypeNoteData } = {};
 
   let partNode;
@@ -190,11 +199,12 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number) => {
       }
     }
   }
-  console.log(data);
+  // console.log(data);
+  return data;
 }
 
-const parseTimeWise = (doc: XMLDocument) => {
-
+const parseTimeWise = (doc: XMLDocument): TypeMusicXML => {
+  return null;
 }
 
 // const url = './assets/mozk545a.musicxml';
@@ -206,30 +216,64 @@ const options = {
 }
 const c = document.createElement('div');
 document.body.appendChild(c);
-const openSheetMusicDisplay = new OpenSheetMusicDisplay(c, {
+const osmd = new OpenSheetMusicDisplay(c, {
   backend: 'svg',
   autoResize: true,
 });
-window.openSheetMusicDisplay = openSheetMusicDisplay;
+// window.openSheetMusicDisplay = openSheetMusicDisplay;
+
+
+const loadMIDIFile = (url: string): Promise<void> => {
+  return new Promise(resolve => {
+    sequencer.addMidiFile({ url }, resolve);
+  });
+}
+
+const loadMusicXMLFile = (url: string): Promise<[OpenSheetMusicDisplay, TypeMusicXML]> => {
+  return new Promise((resolve, reject) => {
+    fetch(url)
+      .then(response => response.text())
+      .then(str => {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(str, 'application/xml');
+        const data = parse(xmlDoc, 960);
+        osmd.load(xmlDoc).then(
+          function () {
+            osmd.render();
+            resolve([osmd, data]);
+          },
+          function (e) {
+            // console.error(e, 'rendering');
+            reject(e);
+          });
+      });
+  });
+}
 
 const init = async () => {
-  console.log(sequencer);
   await sequencer.ready();
-  await fetch(url)
-    .then(response => response.text())
-    .then(str => {
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(str, 'application/xml');
-      parse(xmlDoc, 960);
-      openSheetMusicDisplay.load(xmlDoc).then(
-        function () {
-          openSheetMusicDisplay.render();
-          // const notes = c.getElementsByClassName('vf-stavenote');
-          // console.log(notes);
-        },
-        function (e) {
-          console.error(e, 'rendering');
-        });
+  await loadMIDIFile('./assets/mozk545a_musescore.mid');
+  sequencer.createSong(sequencer.getMidiFile('mozk545a_musescore'));
+  const [osmd, hints] = await loadMusicXMLFile('./assets/mozk545a_musescore.musicxml');
+  // const notes = c.getElementsByClassName('vf-stavenote');
+  // console.log(notes);
+  console.log(osmd.graphic.measureList);
+  from(osmd.graphic.measureList)
+    // path: openSheetMusicDisplay.GraphicSheet.MeasureList[0][0].staffEntries[0].graphicalVoiceEntries[0].notes[0];
+    .pipe(
+      map(measure => {
+        return measure.map(m => {
+          return m.staffEntries.map(s => {
+            return s.graphicalVoiceEntries.map(v => {
+              return v.notes.map(n => {
+                return n.vfnote[0];
+              });
+            });
+          })
+        })
+      }),
+    ).subscribe(data => {
+      console.log(data);
     });
 }
 
