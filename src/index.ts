@@ -215,8 +215,8 @@ const url = './assets/mozk545a_musescore.musicxml';
 const options = {
   ignoreAttributes: false,
 }
-const c = document.createElement('div');
-document.body.appendChild(c);
+const c = document.getElementById('score');
+// document.body.appendChild(c);
 const osmd = new OpenSheetMusicDisplay(c, {
   backend: 'svg',
   autoResize: true,
@@ -252,9 +252,19 @@ const loadMusicXMLFile = (url: string): Promise<[OpenSheetMusicDisplay, TypeMusi
 }
 
 const colorStaveNote = (el, color) => {
-  el.firstChild.firstChild.firstChild.setAttribute('stroke', color);
-  el.firstChild.firstChild.nextSibling.firstChild.setAttribute('stroke', color);
-  el.firstChild.firstChild.nextSibling.firstChild.setAttribute('fill', color);
+  const stems = el.getElementsByClassName('vf-stem');
+  const noteheads = el.getElementsByClassName('vf-notehead');
+  // console.log(stem, notehead);
+  for (let i = 0; i < stems.length; i++) {
+    const stem = stems[i];
+    stem.firstChild.setAttribute('fill', color);
+    stem.firstChild.setAttribute('stroke', color);
+  }
+  for (let i = 0; i < noteheads.length; i++) {
+    const notehead = noteheads[i];
+    notehead.firstChild.setAttribute('fill', color);
+    notehead.firstChild.setAttribute('stroke', color);
+  }
 }
 
 const ppq = 960;
@@ -281,7 +291,7 @@ const init = async () => {
                 const relPosInMeasure = n.sourceNote.voiceEntry.timestamp.realValue;
                 return {
                   vfnote: n.vfnote[0],
-                  ticks: (i * ppq * 4) + (relPosInMeasure * ppq),
+                  ticks: (i * ppq * 4) + (relPosInMeasure * ppq * 4),
                   noteNumber: n.sourceNote.halfTone + 12, // this is weird!
                   bar: i + 1,
                 };
@@ -303,6 +313,7 @@ const init = async () => {
       // console.log(events);
       const numNotes = events.length;
       const flattened = data.flat();
+      console.log(flattened);
       const numData = flattened.length;
       for (let i = 0; i < numData; i++) {
         const d = flattened[i];
@@ -320,20 +331,52 @@ const init = async () => {
       };
       console.timeEnd('connect_heartbeat');
 
+      const btnPlay = document.getElementById('play');
+      const btnStop = document.getElementById('stop');
+      btnPlay.disabled = true;
+      btnStop.disabled = true;
+
+
       song.addEventListener('event', 'type = NOTE_ON', (event) => {
-        const noteId = event.midiNote.id;
-        // o[noteId].setStyle({ fillStyle: "red", strokeStyle: "red" });
-        const el = o[noteId].attrs.el;
-        colorStaveNote(el, 'red');
+        if (event.vfnote) {
+          const el = event.vfnote.attrs.el;
+          colorStaveNote(el, 'red');
+        }
       });
 
       song.addEventListener('event', 'type = NOTE_OFF', (event) => {
-        const noteId = event.midiNote.id;
-        const el = o[noteId].attrs.el;
-        colorStaveNote(el, 'black');
+        const noteOn = event.midiNote.noteOn;
+        if (noteOn.vfnote) {
+          const el = noteOn.vfnote.attrs.el;
+          colorStaveNote(el, 'black');
+        }
       });
 
-      // console.log(song.events);
+      song.addEventListener('stop', () => {
+        btnPlay.innerHTML = 'play';
+      });
+      song.addEventListener('play', () => {
+        btnPlay.innerHTML = 'pause';
+      });
+      song.addEventListener('end', () => {
+        btnPlay.innerHTML = 'play';
+      });
+
+      btnPlay.disabled = false;
+      btnStop.disabled = false;
+
+      btnPlay.addEventListener('click', () => {
+        if (song.playing) {
+          // btnPlay.innerHTML = 'play';
+          song.pause();
+        } else {
+          // btnPlay.innerHTML = 'pause';
+          song.play();
+        }
+      });
+      btnStop.addEventListener('click', () => { song.stop() });
+
+      console.log(events);
       // from(song.events)
       //   .pipe(
       //     filter(event => event.vfnote),
