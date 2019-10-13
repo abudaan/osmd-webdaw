@@ -16,6 +16,7 @@ type TypeNoteData = {
   part: string,
   voice: number,
   staff: number,
+  // parentMusicSystem: { boundingBox: {} },
 }
 
 type TypeMusicXML = {
@@ -271,7 +272,7 @@ const colorStaveNote = (el, color) => {
 
 const update = (barDatas, ticksOffset, events, numNotes) => {
   barDatas.forEach(bd => {
-    const { vfnote, ticks, noteNumber, bar } = bd;
+    const { vfnote, ticks, noteNumber, bar, parentMusicSystem } = bd;
     // console.log('check', bar, ticks, noteNumber);
     for (let j = 0; j < numNotes; j++) {
       const event = events[j];
@@ -279,6 +280,7 @@ const update = (barDatas, ticksOffset, events, numNotes) => {
       // if (event.bar == bar && event.noteNumber == noteNumber) {
       if (event.command === 144 && event.ticks == (ticks + ticksOffset) && event.noteNumber == noteNumber) {
         event.vfnote = vfnote;
+        event.musicSystem = parentMusicSystem;
         break;
       }
     }
@@ -305,13 +307,16 @@ const init = async () => {
   const osmd = await loadMusicXMLFile('./assets/mozk545a_musescore.musicxml');
   // const notes = c.getElementsByClassName('vf-stavenote');
   // console.log(notes);
-  // console.log(osmd.graphic);
+  console.log(osmd.graphic);
+  let parentMusicSystem;
   from(osmd.graphic.measureList)
     // path: openSheetMusicDisplay.GraphicSheet.MeasureList[0][0].staffEntries[0].graphicalVoiceEntries[0].notes[0];
+    // path: openSheetMusicDisplay.GraphicSheet.MeasureList[0][0].parentMusicSystem
     .pipe(
       // tap(m => { console.log(m); }),
       map((staves, i) => {
         return staves.map(s => {
+          parentMusicSystem = staves[0].parentMusicSystem;
           return s.staffEntries.map(se => {
             return se.graphicalVoiceEntries.map(ve => {
               // return ve.notes;
@@ -322,6 +327,7 @@ const init = async () => {
                   ticks: (i * ppq * 4) + (relPosInMeasure * ppq * 4),
                   noteNumber: n.sourceNote.halfTone + 12, // this is weird!
                   bar: i + 1,
+                  parentMusicSystem,
                 };
               });
             });
@@ -377,6 +383,7 @@ const init = async () => {
     });
 
   console.timeEnd('connect_heartbeat');
+  console.log(song.events);
 
   const btnPlay = document.getElementById('play');
   const btnStop = document.getElementById('stop');
@@ -384,12 +391,31 @@ const init = async () => {
   btnStop.disabled = true;
 
 
+  let scrollPos = 0;
+  let currentY = 0;
+  let reference = -1;
+  const height = window.innerHeight;
   song.addEventListener('event', 'type = NOTE_ON', (event) => {
     if (event.vfnote) {
       const el = event.vfnote.attrs.el;
       colorStaveNote(el, 'red');
+
+      const tmp = event.musicSystem.graphicalMeasures[0][0].stave.y;
+      if (currentY !== tmp) {
+        currentY = tmp;
+        const bbox = el.getBoundingClientRect();
+        console.log(bbox.y, window.pageYOffset);
+        if (reference === -1) {
+          reference = bbox.y;
+        } else {
+          scrollPos = (bbox.y + window.pageYOffset) - reference;
+          window.scroll({
+            top: scrollPos,
+            behavior: 'smooth'
+          });
+        }
+      }
     }
-    // document.sc
   });
 
   song.addEventListener('event', 'type = NOTE_OFF', (event) => {
