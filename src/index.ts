@@ -158,7 +158,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): TypeMusicXML => {
             voice,
             staff,
           };
-          // console.log('note', ticks, noteDuration, divisions, ppq);
+          console.log('note', ticks, noteDuration, divisions, ppq, step, octave, noteNumber);
           ticks += (noteDuration / divisions) * ppq;
           if (chord !== null) {
             ticks -= (noteDuration / divisions) * ppq;
@@ -182,7 +182,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): TypeMusicXML => {
           } else if (tieStart === false && tieStop === true) {
             // end of tie
             tiedNotes[`N_${staff}-${voice}-${noteNumber}`].duration += (noteDuration / divisions) * ppq;
-            delete tiedNotes[`N_${staff}-${voice}-${noteNumber}`];
+            // delete tiedNotes[`N_${staff}-${voice}-${noteNumber}`];
             //console.log('end', measureNumber, voice, noteNumber, tiedNotes);
           }
 
@@ -237,11 +237,11 @@ const loadMusicXMLFile = (url: string): Promise<[OpenSheetMusicDisplay, TypeMusi
       .then(str => {
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(str, 'application/xml');
-        const data = parse(xmlDoc, 960);
+        // const data = parse(xmlDoc, 960);
         osmd.load(xmlDoc).then(
           function () {
             osmd.render();
-            resolve([osmd, data]);
+            resolve(osmd);
           },
           function (e) {
             // console.error(e, 'rendering');
@@ -251,15 +251,23 @@ const loadMusicXMLFile = (url: string): Promise<[OpenSheetMusicDisplay, TypeMusi
   });
 }
 
+const colorStaveNote = (el, color) => {
+  el.firstChild.firstChild.firstChild.setAttribute('stroke', color);
+  el.firstChild.firstChild.nextSibling.firstChild.setAttribute('stroke', color);
+  el.firstChild.firstChild.nextSibling.firstChild.setAttribute('fill', color);
+}
+
 const ppq = 960;
+const midiFile = 'mozk545a_musescore';
 const init = async () => {
   await sequencer.ready();
-  await loadMIDIFile('./assets/mozk545a_musescore.mid');
-  sequencer.createSong(sequencer.getMidiFile('mozk545a_musescore'));
-  const [osmd, hints] = await loadMusicXMLFile('./assets/mozk545a_musescore.musicxml');
+  await loadMIDIFile(`./assets/${midiFile}.mid`);
+  const song = sequencer.createSong(sequencer.getMidiFile(midiFile));
+  // song.update();
+  const osmd = await loadMusicXMLFile('./assets/mozk545a_musescore.musicxml');
   // const notes = c.getElementsByClassName('vf-stavenote');
   // console.log(notes);
-  console.log(osmd.graphic);
+  // console.log(osmd.graphic);
   from(osmd.graphic.measureList)
     // path: openSheetMusicDisplay.GraphicSheet.MeasureList[0][0].staffEntries[0].graphicalVoiceEntries[0].notes[0];
     .pipe(
@@ -273,8 +281,9 @@ const init = async () => {
                 const relPosInMeasure = n.sourceNote.voiceEntry.timestamp.realValue;
                 return {
                   vfnote: n.vfnote[0],
-                  ticks: (i * ppq) + (relPosInMeasure * ppq),
-                  noteNumber: n.sourceNote.halfTone,
+                  ticks: (i * ppq * 4) + (relPosInMeasure * ppq),
+                  noteNumber: n.sourceNote.halfTone + 12, // this is weird!
+                  bar: i + 1,
                 };
               });
             });
@@ -287,8 +296,62 @@ const init = async () => {
       }, []),
     ).subscribe(data => {
       console.log(data);
+      // console.log(song);
       // console.log(data[0][0] instanceof Vex.Flow.StaveNote);
-    });
+      console.time('connect_heartbeat');
+      const events = song.events.filter(event => event.command === 144);
+      // console.log(events);
+      const numNotes = events.length;
+      const flattened = data.flat();
+      const numData = flattened.length;
+      for (let i = 0; i < numData; i++) {
+        const d = flattened[i];
+        const { vfnote, ticks, noteNumber, bar } = d;
+        // console.log('check', bar, ticks, noteNumber);
+        for (let j = 0; j < numNotes; j++) {
+          const event = events[j];
+          // console.log(event);
+          // if (event.bar == bar && event.noteNumber == noteNumber) {
+          if (event.command === 144 && event.ticks == ticks && event.noteNumber == noteNumber) {
+            event.vfnote = vfnote;
+            break;
+          }
+        }
+      };
+      console.timeEnd('connect_heartbeat');
+
+      song.addEventListener('event', 'type = NOTE_ON', (event) => {
+        const noteId = event.midiNote.id;
+        // o[noteId].setStyle({ fillStyle: "red", strokeStyle: "red" });
+        const el = o[noteId].attrs.el;
+        colorStaveNote(el, 'red');
+      });
+
+      song.addEventListener('event', 'type = NOTE_OFF', (event) => {
+        const noteId = event.midiNote.id;
+        const el = o[noteId].attrs.el;
+        colorStaveNote(el, 'black');
+      });
+
+      // console.log(song.events);
+      // from(song.events)
+      //   .pipe(
+      //     filter(event => event.vfnote),
+      //     map(event => [event.ticks, event.noteNumber, event.vfnote]),
+      //   )
+      //   .subscribe(data => {
+      //     console.log(data);
+      //   });
+      // console.log('========================================');
+      // from(flattened)
+      //   .pipe(
+      //     // filter(event => event.vfnote),
+      //     map(data => [data.ticks, data.noteNumber, data.step, data.octave]),
+      //   )
+      //   .subscribe(data => {
+      //     console.log(data);
+      //   });
+    })
 }
 
 init();
