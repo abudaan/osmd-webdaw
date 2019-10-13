@@ -4,6 +4,8 @@ import { from, of, forkJoin, zip } from 'rxjs';
 import { map, filter, tap, switchMap, mergeMap, reduce, groupBy, toArray, mergeAll, concatAll } from 'rxjs/operators';
 import flatten from 'ramda/es/flatten';
 import Vex from 'vexflow';
+import { addAssetPack, loadJSON, initSequencer } from './action-utils';
+
 
 type TypeNoteData = {
   noteNumber: number,
@@ -267,12 +269,38 @@ const colorStaveNote = (el, color) => {
   }
 }
 
+const update = (barDatas, ticksOffset, events, numNotes) => {
+  barDatas.forEach(bd => {
+    const { vfnote, ticks, noteNumber, bar } = bd;
+    // console.log('check', bar, ticks, noteNumber);
+    for (let j = 0; j < numNotes; j++) {
+      const event = events[j];
+      // console.log(event);
+      // if (event.bar == bar && event.noteNumber == noteNumber) {
+      if (event.command === 144 && event.ticks == (ticks + ticksOffset) && event.noteNumber == noteNumber) {
+        event.vfnote = vfnote;
+        break;
+      }
+    }
+  })
+}
+
 const ppq = 960;
 const midiFile = 'mozk545a_musescore';
 const init = async () => {
   await sequencer.ready();
   await loadMIDIFile(`./assets/${midiFile}.mid`);
   const song = sequencer.createSong(sequencer.getMidiFile(midiFile));
+
+  // const srcName = 'TP00-PianoStereo';
+  // let url = `assets/${srcName}.mp3.json`;
+  // if (sequencer.browser === 'firefox') {
+  //   url = `assets/${srcName}.ogg.json`;
+  // }
+  // const json = await loadJSON(url);
+  // await addAssetPack(json);
+  // song.tracks.forEach(track => { track.setInstrument(srcName); })
+
   // song.update();
   const osmd = await loadMusicXMLFile('./assets/mozk545a_musescore.musicxml');
   // const notes = c.getElementsByClassName('vf-stavenote');
@@ -312,89 +340,90 @@ const init = async () => {
       const events = song.events.filter(event => event.command === 144);
       // console.log(events);
       const numNotes = events.length;
-      const flattened = data.flat();
-      console.log(flattened);
-      const numData = flattened.length;
-      for (let i = 0; i < numData; i++) {
-        const d = flattened[i];
-        const { vfnote, ticks, noteNumber, bar } = d;
-        // console.log('check', bar, ticks, noteNumber);
-        for (let j = 0; j < numNotes; j++) {
-          const event = events[j];
-          // console.log(event);
-          // if (event.bar == bar && event.noteNumber == noteNumber) {
-          if (event.command === 144 && event.ticks == ticks && event.noteNumber == noteNumber) {
-            event.vfnote = vfnote;
-            break;
+      // const flattened = data.flat();
+      // console.log(flattened);
+      // const numData = flattened.length;
+      const numBars = data.length;
+      let repeat1 = [-1, 27];
+      let repeat2 = [27, 72];
+      let repeated1 = false;
+      let repeated2 = false;
+      let songEnd = false;
+      let barIndex = -1;
+      let ticksOffset = 0;
+      while (songEnd === false) {
+        barIndex++;
+        // console.log(barIndex);
+        if (barIndex === repeat1[1]) {
+          update(data[barIndex], ticksOffset, events, numNotes)
+          if (repeated1 === false) {
+            barIndex = repeat1[0];
+            repeated1 = true;
+            ticksOffset += (repeat1[1] - repeat1[0]) * 4 * ppq;
           }
+        } else if (barIndex === repeat2[1]) {
+          update(data[barIndex], ticksOffset, events, numNotes)
+          if (repeated2 === false) {
+            barIndex = repeat2[0];
+            repeated2 = true;
+            ticksOffset += (repeat2[1] - repeat2[0]) * 4 * ppq;
+          } else {
+            songEnd = true;
+          }
+        } else {
+          update(data[barIndex], ticksOffset, events, numNotes);
         }
       };
-      console.timeEnd('connect_heartbeat');
+    });
 
-      const btnPlay = document.getElementById('play');
-      const btnStop = document.getElementById('stop');
-      btnPlay.disabled = true;
-      btnStop.disabled = true;
+  console.timeEnd('connect_heartbeat');
+
+  const btnPlay = document.getElementById('play');
+  const btnStop = document.getElementById('stop');
+  btnPlay.disabled = true;
+  btnStop.disabled = true;
 
 
-      song.addEventListener('event', 'type = NOTE_ON', (event) => {
-        if (event.vfnote) {
-          const el = event.vfnote.attrs.el;
-          colorStaveNote(el, 'red');
-        }
-      });
+  song.addEventListener('event', 'type = NOTE_ON', (event) => {
+    if (event.vfnote) {
+      const el = event.vfnote.attrs.el;
+      colorStaveNote(el, 'red');
+    }
+    // document.sc
+  });
 
-      song.addEventListener('event', 'type = NOTE_OFF', (event) => {
-        const noteOn = event.midiNote.noteOn;
-        if (noteOn.vfnote) {
-          const el = noteOn.vfnote.attrs.el;
-          colorStaveNote(el, 'black');
-        }
-      });
+  song.addEventListener('event', 'type = NOTE_OFF', (event) => {
+    const noteOn = event.midiNote.noteOn;
+    if (noteOn.vfnote) {
+      const el = noteOn.vfnote.attrs.el;
+      colorStaveNote(el, 'black');
+    }
+  });
 
-      song.addEventListener('stop', () => {
-        btnPlay.innerHTML = 'play';
-      });
-      song.addEventListener('play', () => {
-        btnPlay.innerHTML = 'pause';
-      });
-      song.addEventListener('end', () => {
-        btnPlay.innerHTML = 'play';
-      });
+  song.addEventListener('stop', () => {
+    btnPlay.innerHTML = 'play';
+  });
+  song.addEventListener('play', () => {
+    btnPlay.innerHTML = 'pause';
+  });
+  song.addEventListener('end', () => {
+    btnPlay.innerHTML = 'play';
+  });
 
-      btnPlay.disabled = false;
-      btnStop.disabled = false;
+  btnPlay.disabled = false;
+  btnStop.disabled = false;
 
-      btnPlay.addEventListener('click', () => {
-        if (song.playing) {
-          // btnPlay.innerHTML = 'play';
-          song.pause();
-        } else {
-          // btnPlay.innerHTML = 'pause';
-          song.play();
-        }
-      });
-      btnStop.addEventListener('click', () => { song.stop() });
+  btnPlay.addEventListener('click', () => {
+    if (song.playing) {
+      // btnPlay.innerHTML = 'play';
+      song.pause();
+    } else {
+      // btnPlay.innerHTML = 'pause';
+      song.play();
+    }
+  });
+  btnStop.addEventListener('click', () => { song.stop() });
 
-      console.log(events);
-      // from(song.events)
-      //   .pipe(
-      //     filter(event => event.vfnote),
-      //     map(event => [event.ticks, event.noteNumber, event.vfnote]),
-      //   )
-      //   .subscribe(data => {
-      //     console.log(data);
-      //   });
-      // console.log('========================================');
-      // from(flattened)
-      //   .pipe(
-      //     // filter(event => event.vfnote),
-      //     map(data => [data.ticks, data.noteNumber, data.step, data.octave]),
-      //   )
-      //   .subscribe(data => {
-      //     console.log(data);
-      //   });
-    })
 }
 
 init();
