@@ -1,10 +1,10 @@
-import sequencer from 'heartbeat-sequencer';
+import sequencer, { loadMusicXMLFile } from 'heartbeat-sequencer';
 import { OpenSheetMusicDisplay, GraphicalMusicSheet, GraphicalNote } from 'opensheetmusicdisplay';
 import { from, of, forkJoin, zip } from 'rxjs';
 import { map, filter, tap, switchMap, mergeMap, reduce, groupBy, toArray, mergeAll, concatAll } from 'rxjs/operators';
 import flatten from 'ramda/es/flatten';
 import Vex from 'vexflow';
-import { addAssetPack, loadJSON, initSequencer } from './action-utils';
+import { loadJSON, initSequencer, addAssetPack } from './action-utils';
 import { getNoteData } from './osmd_utils';
 import { parse } from './musicxml';
 
@@ -17,6 +17,7 @@ const options = {
   ignoreAttributes: false,
 }
 const c = document.getElementById('score');
+const divLoading = document.getElementById('loading') as HTMLDivElement;
 // document.body.appendChild(c);
 const osmd = new OpenSheetMusicDisplay(c, {
   backend: 'svg',
@@ -31,19 +32,7 @@ const loadMIDIFile = (url: string): Promise<void> => {
   });
 }
 
-const loadMusicXMLFile = (url: string): Promise<XMLDocument> => {
-  return new Promise((resolve, reject) => {
-    fetch(url)
-      .then(response => response.text())
-      .then(str => {
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(str, 'application/xml');
-        resolve(xmlDoc);
-      });
-  });
-}
-
-const colorStaveNote = (el, color) => {
+const colorStaveNote = (el, color: string) => {
   const stems = el.getElementsByClassName('vf-stem');
   const noteheads = el.getElementsByClassName('vf-notehead');
   // console.log(stem, notehead);
@@ -83,27 +72,32 @@ const init = async () => {
   await loadMIDIFile(`./assets/${midiFile}.mid`);
   const song = sequencer.createSong(sequencer.getMidiFile(midiFile));
 
-  // const srcName = 'TP00-PianoStereo';
-  // let url = `assets/${srcName}.mp3.json`;
-  // if (sequencer.browser === 'firefox') {
-  //   url = `assets/${srcName}.ogg.json`;
-  // }
-  // const json = await loadJSON(url);
-  // await addAssetPack(json);
-  // song.tracks.forEach(track => { track.setInstrument(srcName); })
+  const srcName = 'TP00-PianoStereo';
+  let url = `assets/${srcName}.mp3.json`;
+  if (sequencer.browser === 'firefox') {
+    url = `assets/${srcName}.ogg.json`;
+  }
+  const json = await loadJSON(url);
+  await addAssetPack(json);
+  song.tracks.forEach(track => { track.setInstrument(srcName); })
 
   // song.update();
   const xmlDoc = await loadMusicXMLFile('./assets/mozk545a_musescore.musicxml');
   console.log(parse(xmlDoc, ppq));
+  divLoading.innerHTML = 'loading musicxml';
   await osmd.load(xmlDoc);
+  osmd.render();
 
   // const notes = c.getElementsByClassName('vf-stavenote');
   // console.log(notes);
   console.log(osmd);
+  divLoading.innerHTML = 'parsing musicxml';
   const data = await getNoteData(osmd, ppq);
-  console.log(data);
+
+  // console.log(data);
   // console.log(song);
   // console.log(data[0][0] instanceof Vex.Flow.StaveNote);
+  divLoading.innerHTML = 'connecting heartbeat';
   console.time('connect_heartbeat');
   const events = song.events.filter(event => event.command === 144);
   // console.log(events);
@@ -145,10 +139,10 @@ const init = async () => {
 
 
   console.timeEnd('connect_heartbeat');
-  console.log(song.events);
-
-  const btnPlay = document.getElementById('play');
-  const btnStop = document.getElementById('stop');
+  // console.log(song.events);
+  divLoading.style.display = 'none';
+  const btnPlay = document.getElementById('play') as HTMLButtonElement;
+  const btnStop = document.getElementById('stop') as HTMLButtonElement;
   btnPlay.disabled = true;
   btnStop.disabled = true;
 

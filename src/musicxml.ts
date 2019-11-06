@@ -18,11 +18,17 @@ type PartData = {
   name: string,
 }[];
 
+type ParsedData = {
+  bpm: number,
+  parts: PartData,
+  eventDataPerPart: EventDataPerPart,
+}
+
 const NOTE_ON = 0x90; // 144
 const NOTE_OFF = 0x80; // 128
 const TIME_SIGNATURE = 0x58; // 88
 
-const parse = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPerPart] | null => {
+const parse = (xmlDoc: XMLDocument, ppq: number): ParsedData | null => {
   if (xmlDoc === null) {
     return null;
   }
