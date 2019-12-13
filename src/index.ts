@@ -48,17 +48,29 @@ const colorStaveNote = (el, color: string) => {
   }
 }
 
-const update = (barDatas, ticksOffset, events, numNotes) => {
+const update = (barDatas, barIndex, ticksOffset, events, numNotes) => {
+  barDatas.sort((a, b) => {
+    if (a.ticks < b.ticks) {
+      return -1;
+    } else if (a.ticks > b.ticks) {
+      return 1;
+    }
+    return 0;
+  })
+  const filtered = events.filter(e => e.bar === barIndex + 1);
+
   barDatas.forEach(bd => {
     const { vfnote, ticks, noteNumber, bar, parentMusicSystem } = bd;
-    // console.log('check', bar, ticks, noteNumber);
-    for (let j = 0; j < numNotes; j++) {
-      const event = events[j];
-      // console.log(event);
-      // if (event.bar == bar && event.noteNumber == noteNumber) {
-      if (event.command === 144 && event.ticks == (ticks + ticksOffset) && event.noteNumber == noteNumber) {
+    console.log('check', bar, ticks, noteNumber);
+    // console.log(bd, filtered);
+    for (let j = 0; j < filtered.length; j++) {
+      const event = filtered[j];
+      console.log('-->', event.bar, event.noteNumber);
+      if (event.bar == bar && event.noteNumber == noteNumber) {
+        // if (event.command === 144 && event.ticks == (ticks + ticksOffset) && event.noteNumber == noteNumber) {
         event.vfnote = vfnote;
         event.musicSystem = parentMusicSystem;
+        filtered.splice(j, 1);
         break;
       }
     }
@@ -94,7 +106,7 @@ const init = async () => {
   divLoading.innerHTML = 'parsing musicxml';
   const data = await getNoteData(osmd, ppq);
 
-  // console.log(data);
+  console.log(data);
   // console.log(song);
   // console.log(data[0][0] instanceof Vex.Flow.StaveNote);
   divLoading.innerHTML = 'connecting heartbeat';
@@ -117,14 +129,15 @@ const init = async () => {
     barIndex++;
     // console.log(barIndex);
     if (barIndex === repeat1[1]) {
-      update(data[barIndex], ticksOffset, events, numNotes)
+      songEnd = true;
+      update(data[barIndex], barIndex, ticksOffset, events, numNotes)
       if (repeated1 === false) {
         barIndex = repeat1[0];
         repeated1 = true;
         ticksOffset += (repeat1[1] - repeat1[0]) * 4 * ppq;
       }
     } else if (barIndex === repeat2[1]) {
-      update(data[barIndex], ticksOffset, events, numNotes)
+      update(data[barIndex], barIndex, ticksOffset, events, numNotes)
       if (repeated2 === false) {
         barIndex = repeat2[0];
         repeated2 = true;
@@ -133,7 +146,7 @@ const init = async () => {
         songEnd = true;
       }
     } else {
-      update(data[barIndex], ticksOffset, events, numNotes);
+      update(data[barIndex], barIndex, ticksOffset, events, numNotes);
     }
   };
 
