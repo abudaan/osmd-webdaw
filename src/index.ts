@@ -61,11 +61,11 @@ const update = (barDatas, barIndex, ticksOffset, events, numNotes) => {
 
   barDatas.forEach(bd => {
     const { vfnote, ticks, noteNumber, bar, parentMusicSystem } = bd;
-    console.log('check', bar, ticks, noteNumber);
+    // console.log('check', bar, ticks, noteNumber);
     // console.log(bd, filtered);
     for (let j = 0; j < filtered.length; j++) {
       const event = filtered[j];
-      console.log('-->', event.bar, event.noteNumber);
+      // console.log('-->', event.bar, event.noteNumber);
       if (event.bar == bar && event.noteNumber == noteNumber) {
         // if (event.command === 144 && event.ticks == (ticks + ticksOffset) && event.noteNumber == noteNumber) {
         event.vfnote = vfnote;
@@ -95,7 +95,10 @@ const init = async () => {
 
   // song.update();
   const xmlDoc = await loadMusicXMLFile('./assets/mozk545a_musescore.musicxml');
-  console.log(parse(xmlDoc, ppq));
+  const heartbeatParsed = parse(xmlDoc, ppq);
+  const [, , repeats] = heartbeatParsed;
+  console.log(repeats);
+
   divLoading.innerHTML = 'loading musicxml';
   await osmd.load(xmlDoc);
   osmd.render();

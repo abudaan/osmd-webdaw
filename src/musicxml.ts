@@ -24,11 +24,16 @@ type ParsedData = {
   eventDataPerPart: EventDataPerPart,
 }
 
+type Repeats = {
+  bar: number
+  type: string
+}[];
+
 const NOTE_ON = 0x90; // 144
 const NOTE_OFF = 0x80; // 128
 const TIME_SIGNATURE = 0x58; // 88
 
-const parse = (xmlDoc: XMLDocument, ppq: number): ParsedData | null => {
+const parse = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPerPart, Repeats] | null => {
   if (xmlDoc === null) {
     return null;
   }
@@ -48,12 +53,13 @@ const parse = (xmlDoc: XMLDocument, ppq: number): ParsedData | null => {
   return null;
 }
 
-const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPerPart] => {
+const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPerPart, Repeats] => {
   const nsResolver = xmlDoc.createNSResolver(xmlDoc.ownerDocument === null ? xmlDoc.documentElement : xmlDoc.ownerDocument.documentElement);
   const partIterator = xmlDoc.evaluate('//score-part', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null);
   const events: EventDataPerPart = {};
   const parts: PartData = [];
   const tiedNotes: { [id: string]: number } = {};
+  const repeats: Repeats = [];
 
   let tmp;
   let tmp1;
@@ -100,7 +106,8 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
 
       tmp = xmlDoc.evaluate('barline/repeat/@direction', measureNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
       if (tmp !== '') {
-        console.log(tmp, measureNumber);
+        // console.log(tmp, measureNumber);
+        repeats.push({ type: tmp, bar: measureNumber });
       }
 
       // get all notes and backups
@@ -233,10 +240,10 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
       }
     }
   }
-  return [parts, events];
+  return [parts, events, repeats];
 }
 
-const parseTimeWise = (doc: XMLDocument): [PartData, EventDataPerPart] | null => {
+const parseTimeWise = (doc: XMLDocument): [PartData, EventDataPerPart, Repeats] | null => {
   return null;
 }
 
