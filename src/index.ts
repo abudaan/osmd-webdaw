@@ -5,8 +5,8 @@ import { map, filter, tap, switchMap, mergeMap, reduce, groupBy, toArray, mergeA
 import flatten from 'ramda/es/flatten';
 import Vex from 'vexflow';
 import { loadJSON, initSequencer, addAssetPack } from './action-utils';
-import { getNoteData } from './osmd_utils';
-import { parse } from './musicxml';
+import { getNoteData, TypeNoteData } from './osmd_utils';
+import { parse, Repeats } from './musicxml';
 
 
 // const url = './assets/mozk545a.musicxml';
@@ -28,27 +28,31 @@ const osmd = new OpenSheetMusicDisplay(c, {
 
 const loadMIDIFile = (url: string): Promise<void> => {
   return new Promise(resolve => {
-    sequencer.addMidiFile({ url }, resolve);
+    sequencer.addMidiFile({ url }, () => { resolve() });
   });
 }
 
-const colorStaveNote = (el, color: string) => {
+const colorStaveNote = (el: SVGElement, color: string) => {
   const stems = el.getElementsByClassName('vf-stem');
   const noteheads = el.getElementsByClassName('vf-notehead');
   // console.log(stem, notehead);
   for (let i = 0; i < stems.length; i++) {
     const stem = stems[i];
-    stem.firstChild.setAttribute('fill', color);
-    stem.firstChild.setAttribute('stroke', color);
+    if (stem.firstChild !== null) {
+      (stem.firstChild as SVGElement).setAttribute('fill', color);
+      (stem.firstChild as SVGElement).setAttribute('stroke', color);
+    }
   }
   for (let i = 0; i < noteheads.length; i++) {
     const notehead = noteheads[i];
-    notehead.firstChild.setAttribute('fill', color);
-    notehead.firstChild.setAttribute('stroke', color);
+    if (notehead.firstChild !== null) {
+      (notehead.firstChild as SVGElement).setAttribute('fill', color);
+      (notehead.firstChild as SVGElement).setAttribute('stroke', color);
+    }
   }
 }
 
-const update = (barDatas, barIndex, ticksOffset, events, numNotes) => {
+const update = (barDatas: TypeNoteData[], barIndex: number, barOffset: number, events: Heartbeat.MIDIEvent[]) => {
   barDatas.sort((a, b) => {
     if (a.ticks < b.ticks) {
       return -1;
@@ -57,7 +61,8 @@ const update = (barDatas, barIndex, ticksOffset, events, numNotes) => {
     }
     return 0;
   })
-  const filtered = events.filter(e => e.bar === barIndex + 1);
+  const filtered = events.filter(e => e.bar === barIndex + 1 + barOffset);
+  console.log('F', barIndex, barOffset, (barIndex + 1 + barOffset), filtered[0].bar);
 
   barDatas.forEach(bd => {
     const { vfnote, ticks, noteNumber, bar, parentMusicSystem } = bd;
@@ -66,8 +71,9 @@ const update = (barDatas, barIndex, ticksOffset, events, numNotes) => {
     for (let j = 0; j < filtered.length; j++) {
       const event = filtered[j];
       // console.log('-->', event.bar, event.noteNumber);
-      if (event.bar == bar && event.noteNumber == noteNumber) {
+      if (event.bar == (bar + barOffset) && event.noteNumber == noteNumber) {
         // if (event.command === 144 && event.ticks == (ticks + ticksOffset) && event.noteNumber == noteNumber) {
+        // console.log(event.vfnote, event.bar);
         event.vfnote = vfnote;
         event.musicSystem = parentMusicSystem;
         filtered.splice(j, 1);
@@ -96,8 +102,7 @@ const init = async () => {
   // song.update();
   const xmlDoc = await loadMusicXMLFile('./assets/mozk545a_musescore.musicxml');
   const heartbeatParsed = parse(xmlDoc, ppq);
-  const [, , repeats] = heartbeatParsed;
-  console.log(repeats);
+  const [, , tmp] = heartbeatParsed;
 
   divLoading.innerHTML = 'loading musicxml';
   await osmd.load(xmlDoc);
@@ -121,36 +126,69 @@ const init = async () => {
   // console.log(flattened);
   // const numData = flattened.length;
   const numBars = data.length;
-  let repeat1 = [-1, 27];
-  let repeat2 = [27, 72];
-  let repeated1 = false;
-  let repeated2 = false;
+
+  // const tmp = [
+  //   {
+  //     "type": "forward",
+  //     "bar": 1
+  //   },
+  //   {
+  //     "type": "backward",
+  //     "bar": 28
+  //   },
+  //   {
+  //     "type": "forward",
+  //     "bar": 29
+  //   },
+  //   {
+  //     "type": "backward",
+  //     "bar": 73
+  //   }
+  // ]
+
+  const repeats: number[][] = [];
+  let j: number = 0;
+  (tmp as Repeats).forEach((t, i) => {
+    if (i % 2 === 0) {
+      repeats[j] = [];
+      repeats[j].push(t.bar);
+    } else if (i % 2 === 1) {
+      repeats[j].push(t.bar);
+      j++;
+    }
+  });
+
   let songEnd = false;
   let barIndex = -1;
+  let repeatIndex: number = 0;
   let ticksOffset = 0;
-  while (songEnd === false) {
+  let barOffset = 0;
+  const hasRepeated: { [index: number]: boolean } = {};
+  // console.log('repeats', repeats);
+  while (true) {
     barIndex++;
-    // console.log(barIndex);
-    if (barIndex === repeat1[1]) {
-      songEnd = true;
-      update(data[barIndex], barIndex, ticksOffset, events, numNotes)
-      if (repeated1 === false) {
-        barIndex = repeat1[0];
-        repeated1 = true;
-        ticksOffset += (repeat1[1] - repeat1[0]) * 4 * ppq;
-      }
-    } else if (barIndex === repeat2[1]) {
-      update(data[barIndex], barIndex, ticksOffset, events, numNotes)
-      if (repeated2 === false) {
-        barIndex = repeat2[0];
-        repeated2 = true;
-        ticksOffset += (repeat2[1] - repeat2[0]) * 4 * ppq;
+    // console.log(barIndex, repeatIndex, hasRepeated[repeatIndex], repeats[repeatIndex][1]);
+    if (barIndex === repeats[repeatIndex][1]) {
+      if (hasRepeated[repeatIndex] !== true) {
+        barIndex = repeats[repeatIndex][0] - 1;
+        // console.log('REPEAT START', barIndex)
+        hasRepeated[repeatIndex] = true;
+        barOffset += repeats[repeatIndex][1] - repeats[repeatIndex][0] + 1;
+        // ticksOffset += (repeats[repeatIndex][1] - repeats[repeatIndex][0]) * song.nominator * ppq;
       } else {
-        songEnd = true;
+        // console.log('REPEAT END', barIndex, repeatIndex);
+        repeatIndex++;
+        if (repeatIndex === repeats.length || barIndex === numBars) {
+          break;
+        }
       }
     } else {
-      update(data[barIndex], barIndex, ticksOffset, events, numNotes);
+      // console.log('CONTINUE', barIndex)
+      if (barIndex === numBars) {
+        break;
+      }
     }
+    update(data[barIndex], barIndex, barOffset, events);
   };
 
 

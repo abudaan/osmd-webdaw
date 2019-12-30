@@ -24,7 +24,7 @@ type ParsedData = {
   eventDataPerPart: EventDataPerPart,
 }
 
-type Repeats = {
+export type Repeats = {
   bar: number
   type: string
 }[];
@@ -59,7 +59,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
   const events: EventDataPerPart = {};
   const parts: PartData = [];
   const tiedNotes: { [id: string]: number } = {};
-  const repeats: Repeats = [];
+  const repeats: Repeats = [{ bar: 1, type: 'forward' }];
 
   let tmp;
   let tmp1;
@@ -107,7 +107,9 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
       tmp = xmlDoc.evaluate('barline/repeat/@direction', measureNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
       if (tmp !== '') {
         // console.log(tmp, measureNumber);
-        repeats.push({ type: tmp, bar: measureNumber });
+        if (measureNumber !== 1) {
+          repeats.push({ type: tmp, bar: measureNumber });
+        }
       }
 
       // get all notes and backups

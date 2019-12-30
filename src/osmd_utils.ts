@@ -1,19 +1,23 @@
 import { from, Observable } from 'rxjs';
 import { map, reduce } from 'rxjs/operators';
-import { OpenSheetMusicDisplay, GraphicalStaffEntry, GraphicalNote, VexFlowGraphicalNote } from 'opensheetmusicdisplay'
+import { OpenSheetMusicDisplay, GraphicalStaffEntry, GraphicalNote, VexFlowGraphicalNote, MusicSystem } from 'opensheetmusicdisplay'
 
 type TypeStave = {
   staffEntries: GraphicalStaffEntry[]
 }
 
-type TypeNoteData = {
+export type TypeNoteData = {
   vfnote: Vex.Flow.Note
+  ticks: number
+  noteNumber: number,
+  bar: number,
+  parentMusicSystem: MusicSystem
 }
 
 // path: openSheetMusicDisplay.GraphicSheet.MeasureList[0][0].staffEntries[0].graphicalVoiceEntries[0].notes[0];
 // path: openSheetMusicDisplay.GraphicSheet.MeasureList[0][0].parentMusicSystem
 
-const getNoteData = (osmd: OpenSheetMusicDisplay, ppq: number): Promise<TypeNoteData[]> => from(osmd.graphic.measureList)
+const getNoteData = (osmd: OpenSheetMusicDisplay, ppq: number): Promise<TypeNoteData[][]> => from(osmd.graphic.measureList)
   .pipe(
     // tap(m => { console.log(m); }),
     map((staves: any, i) => {
