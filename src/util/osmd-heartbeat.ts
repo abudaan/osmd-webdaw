@@ -19,6 +19,7 @@ const mapOSMDToSequencer = (graphicalNotesPerBar: TypeGraphicalNoteData[][], rep
   let repeatIndex: number = 0;
   const hasRepeated: { [index: number]: boolean } = {};
   const events = song.events.filter(event => event.command === 144);
+  console.log(events);
   const { bars: numBars, ppq } = song;
   const mapping: TypeNoteMapping = {};
 
@@ -47,24 +48,23 @@ const mapOSMDToSequencer = (graphicalNotesPerBar: TypeGraphicalNoteData[][], rep
     }
 
     // get all sequencer MIDI events in this bar
-    const filtered = events
-      .filter(e => e.bar === barIndex + 1 + barOffset)
-      .map(e => ({ event: e, processed: false }))
+    const filtered = events.filter(e => e.bar === barIndex + 1 + barOffset)
+    // console.log(barIndex + 1 + barOffset, filtered.length);
 
     graphicalNotesPerBar[barIndex]
-      // .sort((a, b) => {
-      //   if (a.ticks < b.ticks) {
-      //     return -1;
-      //   } else if (a.ticks > b.ticks) {
-      //     return 1;
-      //   }
-      //   return 0;
-      // })
+      .sort((a, b) => {
+        if (a.ticks < b.ticks) {
+          return -1;
+        } else if (a.ticks > b.ticks) {
+          return 1;
+        }
+        return 0;
+      })
       .forEach(bd => {
         const { vfnote, noteNumber, bar, parentMusicSystem } = bd;
         for (let j = 0; j < filtered.length; j++) {
-          const { event, processed } = filtered[j];
-          if (processed === false && event.bar == (bar + barOffset) && event.noteNumber == noteNumber) {
+          const event = filtered[j];
+          if (!mapping[event.id] && event.bar == (bar + barOffset) && event.noteNumber == noteNumber) {
             mapping[event.id] = { vfnote, musicSystem: parentMusicSystem };
             // filtered.splice(j, 1);
             break;

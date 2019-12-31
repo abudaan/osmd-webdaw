@@ -6,7 +6,7 @@ import { TypeNoteMapping } from './util/osmd-heartbeat';
 
 const createSong = async () => {
   await sequencer.ready();
-  const song = await createSongFromMIDIFile('./assets/mozk545a.mid');
+  const song = await createSongFromMIDIFile('./assets/mozk545a_musescore.mid');
   const srcName = 'TP00-PianoStereo';
   const url = `./assets/${srcName}.mp3.json`;
   const json = await loadJSON(url);
@@ -22,7 +22,6 @@ const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping) 
 
   song.addEventListener('event', 'type = NOTE_ON', (event: Heartbeat.MIDIEvent) => {
     const mapping = noteMapping[event.id];
-    console.log(mapping, event)
     if (mapping) {
       const el = mapping.vfnote.attrs.el;
       setStaveNoteColor(el, 'red');
@@ -47,7 +46,7 @@ const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping) 
 
   song.addEventListener('event', 'type = NOTE_OFF', (event) => {
     const noteOn = event.midiNote.noteOn;
-    const mapping = noteMapping[event.id];
+    const mapping = noteMapping[noteOn.id];
     if (mapping) {
       const el = mapping.vfnote.attrs.el;
       setStaveNoteColor(el, 'black');

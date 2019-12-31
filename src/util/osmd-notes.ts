@@ -48,15 +48,14 @@ const getGraphicalNotesPerBar = (osmd: OpenSheetMusicDisplay, ppq: number): Prom
                     parentMusicSystem, // necessary to get the y-position if the note in the score
                   };
                 })
-                .sort((a, b) => {
-                  console.log(a, b);
-                  if (a.ticks < b.ticks) {
-                    return -1;
-                  } else if (a.ticks > b.ticks) {
-                    return 1;
-                  }
-                  return 0;
-                });
+              // .sort((a, b) => {
+              //   if (a.ticks < b.ticks) {
+              //     return -1;
+              //   } else if (a.ticks > b.ticks) {
+              //     return 1;
+              //   }
+              //   return 0;
+              // });
             });
           });
         });
