@@ -27,7 +27,7 @@ const NOTE_ON = 0x90; // 144
 const NOTE_OFF = 0x80; // 128
 const TIME_SIGNATURE = 0x58; // 88
 
-const parse = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPerPart, number[][]] | null => {
+const parseMusicXML = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPerPart, number[][]] | null => {
   if (xmlDoc === null) {
     return null;
   }
@@ -257,5 +257,5 @@ const parseTimeWise = (doc: XMLDocument): [PartData, EventDataPerPart, number[][
 }
 
 export {
-  parse,
+  parseMusicXML,
 }

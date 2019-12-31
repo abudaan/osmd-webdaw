@@ -47,19 +47,30 @@ const mapOSMDToSequencer = (graphicalNotesPerBar: TypeGraphicalNoteData[][], rep
     }
 
     // get all sequencer MIDI events in this bar
-    const filtered = events.filter(e => e.bar === barIndex + 1 + barOffset);
+    const filtered = events
+      .filter(e => e.bar === barIndex + 1 + barOffset)
+      .map(e => ({ event: e, processed: false }))
 
-    graphicalNotesPerBar[barIndex].forEach(bd => {
-      const { vfnote, noteNumber, bar, parentMusicSystem } = bd;
-      for (let j = 0; j < filtered.length; j++) {
-        const event = filtered[j];
-        if (event.bar == (bar + barOffset) && event.noteNumber == noteNumber) {
-          mapping[event.id] = { vfnote, musicSystem: parentMusicSystem };
-          filtered.splice(j, 1);
-          break;
+    graphicalNotesPerBar[barIndex]
+      // .sort((a, b) => {
+      //   if (a.ticks < b.ticks) {
+      //     return -1;
+      //   } else if (a.ticks > b.ticks) {
+      //     return 1;
+      //   }
+      //   return 0;
+      // })
+      .forEach(bd => {
+        const { vfnote, noteNumber, bar, parentMusicSystem } = bd;
+        for (let j = 0; j < filtered.length; j++) {
+          const { event, processed } = filtered[j];
+          if (processed === false && event.bar == (bar + barOffset) && event.noteNumber == noteNumber) {
+            mapping[event.id] = { vfnote, musicSystem: parentMusicSystem };
+            // filtered.splice(j, 1);
+            break;
+          }
         }
-      }
-    })
+      })
   };
 
   return mapping;

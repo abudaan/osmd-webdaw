@@ -49,6 +49,7 @@ const getGraphicalNotesPerBar = (osmd: OpenSheetMusicDisplay, ppq: number): Prom
                   };
                 })
                 .sort((a, b) => {
+                  console.log(a, b);
                   if (a.ticks < b.ticks) {
                     return -1;
                   } else if (a.ticks > b.ticks) {
