@@ -1,12 +1,7 @@
 import sequencer, { loadMusicXMLFile } from 'heartbeat-sequencer';
-import { OpenSheetMusicDisplay, GraphicalMusicSheet, GraphicalNote } from 'opensheetmusicdisplay';
-import { from, of, forkJoin, zip } from 'rxjs';
-import { map, filter, tap, switchMap, mergeMap, reduce, groupBy, toArray, mergeAll, concatAll } from 'rxjs/operators';
-import flatten from 'ramda/es/flatten';
-import Vex from 'vexflow';
-import { loadJSON, initSequencer, addAssetPack } from './action-utils';
-import { getNoteData, TypeNoteData } from './osmd_utils';
-import { parse, Repeats } from './musicxml';
+import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
+import { loadJSON, addAssetPack } from './util/heartbeat-wrapper';
+import { parse } from './util/musicxml';
 
 
 // const url = './assets/mozk545a.musicxml';
@@ -30,57 +25,6 @@ const loadMIDIFile = (url: string): Promise<void> => {
   return new Promise(resolve => {
     sequencer.addMidiFile({ url }, () => { resolve() });
   });
-}
-
-const colorStaveNote = (el: SVGElement, color: string) => {
-  const stems = el.getElementsByClassName('vf-stem');
-  const noteheads = el.getElementsByClassName('vf-notehead');
-  // console.log(stem, notehead);
-  for (let i = 0; i < stems.length; i++) {
-    const stem = stems[i];
-    if (stem.firstChild !== null) {
-      (stem.firstChild as SVGElement).setAttribute('fill', color);
-      (stem.firstChild as SVGElement).setAttribute('stroke', color);
-    }
-  }
-  for (let i = 0; i < noteheads.length; i++) {
-    const notehead = noteheads[i];
-    if (notehead.firstChild !== null) {
-      (notehead.firstChild as SVGElement).setAttribute('fill', color);
-      (notehead.firstChild as SVGElement).setAttribute('stroke', color);
-    }
-  }
-}
-
-const update = (barDatas: TypeNoteData[], barIndex: number, barOffset: number, events: Heartbeat.MIDIEvent[]) => {
-  barDatas.sort((a, b) => {
-    if (a.ticks < b.ticks) {
-      return -1;
-    } else if (a.ticks > b.ticks) {
-      return 1;
-    }
-    return 0;
-  })
-  const filtered = events.filter(e => e.bar === barIndex + 1 + barOffset);
-  console.log('F', barIndex, barOffset, (barIndex + 1 + barOffset), filtered[0].bar);
-
-  barDatas.forEach(bd => {
-    const { vfnote, ticks, noteNumber, bar, parentMusicSystem } = bd;
-    // console.log('check', bar, ticks, noteNumber);
-    // console.log(bd, filtered);
-    for (let j = 0; j < filtered.length; j++) {
-      const event = filtered[j];
-      // console.log('-->', event.bar, event.noteNumber);
-      if (event.bar == (bar + barOffset) && event.noteNumber == noteNumber) {
-        // if (event.command === 144 && event.ticks == (ticks + ticksOffset) && event.noteNumber == noteNumber) {
-        // console.log(event.vfnote, event.bar);
-        event.vfnote = vfnote;
-        event.musicSystem = parentMusicSystem;
-        filtered.splice(j, 1);
-        break;
-      }
-    }
-  })
 }
 
 const ppq = 960;
@@ -127,69 +71,9 @@ const init = async () => {
   // const numData = flattened.length;
   const numBars = data.length;
 
-  // const tmp = [
-  //   {
-  //     "type": "forward",
-  //     "bar": 1
-  //   },
-  //   {
-  //     "type": "backward",
-  //     "bar": 28
-  //   },
-  //   {
-  //     "type": "forward",
-  //     "bar": 29
-  //   },
-  //   {
-  //     "type": "backward",
-  //     "bar": 73
-  //   }
-  // ]
 
-  const repeats: number[][] = [];
-  let j: number = 0;
-  (tmp as Repeats).forEach((t, i) => {
-    if (i % 2 === 0) {
-      repeats[j] = [];
-      repeats[j].push(t.bar);
-    } else if (i % 2 === 1) {
-      repeats[j].push(t.bar);
-      j++;
-    }
-  });
 
-  let songEnd = false;
-  let barIndex = -1;
-  let repeatIndex: number = 0;
-  let ticksOffset = 0;
-  let barOffset = 0;
-  const hasRepeated: { [index: number]: boolean } = {};
-  // console.log('repeats', repeats);
-  while (true) {
-    barIndex++;
-    // console.log(barIndex, repeatIndex, hasRepeated[repeatIndex], repeats[repeatIndex][1]);
-    if (barIndex === repeats[repeatIndex][1]) {
-      if (hasRepeated[repeatIndex] !== true) {
-        barIndex = repeats[repeatIndex][0] - 1;
-        // console.log('REPEAT START', barIndex)
-        hasRepeated[repeatIndex] = true;
-        barOffset += repeats[repeatIndex][1] - repeats[repeatIndex][0] + 1;
-        // ticksOffset += (repeats[repeatIndex][1] - repeats[repeatIndex][0]) * song.nominator * ppq;
-      } else {
-        // console.log('REPEAT END', barIndex, repeatIndex);
-        repeatIndex++;
-        if (repeatIndex === repeats.length || barIndex === numBars) {
-          break;
-        }
-      }
-    } else {
-      // console.log('CONTINUE', barIndex)
-      if (barIndex === numBars) {
-        break;
-      }
-    }
-    update(data[barIndex], barIndex, barOffset, events);
-  };
+
 
 
   console.timeEnd('connect_heartbeat');

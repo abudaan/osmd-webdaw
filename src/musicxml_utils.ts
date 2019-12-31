@@ -1,5 +1,0 @@
-
-
-const getRepeatData = (xmlDoc: XMLDocument) => {
-
-}

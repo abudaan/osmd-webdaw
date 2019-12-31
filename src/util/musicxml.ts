@@ -18,13 +18,7 @@ type PartData = {
   name: string,
 }[];
 
-type ParsedData = {
-  bpm: number,
-  parts: PartData,
-  eventDataPerPart: EventDataPerPart,
-}
-
-export type Repeats = {
+export type TypeRepeats = {
   bar: number
   type: string
 }[];
@@ -33,7 +27,7 @@ const NOTE_ON = 0x90; // 144
 const NOTE_OFF = 0x80; // 128
 const TIME_SIGNATURE = 0x58; // 88
 
-const parse = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPerPart, Repeats] | null => {
+const parse = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPerPart, number[][]] | null => {
   if (xmlDoc === null) {
     return null;
   }
@@ -53,13 +47,13 @@ const parse = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPerPart, R
   return null;
 }
 
-const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPerPart, Repeats] => {
+const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPerPart, number[][]] => {
   const nsResolver = xmlDoc.createNSResolver(xmlDoc.ownerDocument === null ? xmlDoc.documentElement : xmlDoc.ownerDocument.documentElement);
   const partIterator = xmlDoc.evaluate('//score-part', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null);
   const events: EventDataPerPart = {};
   const parts: PartData = [];
   const tiedNotes: { [id: string]: number } = {};
-  const repeats: Repeats = [{ bar: 1, type: 'forward' }];
+  const repeats: TypeRepeats = [{ bar: 1, type: 'forward' }];
 
   let tmp;
   let tmp1;
@@ -242,10 +236,23 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
       }
     }
   }
-  return [parts, events, repeats];
+
+  const repeats2: number[][] = [];
+  let j: number = 0;
+  repeats.forEach((t, i) => {
+    if (i % 2 === 0) {
+      repeats2[j] = [];
+      repeats2[j].push(t.bar);
+    } else if (i % 2 === 1) {
+      repeats2[j].push(t.bar);
+      j++;
+    }
+  });
+
+  return [parts, events, repeats2];
 }
 
-const parseTimeWise = (doc: XMLDocument): [PartData, EventDataPerPart, Repeats] | null => {
+const parseTimeWise = (doc: XMLDocument): [PartData, EventDataPerPart, number[][]] | null => {
   return null;
 }
 

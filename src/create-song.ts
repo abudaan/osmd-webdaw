@@ -1,6 +1,6 @@
 import 'jzz';
 import sequencer from 'heartbeat-sequencer';
-import { addAssetPack, loadJSON, initSequencer, createSongFromMIDIFile } from './action-utils';
+import { addAssetPack, loadJSON, initSequencer, createSongFromMIDIFile } from './util/heartbeat-wrapper';
 
 const createSong = async () => {
   await initSequencer();

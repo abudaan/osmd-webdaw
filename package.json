@@ -9,7 +9,7 @@
     "glamor": "^2.20.40",
     "heartbeat-sequencer": "file:../heartbeat",
     "jzz": "^0.7.9",
-    "opensheetmusicdisplay": "^0.7.1",
+    "opensheetmusicdisplay": "^0.7.2",
     "ramda": "^0.26.1",
     "rxjs": "^6.5.2",
     "shortid": "^2.2.14",
