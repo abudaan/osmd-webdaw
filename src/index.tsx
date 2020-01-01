@@ -5,8 +5,7 @@ import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
 import { App } from './components/app';
-
-console.log(store.getState());
+import { init } from './redux/actions';
 
 ReactDOM.render(
   <Provider store={store}>
@@ -14,3 +13,7 @@ ReactDOM.render(
   </Provider>,
   document.getElementById('app')
 );
+
+// const { xmlDocUrl, midiFileUrl } = store.getState().song;
+// console.log(xmlDocUrl, midiFileUrl);
+// store.dispatch(init(xmlDocUrl, midiFileUrl));

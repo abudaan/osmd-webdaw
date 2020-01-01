@@ -1,17 +1,30 @@
-import React, { SyntheticEvent } from 'react';
-import Slider, { Range } from 'rc-slider';
+import React, { useEffect } from 'react';
+import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
+import { useSelector, useDispatch } from 'react-redux';
+import { AppState } from '../redux/store';
+import { scoreRendered } from '../redux/actions';
 
-export type AppState = {
-  song: {
-    midiFileUrl: string,
-    xmlDocUrl: string,
-    midiFile: string,
-    xmlDoc: string,
-  }
-}
+export const Score: React.FC<{}> = ({ }) => {
+  const xmlDoc = useSelector((state: AppState) => state.song.xmlDoc);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    if (xmlDoc) {
+      const scoreDiv = document.getElementById('score');
+      if (scoreDiv) {
+        const osmd = new OpenSheetMusicDisplay(scoreDiv, {
+          backend: 'svg',
+          autoResize: true,
+        });
+        // window.openSheetMusicDisplay = openSheetMusicDisplay;  
+        osmd.load(xmlDoc)
+          .then(() => {
+            osmd.render();
+            dispatch(scoreRendered())
+          });
 
-export const Score: React.FC<{}> = () => {
-
+      }
+    }
+  }, [xmlDoc])
 
   return null;
-}
+};

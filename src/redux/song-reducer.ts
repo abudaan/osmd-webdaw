@@ -1,6 +1,11 @@
-import { INIT_FILES_LOADED } from "./actions";
+import { INIT_FILES_LOADED, SCORE_RENDERED } from "./actions";
 
-type SongState = {};
+type SongState = {
+  midiFileUrl: string,
+  xmlDocUrl: string,
+  midiFile: null,
+  xmlDoc: null | XMLDocument,
+};
 
 export const initialState = {
   midiFileUrl: './assets/mozk545a_musescore.mid',
@@ -16,6 +21,8 @@ export const song = (state: SongState = initialState, action: any) => {
       ...state,
       xmlDoc: action.payload.xmlDoc,
     }
+  } else if (action.type === SCORE_RENDERED) {
+    return state;
   }
 
   return state;

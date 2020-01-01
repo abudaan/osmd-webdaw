@@ -1,5 +1,6 @@
 export const INITIALIZING = 'INITIALIZING';
 export const INIT_FILES_LOADED = 'INIT_FILES_LOADED';
+export const SCORE_RENDERED = 'SCORE_RENDERED';
 
 import { Dispatch } from 'redux'
 import { loadXML, addMIDIFile } from '../util/heartbeat-utils';
@@ -20,3 +21,5 @@ export const init = (xmlDocUrl: string, midiFileUrl: string) => async (dispatch:
     }
   })
 }
+
+export const scoreRendered = () => ({ type: SCORE_RENDERED });

@@ -17,6 +17,15 @@ import { createLogger } from 'redux-logger'
 //   scanResult: scanResultState
 // }
 
+export type AppState = {
+  song: {
+    midiFileUrl: string,
+    xmlDocUrl: string,
+    midiFile: string,
+    xmlDoc: string,
+  }
+}
+
 type ReduxState = {}
 const initialState: ReduxState = {
   song: songInitialState,
