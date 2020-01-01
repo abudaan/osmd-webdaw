@@ -23,6 +23,19 @@ const loadArrayBuffer = (url: string) => fetch(url)
   .then(response => response.arrayBuffer())
   .catch(e => console.error(e));
 
+const loadXML = (url: string): Promise<XMLDocument> => {
+  return new Promise((resolve, reject) => {
+    fetch(url)
+      .then(response => response.text())
+      .then(str => {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(str, 'application/xml');
+        resolve(xmlDoc);
+      });
+  });
+}
+
+
 
 // const initSequencer = () => sequencer.ready();
 const initSequencer = async () => {
@@ -212,4 +225,5 @@ export {
   getLowestNote,
   getHighestNote,
   getAverageNote,
+  loadXML,
 }
