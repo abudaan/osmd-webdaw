@@ -3,7 +3,7 @@ import { INIT_FILES_LOADED, SCORE_RENDERED } from "./actions";
 type SongState = {
   midiFileUrl: string,
   xmlDocUrl: string,
-  midiFile: null,
+  midiFile: null | Heartbeat.MIDIFileJSON,
   xmlDoc: null | XMLDocument,
 };
 
@@ -16,10 +16,10 @@ export const initialState = {
 
 export const song = (state: SongState = initialState, action: any) => {
   if (action.type === INIT_FILES_LOADED) {
-    console.log(action.payload);
     return {
       ...state,
       xmlDoc: action.payload.xmlDoc,
+      midiFile: action.payload.midiFile,
     }
   } else if (action.type === SCORE_RENDERED) {
     return state;

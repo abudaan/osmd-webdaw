@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, RefObject } from 'react';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppState } from '../redux/store';
@@ -7,9 +7,12 @@ import { scoreRendered } from '../redux/actions';
 export const Score: React.FC<{}> = ({ }) => {
   const xmlDoc = useSelector((state: AppState) => state.song.xmlDoc);
   const dispatch = useDispatch();
+  const refScore: RefObject<HTMLDivElement> = useRef(null);
+
   useEffect(() => {
     if (xmlDoc) {
-      const scoreDiv = document.getElementById('score');
+      // const scoreDiv = document.getElementById('score');
+      const scoreDiv = refScore.current;
       if (scoreDiv) {
         const osmd = new OpenSheetMusicDisplay(scoreDiv, {
           backend: 'svg',
@@ -26,5 +29,5 @@ export const Score: React.FC<{}> = ({ }) => {
     }
   }, [xmlDoc])
 
-  return null;
+  return <div ref={refScore}></div>;
 };
