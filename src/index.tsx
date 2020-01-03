@@ -1,12 +1,14 @@
 // import 'core-js/stable';
 // import 'regenerator-runtime/runtime';
+import { Observable, Subscriber } from 'rxjs';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
-import { store } from './redux/store';
+import { store, AppState } from './redux/store';
 import { App } from './components/app';
-import { init } from './redux/actions';
+import { loadInitSong, init } from './redux/actions';
 import sequencer from 'heartbeat-sequencer';
+import { createSong } from './create-song';
 
 ReactDOM.render(
   <Provider store={store}>
@@ -15,8 +17,21 @@ ReactDOM.render(
   document.getElementById('app')
 );
 
+const state$ = new Observable((observer: Subscriber<AppState>) => {
+  observer.next(store.getState());
+  const unsubscribe = store.subscribe(() => {
+    observer.next(store.getState());
+  });
+  return unsubscribe;
+});
+
+createSong(store, state$);
+
+store.dispatch(init(state$));
+
 sequencer.ready()
   .then(() => {
-    const { xmlDocUrl, midiFileUrl } = store.getState().song;
-    store.dispatch(init(xmlDocUrl, midiFileUrl));
+    const { initUrls: { xmlDoc, midiFile, instrument } } = store.getState().song;
+    store.dispatch(loadInitSong(xmlDoc, midiFile, instrument));
   })
+

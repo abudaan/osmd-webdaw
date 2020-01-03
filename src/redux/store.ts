@@ -1,6 +1,6 @@
 import thunkMiddleware from 'redux-thunk'
 import { createStore, combineReducers, DeepPartial, applyMiddleware } from 'redux';
-import { song, initialState as songInitialState } from './song-reducer';
+import { song, initialState as songInitialState, SongState } from './song-reducer';
 import { composeWithDevTools } from 'redux-devtools-extension';
 import { createLogger } from 'redux-logger'
 
@@ -18,12 +18,7 @@ import { createLogger } from 'redux-logger'
 // }
 
 export type AppState = {
-  song: {
-    midiFileUrl: string,
-    xmlDocUrl: string,
-    midiFile: string,
-    xmlDoc: string,
-  }
+  song: SongState,
 }
 
 type ReduxState = {}
