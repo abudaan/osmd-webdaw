@@ -9,7 +9,7 @@ import { Store } from 'redux';
 import { distinctUntilChanged, pluck, tap, map, filter } from 'rxjs/operators';
 import { SongState } from './redux/song-reducer';
 
-const createSong = async (store: Store<AppState>, state$: Observable<AppState>) => {
+const createSong2 = async (store: Store<AppState>, state$: Observable<AppState>) => {
   state$.pipe(
     pluck('song'),
     filter((state) => { return state.midiFiles.length > 0 && state.xmlDocs.length > 0 }),
@@ -24,15 +24,13 @@ const createSong = async (store: Store<AppState>, state$: Observable<AppState>) 
     console.log(val);
 
   });
+}
 
-  // await sequencer.ready();
-  // const song = await createSongFromMIDIFile('./assets/mozk545a_musescore.mid');
-  // const srcName = 'TP00-PianoStereo';
-  // const url = `./assets/${srcName}.mp3.json`;
-  // const json = await loadJSON(url);
-  // await addAssetPack(json);
-  // song.tracks.forEach((t: Heartbeat.Track) => { t.setInstrument(srcName); });
-  // return song;
+const createSong = (midiFileName: string, instrumentName: string): Heartbeat.Song => {
+  const midifile = sequencer.getMidiFile(midiFileName);
+  const song = sequencer.createSong(midifile);
+  song.tracks.forEach((t: Heartbeat.Track) => { t.setInstrument(instrumentName); });
+  return song;
 }
 
 const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping) => {

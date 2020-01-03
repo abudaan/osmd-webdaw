@@ -1,4 +1,4 @@
-import { INITIALIZING, INIT_SONG_LOADED, SCORE_RENDERED, SONG_READY } from './actions';
+import { INITIALIZING, SONG_LOADED, SCORE_RENDERED, SONG_READY } from './actions';
 import { Observable } from 'rxjs';
 import { AppState } from "./store";
 
@@ -36,7 +36,7 @@ export const song = (state: SongState = initialState, action: any) => {
       ...state,
       observable: action.payload.observable,
     }
-  } else if (action.type === INIT_SONG_LOADED) {
+  } else if (action.type === SONG_LOADED) {
     return {
       ...state,
       xmlDocs: [action.payload.xmlDoc],
