@@ -1,25 +1,31 @@
 import 'jzz';
 import sequencer from 'heartbeat-sequencer';
-import { addAssetPack, loadJSON, createSongFromMIDIFile } from './util/heartbeat-utils';
 import { setStaveNoteColor } from './util/osmd-stavenote-color';
-import { TypeNoteMapping } from './util/osmd-heartbeat';
+import { TypeNoteMapping, mapOSMDToSequencer } from './util/osmd-heartbeat';
 import { AppState } from './redux/store';
 import { Observable } from 'rxjs';
-import { Store } from 'redux';
 import { distinctUntilChanged, pluck, tap, map, filter } from 'rxjs/operators';
 import { SongState, SongActions } from './redux/song-reducer';
 import { Dispatch } from 'redux';
-import { songReady } from './redux/actions';
+import { songReady, updateNoteMapping } from './redux/actions';
+import { parseMusicXML } from './util/musicxml';
+import { getGraphicalNotesPerBar } from './util/osmd-notes';
+import { isNil } from 'ramda';
 
-export const createSong = async (state$: Observable<AppState>, dispatch: Dispatch) => {
+export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatch) => {
   state$.pipe(
     pluck('song'),
-    filter((state) => { return state.currentMIDIFileIndex !== -1 }),
+    filter((state) => { return state.currentMIDIFile !== null }),
     distinctUntilChanged((a, b) => {
-      return a.currentMIDIFileIndex === b.currentMIDIFileIndex;
+      if (a.currentMIDIFile === null || b.currentMIDIFile === null) {
+        return true;
+      }
+      return a.currentMIDIFile.id === b.currentMIDIFile.id;
     }),
     map((state: SongState) => {
-      return [state.midiFiles[state.currentMIDIFileIndex].name, state.instrumentName];
+      if (state.currentMIDIFile !== null) { // extra check for eslint
+        return [state.currentMIDIFile.name, state.instrumentName];
+      }
     })
   ).subscribe(([midiFileName, instrumentName]) => {
     const song = sequencer.createSong(sequencer.getMidiFile(midiFileName));
@@ -45,6 +51,24 @@ export const createSong = async (state$: Observable<AppState>, dispatch: Dispatc
       } else if (songAction === SongActions.STOP) {
         song.stop();
       }
+    }
+  });
+
+  state$.pipe(
+    map(state => ({ osmd: state.song.osmd, song: state.song.song, xml: state.song.currentXMLDoc })),
+    filter(({ osmd, song, xml }) => { return osmd !== null && song !== null && xml !== null }),
+    // tap(val => { console.log(val); }),
+    distinctUntilChanged((a, b) => {
+      return a.osmd == b.osmd;
+    }),
+  ).subscribe(async ({ osmd, song, xml }) => {
+    if (osmd !== null && song !== null && xml !== null) { // extra check for eslint because it doesn't understand rxjs
+      console.log('setup notemapping', osmd);
+      const [, , repeats] = parseMusicXML(xml, song.ppq);
+      const notesPerBar = await getGraphicalNotesPerBar(osmd, song.ppq);
+      const noteMapping = mapOSMDToSequencer(notesPerBar, repeats as number[][], song);
+      setupSongListeners(song, noteMapping);
+      dispatch(updateNoteMapping(noteMapping));
     }
   });
 }
@@ -86,6 +110,5 @@ const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping) 
       setStaveNoteColor(el, 'black');
     }
   });
-
 }
 

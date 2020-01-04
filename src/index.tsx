@@ -6,9 +6,9 @@ import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { store, AppState } from './redux/store';
 import { App } from './components/app';
-import { loadInitSong, init } from './redux/actions';
+import { loadInitData, init } from './redux/actions';
 import sequencer from 'heartbeat-sequencer';
-import { createSong } from './create-song';
+import { manageSong } from './sequencer-manager';
 
 ReactDOM.render(
   <Provider store={store}>
@@ -26,11 +26,11 @@ const state$ = new Observable((observer: Subscriber<AppState>) => {
 });
 
 store.dispatch(init(state$));
-createSong(state$, store.dispatch);
+manageSong(state$, store.dispatch);
 
 sequencer.ready()
   .then(() => {
     const { initUrls: { xmlDoc, midiFile, instrument } } = store.getState().song;
-    store.dispatch(loadInitSong(xmlDoc, midiFile, instrument));
+    store.dispatch(loadInitData(xmlDoc, midiFile, instrument));
   })
 

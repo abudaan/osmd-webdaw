@@ -1,4 +1,4 @@
-import { createSong, setupSongListeners } from './create-song';
+import { manageSong, setupSongListeners } from './sequencer-manager';
 import { createScore } from './create-score';
 import { getGraphicalNotesPerBar } from './util/osmd-notes';
 import { parseMusicXML } from './util/musicxml';
@@ -12,7 +12,7 @@ const init = async () => {
   btnStop.disabled = true;
 
   divLoading.innerHTML = 'init sequencer';
-  const song = await createSong();
+  const song = await manageSong();
   divLoading.innerHTML = 'parsing musicxml';
   const [xmlDoc, osmd] = await createScore();
 

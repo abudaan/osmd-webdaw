@@ -1,6 +1,9 @@
-import { INITIALIZING, SONG_LOADED, SCORE_RENDERED, SONG_READY, INIT_SONG_LOADED, UPDATE_SONG_ACTION } from './actions';
+import { INITIALIZING, MIDIFILE_LOADED, MUSICXML_LOADED, SCORE_READY, SONG_READY, INIT_DATA_LOADED, UPDATE_SONG_ACTION, noteMapping } from './actions';
 import { Observable } from 'rxjs';
 import { AppState } from './store';
+import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay/build/dist/src';
+import { TypeGraphicalNoteData } from '../util/osmd-notes';
+import { TypeNoteMapping } from 'src/util/osmd-heartbeat';
 export const SongActions = {
   PLAY: 'PLAY',
   PAUSE: 'PAUSE',
@@ -18,11 +21,14 @@ export type SongState = {
   xmlDocs: XMLDocument[],
   songPosition: string,
   observable: null | Observable<AppState>
-  currentXMLDocIndex: number,
-  currentMIDIFileIndex: number,
+  currentXMLDoc: null | XMLDocument,
+  currentMIDIFile: null | Heartbeat.MIDIFileJSON,
+  osmd: null | OpenSheetMusicDisplay
   song: null | Heartbeat.Song
   songAction: string
   songIsPlaying: boolean
+  graphicalNotesPerBar: TypeGraphicalNoteData[][]
+  noteMapping: TypeNoteMapping
 };
 
 const instrumentName = 'TP00-PianoStereo';
@@ -38,11 +44,14 @@ export const initialState = {
   midiFiles: [],
   songPosition: '',
   observable: null,
-  currentXMLDocIndex: -1,
-  currentMIDIFileIndex: -1,
+  currentXMLDoc: null,
+  currentMIDIFile: null,
   song: null,
+  osmd: null,
   songAction: '',
   songIsPlaying: false,
+  graphicalNotesPerBar: [],
+  noteMapping: {}
 }
 
 export const song = (state: SongState = initialState, action: any) => {
@@ -51,26 +60,31 @@ export const song = (state: SongState = initialState, action: any) => {
       ...state,
       observable: action.payload.observable,
     }
-  } else if (action.type === SONG_LOADED) {
+  } else if (action.type === INIT_DATA_LOADED) {
+    const { xmlDoc, midiFile, instrumentName } = action.payload;
     return {
       ...state,
-      // xmlDocs: [action.payload.xmlDoc],
-      // midiFiles: [action.payload.midiFile],
-      // instrumentName: action.payload.instrumentName,
-      // currentXMLDocIndex: 0,
-      // currentMIDIFileIndex: 0,
+      xmlDocs: [xmlDoc],
+      midiFiles: [midiFile],
+      instrumentName: instrumentName,
+      currentXMLDoc: xmlDoc,
+      currentMIDIFile: midiFile,
     }
-  } else if (action.type === INIT_SONG_LOADED) {
+  } else if (action.type === MIDIFILE_LOADED) {
     return {
       ...state,
-      xmlDocs: [action.payload.xmlDoc],
-      midiFiles: [action.payload.midiFile],
-      instrumentName: action.payload.instrumentName,
-      currentXMLDocIndex: 0,
-      currentMIDIFileIndex: 0,
+      midiFiles: [...state.midiFiles, action.payload.midiFile],
     }
-  } else if (action.type === SCORE_RENDERED) {
-    return state;
+  } else if (action.type === MUSICXML_LOADED) {
+    return {
+      ...state,
+      xmlDocs: [...state.xmlDocs, action.payload.xmlDoc],
+    }
+  } else if (action.type === SCORE_READY) {
+    return {
+      ...state,
+      osmd: action.payload.osmd,
+    };
   } else if (action.type === SONG_READY) {
     return {
       ...state,

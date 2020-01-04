@@ -1,31 +1,13 @@
 import React, { useEffect, useRef, RefObject } from 'react';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch, shallowEqual } from 'react-redux';
 import { AppState } from '../redux/store';
-import { scoreRendered } from '../redux/actions';
+import { scoreReady } from '../redux/actions';
 
 let i: number = 0;
 
 export const Score: React.FC<{}> = ({ }) => {
-  const xmlDoc = useSelector((state: AppState) => {
-    const index = state.song.currentXMLDocIndex;
-    if (index !== -1) {
-      return state.song.xmlDocs[state.song.currentXMLDocIndex]
-    }
-    return null;
-  }, (stateNew: XMLDocument | null, stateOld: XMLDocument | null) => {
-    // console.log(stateNew, stateOld);
-    if (stateNew === null) {
-      // console.log('no re-render', stateNew);
-      return true;
-    } else if (stateNew === stateOld) {
-      // console.log('no re-render', stateNew);
-      return true;
-    }
-    // console.log('re-render');
-    return false;
-  });
-
+  const xmlDoc = useSelector((state: AppState) => { return state.song.currentXMLDoc; }, shallowEqual)
   const dispatch = useDispatch();
   const refScore: RefObject<HTMLDivElement> = useRef(null);
 
@@ -42,7 +24,9 @@ export const Score: React.FC<{}> = ({ }) => {
         osmd.load(xmlDoc)
           .then(() => {
             osmd.render();
-            dispatch(scoreRendered(osmd))
+            // idString is not set by osmd which is I believe a bug -> the default value is "random idString, not initialized"
+            // osmd.idString = `score-${new Date().getTime()}`;
+            dispatch(scoreReady(osmd))
           });
 
       }
