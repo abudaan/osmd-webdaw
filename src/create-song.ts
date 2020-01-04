@@ -7,30 +7,46 @@ import { AppState } from './redux/store';
 import { Observable } from 'rxjs';
 import { Store } from 'redux';
 import { distinctUntilChanged, pluck, tap, map, filter } from 'rxjs/operators';
-import { SongState } from './redux/song-reducer';
+import { SongState, SongActions } from './redux/song-reducer';
+import { Dispatch } from 'redux';
+import { songReady } from './redux/actions';
 
-const createSong2 = async (store: Store<AppState>, state$: Observable<AppState>) => {
+export const createSong = async (state$: Observable<AppState>, dispatch: Dispatch) => {
   state$.pipe(
     pluck('song'),
-    filter((state) => { return state.midiFiles.length > 0 && state.xmlDocs.length > 0 }),
+    filter((state) => { return state.currentMIDIFileIndex !== -1 }),
     distinctUntilChanged((a, b) => {
-      // console.log(a.midiFiles.length, b.midiFiles.length)
-      return a.midiFiles.length === b.midiFiles.length && a.xmlDocs.length === b.xmlDocs.length;
+      return a.currentMIDIFileIndex === b.currentMIDIFileIndex;
     }),
     map((state: SongState) => {
-      return [state.midiFiles[0], state.instrument];
+      return [state.midiFiles[state.currentMIDIFileIndex].name, state.instrumentName];
     })
-  ).subscribe(val => {
-    console.log(val);
-
+  ).subscribe(([midiFileName, instrumentName]) => {
+    const song = sequencer.createSong(sequencer.getMidiFile(midiFileName));
+    song.tracks.forEach((t: Heartbeat.Track) => {
+      t.setInstrument(instrumentName);
+    });
+    dispatch(songReady(song));
   });
-}
 
-const createSong = (midiFileName: string, instrumentName: string): Heartbeat.Song => {
-  const midifile = sequencer.getMidiFile(midiFileName);
-  const song = sequencer.createSong(midifile);
-  song.tracks.forEach((t: Heartbeat.Track) => { t.setInstrument(instrumentName); });
-  return song;
+  state$.pipe(
+    map(state => ({ songAction: state.song.songAction, song: state.song.song })),
+    filter(({ songAction, song }) => { return songAction !== '' && song !== null }),
+    // tap(val => { console.log(val); }),
+    distinctUntilChanged((a, b) => {
+      return a.songAction === b.songAction;
+    }),
+  ).subscribe(({ songAction, song }) => {
+    if (song !== null) {
+      if (songAction === SongActions.PLAY) {
+        song.play();
+      } else if (songAction === SongActions.PAUSE) {
+        song.pause();
+      } else if (songAction === SongActions.STOP) {
+        song.stop();
+      }
+    }
+  });
 }
 
 const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping) => {
@@ -73,7 +89,3 @@ const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping) 
 
 }
 
-export {
-  createSong,
-  setupSongListeners,
-}

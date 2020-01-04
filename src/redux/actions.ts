@@ -5,6 +5,7 @@ export const SONG_LOADED = 'SONG_LOADED';
 export const SCORE_RENDERED = 'SCORE_RENDERED';
 export const SONG_READY = 'SONG_READY';
 export const UPDATE_POSTION_SLIDER = 'UPDATE_POSTION_SLIDER';
+export const UPDATE_SONG_ACTION = 'UPDATE_SONG_ACTION';
 
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 import { Dispatch, AnyAction } from 'redux'
@@ -29,29 +30,33 @@ export const loadInitSong = (xmlDocUrl: string, midiFileUrl: string, instrumentU
     const midiFile = await addMIDIFile(midiFileUrl);
     const assetPack = await loadJSON(instrumentUrl);
     await addAssetPack(assetPack);
-    const song = createSong(midiFile.name, assetPack.instruments[0].name)
     dispatch({
       type: INIT_SONG_LOADED,
       payload: {
-        song,
         xmlDoc,
         midiFile,
-        instrument: assetPack.instruments[0].name,
+        instrumentName: assetPack.instruments[0].name,
       }
     });
   };
 }
 
-export const songLoaded = () => ({ type: SONG_LOADED });
+export const songReady = (song: Heartbeat.Song) => ({
+  type: SONG_READY,
+  payload: { song },
+});
 
 export const scoreRendered = (osmd: OpenSheetMusicDisplay) => ({
   type: SCORE_RENDERED,
-  payload: { osmd }
+  payload: { osmd },
 });
 
 export const updatePositionSlider = (position: number) => ({
   type: UPDATE_POSTION_SLIDER,
-  payload: {
-    position,
-  }
+  payload: { position },
+})
+
+export const updateSongAction = (action: string) => ({
+  type: UPDATE_SONG_ACTION,
+  payload: { action },
 })

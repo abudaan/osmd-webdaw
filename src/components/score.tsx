@@ -4,6 +4,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { AppState } from '../redux/store';
 import { scoreRendered } from '../redux/actions';
 
+let i: number = 0;
+
 export const Score: React.FC<{}> = ({ }) => {
   const xmlDoc = useSelector((state: AppState) => {
     const index = state.song.currentXMLDocIndex;
@@ -13,8 +15,11 @@ export const Score: React.FC<{}> = ({ }) => {
     return null;
   }, (stateNew: XMLDocument | null, stateOld: XMLDocument | null) => {
     // console.log(stateNew, stateOld);
-    if (stateNew === null && stateOld === null) {
-      // console.log('no re-render');
+    if (stateNew === null) {
+      // console.log('no re-render', stateNew);
+      return true;
+    } else if (stateNew === stateOld) {
+      // console.log('no re-render', stateNew);
       return true;
     }
     // console.log('re-render');
@@ -26,6 +31,7 @@ export const Score: React.FC<{}> = ({ }) => {
 
   useEffect(() => {
     if (xmlDoc) {
+      console.log('[Score] useEffect');
       const scoreDiv = refScore.current;
       if (scoreDiv) {
         const osmd = new OpenSheetMusicDisplay(scoreDiv, {
@@ -43,7 +49,9 @@ export const Score: React.FC<{}> = ({ }) => {
     }
   }, [xmlDoc])
 
-  return <div id="score-container">
+  console.log('[Score] render (xmlDoc === null) ->', xmlDoc === null);
+
+  return <div id="score-container" className={`render-${i++}`}>
     <div id="score" ref={refScore}></div>
   </div>
 };

@@ -10,7 +10,7 @@ export const App: React.FC<Props> = () => {
   return <>
     <Controls />
     <Score />
-    <Sequencer />
+    {/* <Sequencer /> */}
     <Transport />
   </>
 }

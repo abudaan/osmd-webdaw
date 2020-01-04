@@ -26,6 +26,7 @@ const state$ = new Observable((observer: Subscriber<AppState>) => {
 });
 
 store.dispatch(init(state$));
+createSong(state$, store.dispatch);
 
 sequencer.ready()
   .then(() => {
