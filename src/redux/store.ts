@@ -29,14 +29,14 @@ const initialState: ReduxState = {
 const store = createStore(
   combineReducers({ song }),
   initialState,
-  composeWithDevTools(applyMiddleware(
+  // composeWithDevTools(applyMiddleware(
+  //   thunkMiddleware,
+  //   createLogger()
+  // )),
+  applyMiddleware(
     thunkMiddleware,
     createLogger()
-  )),
-  // applyMiddleware(
-  //   thunkMiddleware,
-  //   // createLogger()
-  // ),
+  ),
 );
 
 

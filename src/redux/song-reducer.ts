@@ -1,4 +1,4 @@
-import { INITIALIZING, SONG_LOADED, SCORE_RENDERED, SONG_READY } from './actions';
+import { INITIALIZING, SONG_LOADED, SCORE_RENDERED, SONG_READY, INIT_SONG_LOADED } from './actions';
 import { Observable } from 'rxjs';
 import { AppState } from "./store";
 
@@ -13,6 +13,8 @@ export type SongState = {
   xmlDocs: XMLDocument[],
   songPosition: string,
   observable: null | Observable<AppState>
+  currentXMLDocIndex: number,
+  currentMIDIFileIndex: number,
 };
 
 const instrumentName = 'TP00-PianoStereo';
@@ -28,6 +30,8 @@ export const initialState = {
   midiFiles: [],
   songPosition: '',
   observable: null,
+  currentXMLDocIndex: -1,
+  currentMIDIFileIndex: -1,
 }
 
 export const song = (state: SongState = initialState, action: any) => {
@@ -42,6 +46,17 @@ export const song = (state: SongState = initialState, action: any) => {
       xmlDocs: [action.payload.xmlDoc],
       midiFiles: [action.payload.midiFile],
       instrument: action.payload.instrument,
+      // currentXMLDocIndex: 0,
+      // currentMIDIFileIndex: 0,
+    }
+  } else if (action.type === INIT_SONG_LOADED) {
+    return {
+      ...state,
+      xmlDocs: [action.payload.xmlDoc],
+      midiFiles: [action.payload.midiFile],
+      instrument: action.payload.instrument,
+      currentXMLDocIndex: 0,
+      currentMIDIFileIndex: 0,
     }
   } else if (action.type === SCORE_RENDERED) {
     return state;

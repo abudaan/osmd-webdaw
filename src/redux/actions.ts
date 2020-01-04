@@ -6,6 +6,7 @@ export const SCORE_RENDERED = 'SCORE_RENDERED';
 export const SONG_READY = 'SONG_READY';
 export const UPDATE_POSTION_SLIDER = 'UPDATE_POSTION_SLIDER';
 
+import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 import { Dispatch, AnyAction } from 'redux'
 import { loadXML, addMIDIFile, loadJSON, addAssetPack } from '../util/heartbeat-utils';
 import { Observable } from 'rxjs';
@@ -43,7 +44,10 @@ export const loadInitSong = (xmlDocUrl: string, midiFileUrl: string, instrumentU
 
 export const songLoaded = () => ({ type: SONG_LOADED });
 
-export const scoreRendered = () => ({ type: SCORE_RENDERED });
+export const scoreRendered = (osmd: OpenSheetMusicDisplay) => ({
+  type: SCORE_RENDERED,
+  payload: { osmd }
+});
 
 export const updatePositionSlider = (position: number) => ({
   type: UPDATE_POSTION_SLIDER,

@@ -1,19 +1,34 @@
 body 
-  // margin 30
-  // padding 30
-  // overflow hidden
+  margin 0
+  padding 0
+  overflow hidden
   width 100%
   background-color aliceblue
 
 
-#score
-  width 100%
-  min-height 100vh
-  height auto
+#app
+  height 100vh
+  display flex
+  flex-direction column
 
-  svg
-    width 100%
-    height auto
+  #score-container   
+    overflow scroll
+    overflow-x hidden
+
+    #score
+      width 100%
+      min-height 100vh
+      height auto
+
+      svg
+        width 100%
+        height auto
+
+  #controls
+    background-color: #fffddd
+
+  #transport
+    background-color: #ffdddf
 
 #hitareas
   z-index 100

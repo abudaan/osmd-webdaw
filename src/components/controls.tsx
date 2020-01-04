@@ -9,20 +9,18 @@ type Props = {};
 export const Controls: React.FC<Props> = ({ }: Props) => {
   const refInput: RefObject<HTMLInputElement> = useRef(null);
   const dispatch: Dispatch = useDispatch();
-  useEffect(() => {
-    if (refInput && refInput.current) {
-      const obs$ = fromEvent(refInput.current, 'input');
-      obs$
-        .pipe(map(event => (event.target as HTMLInputElement).valueAsNumber))
-        .subscribe(val => { dispatch(updatePositionSlider(val)); });
-    }
-  }, [refInput.current]);
+  // useEffect(() => {
+  //   if (refInput && refInput.current) {
+  //     const obs$ = fromEvent(refInput.current, 'input');
+  //     obs$
+  //       .pipe(map(event => (event.target as HTMLInputElement).valueAsNumber))
+  //       .subscribe(val => { dispatch(updatePositionSlider(val)); });
+  //   }
+  // }, [refInput.current]);
 
-  return <>
-    <input ref={refInput} type="range" defaultValue="0" min="0" max="1" step="0.1" />
-    <br />
-
-    <input type="button" value="play" />
-    <input type="button" value="stop" />
-  </>
+  return <div id="controls">
+    <select><option>select MusicXML file</option></select>
+    <select><option>select MIDI file</option></select>
+    <input type="button" value="connect" />
+  </div>
 }
