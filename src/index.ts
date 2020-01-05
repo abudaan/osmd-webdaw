@@ -1,4 +1,4 @@
-import { manageSong, setupSongListeners } from './sequencer-manager';
+import { manageSong, setupSongListeners } from './observers';
 import { createScore } from './create-score';
 import { getGraphicalNotesPerBar } from './util/osmd-notes';
 import { parseMusicXML } from './util/musicxml';

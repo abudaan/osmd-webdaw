@@ -30,6 +30,6 @@ export const Transport: React.FC<Props> = ({ }: Props) => {
   return <div id="transport">
     <input type="button" value={label} disabled={song === null} onClick={() => { dispatch(updateSongAction(action)); }} />
     <input type="button" value="stop" disabled={song === null} onClick={() => { dispatch(updateSongAction(SongActions.STOP)); }} />
-    <input ref={refInput} type="range" defaultValue="0" min="0" max="1" step="0.1" />
+    <input ref={refInput} type="range" defaultValue="0" min="0" max="1" step="0.001" />
   </div>
 }

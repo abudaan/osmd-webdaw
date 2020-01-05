@@ -35,11 +35,21 @@ body
       font-family monospace
 
   #transport
-    background-color: #ffdddf
+    padding 5px 15px
+    width 100vw
+    box-sizing border-box
+    display flex
+    flex-direction row
+    background-color #ffdddf
+    
+    input[type='range']
+      display inline-block
+      flex-grow 1
+
     input[type='button']
       width 100px
-      margin 5px
       font-family monospace
+      margin-right 5px
 
 #hitareas
   z-index 100

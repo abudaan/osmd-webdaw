@@ -3,11 +3,11 @@ export const LOAD_INIT_DATA = 'LOAD_INIT_DATA';
 export const INIT_DATA_LOADED = 'INIT_DATA_LOADED';
 export const SCORE_READY = 'SCORE_READY';
 export const SONG_READY = 'SONG_READY';
-export const UPDATE_POSTION_SLIDER = 'UPDATE_POSTION_SLIDER';
 export const UPDATE_SONG_ACTION = 'UPDATE_SONG_ACTION';
 export const MUSICXML_LOADED = 'MUSICXML_LOADED';
 export const MIDIFILE_LOADED = 'MIDIFILE_LOADED';
 export const UPDATE_NOTE_MAPPING = 'UPDATE_NOTE_MAPPING';
+export const UPDATE_POSITION_SLIDER = 'UPDATE_POSITION_SLIDER';
 
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 import { Dispatch, AnyAction } from 'redux'
@@ -63,7 +63,7 @@ export const updateNoteMapping = (noteMapping: TypeNoteMapping) => {
 };
 
 export const updatePositionSlider = (position: number) => ({
-  type: UPDATE_POSTION_SLIDER,
+  type: UPDATE_POSITION_SLIDER,
   payload: { position },
 })
 

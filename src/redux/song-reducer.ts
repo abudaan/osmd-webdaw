@@ -1,4 +1,4 @@
-import { INITIALIZING, MIDIFILE_LOADED, MUSICXML_LOADED, SCORE_READY, SONG_READY, INIT_DATA_LOADED, UPDATE_SONG_ACTION, noteMapping } from './actions';
+import { INITIALIZING, MIDIFILE_LOADED, MUSICXML_LOADED, SCORE_READY, SONG_READY, INIT_DATA_LOADED, UPDATE_SONG_ACTION, UPDATE_POSITION_SLIDER } from './actions';
 import { Observable } from 'rxjs';
 import { AppState } from './store';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay/build/dist/src';
@@ -20,6 +20,7 @@ export type SongState = {
   midiFiles: Heartbeat.MIDIFileJSON[],
   xmlDocs: XMLDocument[],
   songPosition: string,
+  songPositionPercentage: number,
   observable: null | Observable<AppState>
   currentXMLDoc: null | XMLDocument,
   currentMIDIFile: null | Heartbeat.MIDIFileJSON,
@@ -43,6 +44,7 @@ export const initialState = {
   xmlDocs: [],
   midiFiles: [],
   songPosition: '',
+  songPositionPercentage: 0,
   observable: null,
   currentXMLDoc: null,
   currentMIDIFile: null,
@@ -95,6 +97,11 @@ export const song = (state: SongState = initialState, action: any) => {
       ...state,
       songAction: action.payload.action,
       songIsPlaying: action.payload.action === SongActions.PLAY
+    };
+  } else if (action.type === UPDATE_POSITION_SLIDER) {
+    return {
+      ...state,
+      songPositionPercentage: action.payload.position,
     };
   }
 

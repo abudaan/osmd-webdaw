@@ -1,14 +1,14 @@
 // import 'core-js/stable';
 // import 'regenerator-runtime/runtime';
 import { Observable, Subscriber } from 'rxjs';
+import sequencer from 'heartbeat-sequencer';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { store, AppState } from './redux/store';
 import { App } from './components/app';
 import { loadInitData, init } from './redux/actions';
-import sequencer from 'heartbeat-sequencer';
-import { manageSong } from './sequencer-manager';
+import { manageSong } from './observers';
 
 ReactDOM.render(
   <Provider store={store}>

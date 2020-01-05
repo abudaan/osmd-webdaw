@@ -4,7 +4,7 @@ import { setStaveNoteColor } from './util/osmd-stavenote-color';
 import { TypeNoteMapping, mapOSMDToSequencer } from './util/osmd-heartbeat';
 import { AppState } from './redux/store';
 import { Observable } from 'rxjs';
-import { distinctUntilChanged, pluck, tap, map, filter } from 'rxjs/operators';
+import { distinctUntilChanged, pluck, tap, map, filter, distinctUntilKeyChanged } from 'rxjs/operators';
 import { SongState, SongActions } from './redux/song-reducer';
 import { Dispatch } from 'redux';
 import { songReady, updateNoteMapping } from './redux/actions';
@@ -71,12 +71,32 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
       dispatch(updateNoteMapping(noteMapping));
     }
   });
+
+  state$.pipe(
+    map((state: AppState) => ({ song: state.song.song, percentage: state.song.songPositionPercentage })),
+    distinctUntilChanged((a, b) => {
+      return a.percentage === b.percentage
+    })
+  ).subscribe(({ percentage, song }) => {
+    if (song !== null) {
+      song.setPlayhead('percentage', percentage)
+    }
+  })
+
 }
 
 const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping) => {
   let scrollPos = 0;
   let currentY = 0;
   let reference = -1;
+  const scoreContainer = document.getElementById('score-container');
+  if (!scoreContainer) {
+    return;
+  }
+  const controlsHeight = scoreContainer.offsetTop;
+  // scoreContainer.onscroll = (e) => {
+  //   console.log(scoreContainer.scrollTop);
+  // }
 
   song.addEventListener('event', 'type = NOTE_ON', (event: Heartbeat.MIDIEvent) => {
     const mapping = noteMapping[event.id];
@@ -85,15 +105,16 @@ const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping) 
       setStaveNoteColor(el, 'red');
 
       const tmp = mapping.musicSystem.graphicalMeasures[0][0].stave.y;
+      // console.log(tmp, currentY);
       if (currentY !== tmp) {
-        currentY = tmp;
-        const bbox = el.getBoundingClientRect();
-        // console.log(bbox.y, window.pageYOffset);
         if (reference === -1) {
-          reference = bbox.y;
-        } else {
-          scrollPos = (bbox.y + window.pageYOffset) - reference;
-          window.scroll({
+          reference = tmp; // this is the initial distance from the top of the score to the first system (title, composer, etc.)
+        } else if (currentY !== tmp) {
+          const systemOffset = currentY === 0 ? 0 : ((tmp - currentY) / 2);
+          console.log('SCROLL', tmp, currentY, systemOffset);
+          scrollPos = (tmp + scoreContainer.offsetTop) - reference - controlsHeight + systemOffset;
+          currentY = tmp;
+          scoreContainer.scroll({
             top: scrollPos,
             behavior: 'smooth'
           });
