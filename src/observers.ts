@@ -3,8 +3,8 @@ import sequencer from 'heartbeat-sequencer';
 import { setStaveNoteColor } from './util/osmd-stavenote-color';
 import { TypeNoteMapping, mapOSMDToSequencer } from './util/osmd-heartbeat';
 import { AppState } from './redux/store';
-import { Observable, animationFrameScheduler, defer, of, never, Subject } from 'rxjs';
-import { distinctUntilChanged, pluck, tap, map, filter, distinctUntilKeyChanged, takeWhile, timeInterval, repeat, takeUntil, repeatWhen, mapTo, switchMap } from 'rxjs/operators';
+import { Observable, animationFrameScheduler, defer, of, never, Subject, merge, combineLatest } from 'rxjs';
+import { distinctUntilChanged, pluck, tap, map, filter, distinctUntilKeyChanged, takeWhile, timeInterval, repeat, takeUntil, repeatWhen, mapTo, switchMap, take } from 'rxjs/operators';
 import { SongState, SongActions } from './redux/song-reducer';
 import { Dispatch } from 'redux';
 import { songReady, updateNoteMapping } from './redux/actions';
@@ -21,33 +21,95 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
   //     )
   // );
 
+  const notNull = <T>(value: T | null): value is T => value !== null;
+
   const requestAnimationFrame$ = of(null, animationFrameScheduler)
     .pipe(
       repeat(),
     )
 
-  state$.pipe(
+  const midiFile$ = state$.pipe(
     pluck('song'),
-    filter((state) => { return state.currentMIDIFile !== null && state.osmd !== null }),
+    map(state => state.currentMIDIFile),
+    filter(notNull),
+    // tap(console.log),
     distinctUntilChanged((a, b) => {
-      if (a.currentMIDIFile === null || b.currentMIDIFile === null) {
-        return true;
-      }
-      return a.currentMIDIFile.id === b.currentMIDIFile.id;
-    }),
-    map((state: SongState) => {
-      if (state.currentMIDIFile !== null) { // extra check for eslint
-        return [state.currentMIDIFile.name, state.instrumentName];
-      }
+      return a.id === b.id;
     })
-  ).subscribe(([midiFileName, instrumentName]) => {
-    const song = sequencer.createSong(sequencer.getMidiFile(midiFileName));
-    song.tracks.forEach((t: Heartbeat.Track) => {
-      t.setInstrument(instrumentName);
+  );
+
+  const xmlDoc$ = state$.pipe(
+    pluck('song'),
+    map(state => state.currentXMLDoc),
+    filter(notNull),
+    // tap(console.log),
+    // distinctUntilChanged((a, b) => {
+    //   return a.id === b.id;
+    // })
+  );
+
+  const osmd$ = state$.pipe(
+    pluck('song'),
+    map(state => state.osmd),
+    filter(notNull),
+    // tap(console.log),
+    // distinctUntilChanged((a, b) => {
+    //   return a.id === b.id;
+    // })
+  );
+
+  const song$ = state$.pipe(
+    pluck('song'),
+    map(state => state.song),
+    filter(notNull),
+    // tap(console.log),
+    distinctUntilChanged((a, b) => {
+      return a.id === b.id;
+    })
+  );
+
+  const noteMapping$: Observable<TypeNoteMapping> = state$.pipe(
+    pluck('song'),
+    map(state => state.noteMapping),
+    filter(notNull),
+    // tap(console.log),
+    distinctUntilChanged((a, b) => {
+      return a == b;
+    })
+  );
+
+  const instrumentName$: Observable<string> = state$.pipe(
+    pluck('song'),
+    map(state => state.instrumentName),
+    filter(notNull),
+    distinctUntilChanged((a, b) => {
+      return a == b;
+    })
+  );
+
+  // create a heartbeat song
+  combineLatest(midiFile$, osmd$, instrumentName$)
+    .pipe(take(1))
+    .subscribe(([midiFile, osmd, instrumentName]) => {
+      // console.log(midiFile, osmd, instrumentName);
+      const song = sequencer.createSong(sequencer.getMidiFile(midiFile.name));
+      song.tracks.forEach((t: Heartbeat.Track) => {
+        t.setInstrument(instrumentName);
+      });
+      setupPositionListener(state$, song);
+      dispatch(songReady(song));
     });
-    setupPositionListener(song);
-    dispatch(songReady(song));
-  });
+
+  combineLatest(song$, osmd$, xmlDoc$)
+    .pipe(take(1))
+    .subscribe(async ([song, osmd, xml]) => {
+      console.log('setup notemapping', osmd);
+      const [, , repeats] = parseMusicXML(xml, song.ppq);
+      const notesPerBar = await getGraphicalNotesPerBar(osmd, song.ppq);
+      const noteMapping = mapOSMDToSequencer(notesPerBar, repeats as number[][], song);
+      setupSongListeners(song, noteMapping);
+      dispatch(updateNoteMapping(noteMapping));
+    });
 
   state$.pipe(
     map(state => ({ songAction: state.song.songAction, song: state.song.song })),
@@ -77,12 +139,6 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     }),
   ).subscribe(async ({ osmd, song, xml }) => {
     if (osmd !== null && song !== null && xml !== null) { // extra check for eslint because it doesn't understand rxjs
-      console.log('setup notemapping', osmd);
-      const [, , repeats] = parseMusicXML(xml, song.ppq);
-      const notesPerBar = await getGraphicalNotesPerBar(osmd, song.ppq);
-      const noteMapping = mapOSMDToSequencer(notesPerBar, repeats as number[][], song);
-      setupSongListeners(song, noteMapping);
-      dispatch(updateNoteMapping(noteMapping));
     }
   });
 
@@ -105,37 +161,37 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
   //   interval(),
   //   map(song => song.playhead.data.barsAsString)
   // )
-
-
-  const setupPositionListener = (song: Heartbeat.Song) => {
-    const getPosition$ = of(null, animationFrameScheduler).pipe(
-      repeat(),
-      map(() => {
-        if (song === null) {
-          return '';
-        }
-        return song.playhead.data.barsAsString;
-      })
-    );
-
-    const pauser = new Subject();
-    state$.pipe(
-      map((state: AppState) => {
-        const song = state.song.song;
-        if (song === null) {
-          return false;
-        }
-        return song.playing;
-      }),
-    ).subscribe(playing => {
-      pauser.next(!playing);
-    })
-
-    pauser.pipe(
-      switchMap(paused => paused ? never() : getPosition$),
-    ).subscribe(val => console.log(val));
-  }
 }
+
+const setupPositionListener = (state$: Observable<AppState>, song: Heartbeat.Song) => {
+  const getPosition$ = of(null, animationFrameScheduler).pipe(
+    repeat(),
+    map(() => {
+      if (song === null) {
+        return '';
+      }
+      return song.playhead.data.barsAsString;
+    })
+  );
+
+  const pauser = new Subject();
+  state$.pipe(
+    map((state: AppState) => {
+      const song = state.song.song;
+      if (song === null) {
+        return false;
+      }
+      return song.playing;
+    }),
+  ).subscribe(playing => {
+    pauser.next(!playing);
+  })
+
+  pauser.pipe(
+    switchMap(paused => paused ? never() : getPosition$),
+  ).subscribe(val => console.log(val));
+}
+
 
 const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping) => {
   let scrollPos = 0;

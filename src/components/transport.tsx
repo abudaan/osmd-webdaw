@@ -10,7 +10,7 @@ import { AppState } from '../redux/store';
 type Props = {};
 export const Transport: React.FC<Props> = ({ }: Props) => {
   const refInput: RefObject<HTMLInputElement> = useRef(null);
-  const song = useSelector((state: AppState) => state.song.song)
+  const songAndScoreReady = useSelector((state: AppState) => state.song.songAndScoreReady)
   const songIsPlaying = useSelector((state: AppState) => state.song.songIsPlaying, shallowEqual);
   const dispatch: Dispatch = useDispatch();
   useEffect(() => {
@@ -28,8 +28,8 @@ export const Transport: React.FC<Props> = ({ }: Props) => {
   const action = songIsPlaying ? SongActions.PAUSE : SongActions.PLAY;
 
   return <div id="transport">
-    <input type="button" value={label} disabled={song === null} onClick={() => { dispatch(updateSongAction(action)); }} />
-    <input type="button" value="stop" disabled={song === null} onClick={() => { dispatch(updateSongAction(SongActions.STOP)); }} />
+    <input type="button" value={label} disabled={!songAndScoreReady} onClick={() => { dispatch(updateSongAction(action)); }} />
+    <input type="button" value="stop" disabled={!songAndScoreReady} onClick={() => { dispatch(updateSongAction(SongActions.STOP)); }} />
     <input ref={refInput} type="range" defaultValue="0" min="0" max="1" step="0.001" />
   </div>
 }

@@ -1,4 +1,4 @@
-import { INITIALIZING, MIDIFILE_LOADED, MUSICXML_LOADED, SCORE_READY, SONG_READY, INIT_DATA_LOADED, UPDATE_SONG_ACTION, UPDATE_POSITION_SLIDER } from './actions';
+import { INITIALIZING, MIDIFILE_LOADED, MUSICXML_LOADED, SCORE_READY, SONG_READY, INIT_DATA_LOADED, UPDATE_SONG_ACTION, UPDATE_POSITION_SLIDER, UPDATE_NOTE_MAPPING } from './actions';
 import { Observable } from 'rxjs';
 import { AppState } from './store';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay/build/dist/src';
@@ -30,6 +30,7 @@ export type SongState = {
   songIsPlaying: boolean
   graphicalNotesPerBar: TypeGraphicalNoteData[][]
   noteMapping: TypeNoteMapping
+  songAndScoreReady: boolean
 };
 
 const instrumentName = 'TP00-PianoStereo';
@@ -53,7 +54,8 @@ export const initialState = {
   songAction: '',
   songIsPlaying: false,
   graphicalNotesPerBar: [],
-  noteMapping: {}
+  noteMapping: {},
+  songAndScoreReady: false
 }
 
 export const song = (state: SongState = initialState, action: any) => {
@@ -102,6 +104,12 @@ export const song = (state: SongState = initialState, action: any) => {
     return {
       ...state,
       songPositionPercentage: action.payload.position,
+    };
+  } else if (action.type === UPDATE_NOTE_MAPPING) {
+    return {
+      ...state,
+      noteMapping: action.payload.noteMapping,
+      songAndScoreReady: true,
     };
   }
 
