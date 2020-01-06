@@ -3,8 +3,8 @@ import sequencer from 'heartbeat-sequencer';
 import { setStaveNoteColor } from './util/osmd-stavenote-color';
 import { TypeNoteMapping, mapOSMDToSequencer } from './util/osmd-heartbeat';
 import { AppState } from './redux/store';
-import { Observable } from 'rxjs';
-import { distinctUntilChanged, pluck, tap, map, filter, distinctUntilKeyChanged } from 'rxjs/operators';
+import { Observable, animationFrameScheduler, defer, of, never, Subject } from 'rxjs';
+import { distinctUntilChanged, pluck, tap, map, filter, distinctUntilKeyChanged, takeWhile, timeInterval, repeat, takeUntil, repeatWhen, mapTo, switchMap } from 'rxjs/operators';
 import { SongState, SongActions } from './redux/song-reducer';
 import { Dispatch } from 'redux';
 import { songReady, updateNoteMapping } from './redux/actions';
@@ -13,9 +13,22 @@ import { getGraphicalNotesPerBar } from './util/osmd-notes';
 import { isNil } from 'ramda';
 
 export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatch) => {
+  // const requestAnimationFrame$ = defer(() =>
+  //   of(animationFrameScheduler.now(), animationFrameScheduler)
+  //     .pipe(
+  //       repeat(),
+  //       map((start: number) => animationFrameScheduler.now() - start)
+  //     )
+  // );
+
+  const requestAnimationFrame$ = of(null, animationFrameScheduler)
+    .pipe(
+      repeat(),
+    )
+
   state$.pipe(
     pluck('song'),
-    filter((state) => { return state.currentMIDIFile !== null }),
+    filter((state) => { return state.currentMIDIFile !== null && state.osmd !== null }),
     distinctUntilChanged((a, b) => {
       if (a.currentMIDIFile === null || b.currentMIDIFile === null) {
         return true;
@@ -32,6 +45,7 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     song.tracks.forEach((t: Heartbeat.Track) => {
       t.setInstrument(instrumentName);
     });
+    setupPositionListener(song);
     dispatch(songReady(song));
   });
 
@@ -83,6 +97,44 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     }
   })
 
+  // const timer$ = timer();
+
+  // const updatePosition$ = state$.pipe(
+  //   map((state: AppState) => state.song.song),
+  //   filter((song) => song !== null),
+  //   interval(),
+  //   map(song => song.playhead.data.barsAsString)
+  // )
+
+
+  const setupPositionListener = (song: Heartbeat.Song) => {
+    const getPosition$ = of(null, animationFrameScheduler).pipe(
+      repeat(),
+      map(() => {
+        if (song === null) {
+          return '';
+        }
+        return song.playhead.data.barsAsString;
+      })
+    );
+
+    const pauser = new Subject();
+    state$.pipe(
+      map((state: AppState) => {
+        const song = state.song.song;
+        if (song === null) {
+          return false;
+        }
+        return song.playing;
+      }),
+    ).subscribe(playing => {
+      pauser.next(!playing);
+    })
+
+    pauser.pipe(
+      switchMap(paused => paused ? never() : getPosition$),
+    ).subscribe(val => console.log(val));
+  }
 }
 
 const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping) => {
