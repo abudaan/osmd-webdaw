@@ -29,7 +29,7 @@ export type SongState = {
   songAction: string
   songIsPlaying: boolean
   graphicalNotesPerBar: TypeGraphicalNoteData[][]
-  noteMapping: TypeNoteMapping
+  noteMapping: null | TypeNoteMapping
   songAndScoreReady: boolean
 };
 
@@ -54,7 +54,7 @@ export const initialState = {
   songAction: '',
   songIsPlaying: false,
   graphicalNotesPerBar: [],
-  noteMapping: {},
+  noteMapping: null,
   songAndScoreReady: false
 }
 

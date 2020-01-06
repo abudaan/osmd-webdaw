@@ -33,4 +33,3 @@ sequencer.ready()
     const { initUrls: { xmlDoc, midiFile, instrument } } = store.getState().song;
     store.dispatch(loadInitData(xmlDoc, midiFile, instrument));
   })
-
