@@ -3,7 +3,7 @@ import sequencer from 'heartbeat-sequencer';
 import { setStaveNoteColor } from './util/osmd-stavenote-color';
 import { TypeNoteMapping, mapOSMDToSequencer } from './util/osmd-heartbeat';
 import { AppState } from './redux/store';
-import { Observable, animationFrameScheduler, defer, of, never, Subject, merge, combineLatest } from 'rxjs';
+import { Observable, animationFrameScheduler, defer, of, never, Subject, merge, combineLatest, interval } from 'rxjs';
 import { distinctUntilChanged, pluck, tap, map, filter, distinctUntilKeyChanged, takeWhile, timeInterval, repeat, takeUntil, repeatWhen, mapTo, switchMap, take, multicast, share } from 'rxjs/operators';
 import { SongState, SongActions } from './redux/song-reducer';
 import { Dispatch } from 'redux';
@@ -11,6 +11,7 @@ import { songReady, updateNoteMapping } from './redux/actions';
 import { parseMusicXML } from './util/musicxml';
 import { getGraphicalNotesPerBar } from './util/osmd-notes';
 import { isNil } from 'ramda';
+import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay/build/dist/src';
 
 export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatch) => {
   const requestAnimationFrame$ = defer(() =>
@@ -73,6 +74,11 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     share(),
   )
 
+  const songPositionPercentage$ = state$.pipe(
+    map((state: AppState) => state.song.songPositionPercentage),
+    share(),
+  )
+
   const noteMapping$: Observable<null | TypeNoteMapping> = state$.pipe(
     pluck('song'),
     map(state => state.noteMapping),
@@ -113,9 +119,11 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
       const [, , repeats] = parseMusicXML(xml, song.ppq);
       const notesPerBar = await getGraphicalNotesPerBar(osmd, song.ppq);
       const noteMapping = mapOSMDToSequencer(notesPerBar, repeats as number[][], song);
-      setupSongListeners(song, noteMapping);
-      // const noteMapping = {};
+      setupSongListeners(song, noteMapping, osmd);
       dispatch(updateNoteMapping(noteMapping));
+      // we need to skip a cycle here because, well actually I don't know why this is
+      // setTimeout(() => {
+      // }, 0);
     });
 
   // get the position in bars and beat while the song is playing
@@ -132,7 +140,7 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
       })
     )
     .subscribe((pos) => {
-      console.log('POS', pos);
+      // console.log('POS', pos);
     })
 
   // update the transport controls
@@ -146,27 +154,9 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     }
   });
 
-  state$.pipe(
-    map(state => ({ osmd: state.song.osmd, song: state.song.song, xml: state.song.currentXMLDoc })),
-    filter(({ osmd, song, xml }) => { return osmd !== null && song !== null && xml !== null }),
-    // tap(val => { console.log(val); }),
-    distinctUntilChanged((a, b) => {
-      return a.osmd == b.osmd;
-    }),
-  ).subscribe(async ({ osmd, song, xml }) => {
-    if (osmd !== null && song !== null && xml !== null) { // extra check for eslint because it doesn't understand rxjs
-    }
-  });
-
-  state$.pipe(
-    map((state: AppState) => ({ song: state.song.song, percentage: state.song.songPositionPercentage })),
-    distinctUntilChanged((a, b) => {
-      return a.percentage === b.percentage
-    })
-  ).subscribe(({ percentage, song }) => {
-    if (song !== null) {
-      song.setPlayhead('percentage', percentage)
-    }
+  combineLatest(song$, songPositionPercentage$).subscribe(([song, percentage]) => {
+    song.setPlayhead('percentage', percentage);
+    // console.log(song.playhead.activeNotes);
   })
 
   // const timer$ = timer();
@@ -177,20 +167,21 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
   //   interval(),
   //   map(song => song.playhead.data.barsAsString)
   // )
-
-  // song$.connect();
 }
 
 
-const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping) => {
+// @TODO; use song.playhead.activeNotes here instead of eventlisteners!!
+
+const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping, osmd: OpenSheetMusicDisplay) => {
   let scrollPos = 0;
   let currentY = 0;
-  let reference = -1;
-  const scoreContainer = document.getElementById('score-container');
+  const scoreContainer = (osmd['container'] as HTMLDivElement).parentElement;
   if (!scoreContainer) {
     return;
   }
   const controlsHeight = scoreContainer.offsetTop;
+  // this is the initial distance from the top of the score to the first system (title, composer, etc.)
+  const distanceToFirstSystem = noteMapping[Object.keys(noteMapping)[0]].musicSystem.graphicalMeasures[0][0].stave.y;
   // scoreContainer.onscroll = (e) => {
   //   console.log(scoreContainer.scrollTop);
   // }
@@ -198,25 +189,21 @@ const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping) 
   song.addEventListener('event', 'type = NOTE_ON', (event: Heartbeat.MIDIEvent) => {
     const mapping = noteMapping[event.id];
     if (mapping) {
-      const el = mapping.vfnote.attrs.el;
+      const el: SVGGElement = mapping.vfnote.attrs.el;
       setStaveNoteColor(el, 'red');
 
       const tmp = mapping.musicSystem.graphicalMeasures[0][0].stave.y;
       // console.log(tmp, currentY);
-      if (currentY !== tmp) {
-        if (reference === -1) {
-          reference = tmp; // this is the initial distance from the top of the score to the first system (title, composer, etc.)
-        } else if (currentY !== tmp) {
-          const systemOffset = currentY === 0 ? 0 : ((tmp - currentY) / 2);
-          console.log('SCROLL', tmp, currentY, systemOffset);
-          scrollPos = (tmp + scoreContainer.offsetTop) - reference - controlsHeight + systemOffset;
-          currentY = tmp;
-          scoreContainer.scroll({
-            top: scrollPos,
-            behavior: 'smooth'
-          });
-        }
-      }
+      // if (currentY !== tmp) {
+      const systemOffset = 0;//currentY === 0 ? 0 : ((tmp - currentY) / 2);
+      console.log('SCROLL', tmp, currentY, systemOffset);
+      scrollPos = (tmp + scoreContainer.offsetTop) - distanceToFirstSystem - controlsHeight + systemOffset;
+      currentY = tmp;
+      scoreContainer.scroll({
+        top: scrollPos,
+        behavior: 'smooth'
+      });
+      // }
     }
   });
 
@@ -224,7 +211,7 @@ const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping) 
     const noteOn = event.midiNote.noteOn;
     const mapping = noteMapping[noteOn.id];
     if (mapping) {
-      const el = mapping.vfnote.attrs.el;
+      const el: SVGGElement = mapping.vfnote.attrs.el;
       setStaveNoteColor(el, 'black');
     }
   });

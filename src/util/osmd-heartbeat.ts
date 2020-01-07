@@ -19,7 +19,7 @@ const mapOSMDToSequencer = (graphicalNotesPerBar: TypeGraphicalNoteData[][], rep
   let repeatIndex: number = 0;
   const hasRepeated: { [index: number]: boolean } = {};
   const events = song.events.filter(event => event.command === 144);
-  console.log(events);
+  // console.log(events);
   const { bars: numBars, ppq } = song;
   const mapping: TypeNoteMapping = {};
 
