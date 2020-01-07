@@ -4,7 +4,7 @@ import { setStaveNoteColor } from './util/osmd-stavenote-color';
 import { TypeNoteMapping, mapOSMDToSequencer } from './util/osmd-heartbeat';
 import { AppState } from './redux/store';
 import { Observable, animationFrameScheduler, defer, of, never, Subject, merge, combineLatest } from 'rxjs';
-import { distinctUntilChanged, pluck, tap, map, filter, distinctUntilKeyChanged, takeWhile, timeInterval, repeat, takeUntil, repeatWhen, mapTo, switchMap, take, multicast } from 'rxjs/operators';
+import { distinctUntilChanged, pluck, tap, map, filter, distinctUntilKeyChanged, takeWhile, timeInterval, repeat, takeUntil, repeatWhen, mapTo, switchMap, take, multicast, share } from 'rxjs/operators';
 import { SongState, SongActions } from './redux/song-reducer';
 import { Dispatch } from 'redux';
 import { songReady, updateNoteMapping } from './redux/actions';
@@ -13,20 +13,15 @@ import { getGraphicalNotesPerBar } from './util/osmd-notes';
 import { isNil } from 'ramda';
 
 export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatch) => {
-  // const requestAnimationFrame$ = defer(() =>
-  //   of(animationFrameScheduler.now(), animationFrameScheduler)
-  //     .pipe(
-  //       repeat(),
-  //       map((start: number) => animationFrameScheduler.now() - start)
-  //     )
-  // );
+  const requestAnimationFrame$ = defer(() =>
+    of(animationFrameScheduler.now(), animationFrameScheduler)
+      .pipe(
+        repeat(),
+        map((start: number) => animationFrameScheduler.now() - start)
+      )
+  );
 
   const notNull = <T>(value: T | null): value is T => value !== null;
-
-  const requestAnimationFrame$ = of(null, animationFrameScheduler)
-    .pipe(
-      repeat(),
-    )
 
   const midiFile$ = state$.pipe(
     pluck('song'),
@@ -35,27 +30,26 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     // tap(console.log),
     distinctUntilChanged((a, b) => {
       return a.id === b.id;
-    })
+    }),
+    share(),
   );
 
   const xmlDoc$ = state$.pipe(
     pluck('song'),
     map(state => state.currentXMLDoc),
     filter(notNull),
+    distinctUntilChanged(),
     // tap(console.log),
-    // distinctUntilChanged((a, b) => {
-    //   return a.id === b.id;
-    // })
+    share(),
   );
 
   const osmd$ = state$.pipe(
     pluck('song'),
     map(state => state.osmd),
     filter(notNull),
+    distinctUntilChanged(),
     // tap(console.log),
-    // distinctUntilChanged((a, b) => {
-    //   return a.id === b.id;
-    // })
+    share(),
   );
 
   const song$: Observable<Heartbeat.Song> = state$.pipe(
@@ -66,37 +60,37 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     distinctUntilChanged((a, b) => {
       return a.id === b.id;
     }),
+    share(),
   )
-  // .pipe(
-  //   multicast(() => new Subject<Heartbeat.Song>()),
-  // )
 
   const songIsPlaying$ = state$.pipe(
     map((state: AppState) => state.song.songIsPlaying),
-    // tap(val => { console.log('PLAY', val); })
+    share(),
   )
-  //.subscribe(val => { console.log('PLAY', val) })
+
+  const songAction$ = state$.pipe(
+    map((state: AppState) => state.song.songAction),
+    share(),
+  )
 
   const noteMapping$: Observable<null | TypeNoteMapping> = state$.pipe(
     pluck('song'),
     map(state => state.noteMapping),
-    // filter(notNull),
-    // // tap(console.log),
-    // distinctUntilChanged((a, b) => {
-    //   return a == b;
-    // })
+    // filter(notNull), -> don't filter null values because we check on a null value, see below
+    distinctUntilChanged(),
+    share(),
   );
 
   const instrumentName$: Observable<string> = state$.pipe(
     pluck('song'),
     map(state => state.instrumentName),
     filter(notNull),
-    distinctUntilChanged((a, b) => {
-      return a == b;
-    })
+    distinctUntilChanged(),
+    share(),
   );
 
-  // create a heartbeat song
+  // create a heartbeat song when both the MIDI file has loaded and the MusicXML file has been
+  // loaded and rendered to VefFlow (this is why we subscribe to osmd$)
   combineLatest(midiFile$, osmd$, instrumentName$)
     .pipe(take(1))
     .subscribe(([midiFile, osmd, instrumentName]) => {
@@ -105,37 +99,28 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
       song.tracks.forEach((t: Heartbeat.Track) => {
         t.setInstrument(instrumentName);
       });
-      // setupPositionListener(state$, song);
       dispatch(songReady(song));
     });
 
+  // setup note mapping between the graphical notes of the score and the MIDI events
+  // of the heartbeat song
   combineLatest(song$, osmd$, xmlDoc$, noteMapping$)
     .pipe(
       filter(([, , , mapping]) => mapping === null),
-      distinctUntilChanged((a, b) => {
-        // console.log('song', a[0].id !== b[0].id)
-        // console.log('osmd', a[1] !== b[1])
-        // console.log('xml', a[2] !== b[2])
-        return a[0].id === b[0].id && a[1] == b[1] && a[2] == b[2];
-      }),
-      // tap(([song, osmd, xml, mapping]) => { console.log(song === null, osmd === null, xml === null, mapping === null); }),
     )
-    .subscribe(async ([song, osmd, xml, mapping]) => {
+    .subscribe(async ([song, osmd, xml]) => {
       console.log('setup notemapping');
       const [, , repeats] = parseMusicXML(xml, song.ppq);
       const notesPerBar = await getGraphicalNotesPerBar(osmd, song.ppq);
       const noteMapping = mapOSMDToSequencer(notesPerBar, repeats as number[][], song);
-      // setupSongListeners(song, noteMapping);
+      setupSongListeners(song, noteMapping);
+      // const noteMapping = {};
       dispatch(updateNoteMapping(noteMapping));
     });
 
+  // get the position in bars and beat while the song is playing
   combineLatest(song$, songIsPlaying$)
     .pipe(
-      distinctUntilChanged((a, b) => {
-        // return a[0].id === b[0].id && a[1] === b[1];
-        // return a[1] === b[1];
-        return a[1] === b[1];
-      }),
       switchMap(([song, playing]) => {
         if (playing === true) {
           return of(null, animationFrameScheduler).pipe(
@@ -150,22 +135,14 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
       console.log('POS', pos);
     })
 
-  state$.pipe(
-    map(state => ({ songAction: state.song.songAction, song: state.song.song })),
-    filter(({ songAction, song }) => { return songAction !== '' && song !== null }),
-    // tap(val => { console.log(val); }),
-    distinctUntilChanged((a, b) => {
-      return a.songAction === b.songAction;
-    }),
-  ).subscribe(({ songAction, song }) => {
-    if (song !== null) {
-      if (songAction === SongActions.PLAY) {
-        song.play();
-      } else if (songAction === SongActions.PAUSE) {
-        song.pause();
-      } else if (songAction === SongActions.STOP) {
-        song.stop();
-      }
+  // update the transport controls
+  combineLatest(song$, songAction$).subscribe(([song, action]) => {
+    if (action === SongActions.PLAY) {
+      song.play();
+    } else if (action === SongActions.PAUSE) {
+      song.pause();
+    } else if (action === SongActions.STOP) {
+      song.stop();
     }
   });
 
@@ -202,35 +179,6 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
   // )
 
   // song$.connect();
-}
-
-const setupPositionListener = (state$: Observable<AppState>, song: Heartbeat.Song) => {
-  const getPosition$ = of(null, animationFrameScheduler).pipe(
-    repeat(),
-    map(() => {
-      if (song === null) {
-        return '';
-      }
-      return song.playhead.data.barsAsString;
-    })
-  );
-
-  const pauser = new Subject();
-  state$.pipe(
-    map((state: AppState) => {
-      const song = state.song.song;
-      if (song === null) {
-        return false;
-      }
-      return song.playing;
-    }),
-  ).subscribe(playing => {
-    pauser.next(!playing);
-  })
-
-  pauser.pipe(
-    switchMap(paused => paused ? never() : getPosition$),
-  ).subscribe(val => console.log(val));
 }
 
 
