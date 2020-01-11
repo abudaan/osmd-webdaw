@@ -39,6 +39,8 @@ export type SongState = {
   noteMapping: null | TypeNoteMapping
   songAndScoreReady: boolean
   playheadSeeking: boolean
+  scoreContainer: null | HTMLDivElement
+  scoreContainerOffsetY: number
 };
 
 const instrumentName = 'TP00-PianoStereo';
@@ -66,6 +68,8 @@ export const initialState = {
   noteMapping: null,
   songAndScoreReady: false,
   playheadSeeking: false,
+  scoreContainer: null,
+  scoreContainerOffsetY: 0,
 }
 
 export const song = (state: SongState = initialState, action: any) => {
@@ -98,6 +102,8 @@ export const song = (state: SongState = initialState, action: any) => {
     return {
       ...state,
       osmd: action.payload.osmd,
+      scoreContainer: action.payload.scoreContainer,
+      scoreContainerOffsetY: action.payload.scoreContainerOffsetY,
     };
   } else if (action.type === SONG_READY) {
     return {

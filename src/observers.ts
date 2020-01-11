@@ -10,7 +10,7 @@ import { Dispatch } from 'redux';
 import { songReady, updateNoteMapping } from './redux/actions';
 import { parseMusicXML } from './util/musicxml';
 import { getGraphicalNotesPerBar } from './util/osmd-notes';
-import { isNil } from 'ramda';
+import { flatten } from 'ramda';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay/build/dist/src';
 
 export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatch) => {
@@ -93,6 +93,16 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
 
   const songPositionPercentage$ = state$.pipe(
     map((state: AppState) => state.song.songPositionPercentage),
+    share(),
+  )
+
+  const scoreContainer$ = state$.pipe(
+    map((state: AppState) => state.song.scoreContainer),
+    share(),
+  )
+
+  const scoreContainerOffsetY$ = state$.pipe(
+    map((state: AppState) => state.song.scoreContainerOffsetY),
     share(),
   )
 
@@ -188,32 +198,27 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     }
   });
 
-  combineLatest(song$, songPositionPercentage$).subscribe(([song, percentage]) => {
-    song.setPlayhead('percentage', percentage);
-    // console.log(song.playhead.activeNotes);
-  })
-
-
 
   // get the active notes based on the playhead positions
-  combineLatest(keyEditor$, songIsPlaying$, playheadSeeking$, noteMapping$)
+  type ScoreData = { snapshot: Heartbeat.SnapShot, noteMapping: null | TypeNoteMapping, scoreContainer: null | HTMLDivElement, scoreContainerOffsetY: number };
+  combineLatest(keyEditor$, songIsPlaying$, playheadSeeking$, noteMapping$, scoreContainer$, scoreContainerOffsetY$)
     .pipe(
       distinctUntilChanged(),
-      // filter(([, , , noteMapping]) => noteMapping !== null),
-      // tap(console.log),
-      switchMap(([keyEditor, songIsPlaying, playheadSeeking, noteMapping]) => {
+      switchMap(([keyEditor, songIsPlaying, playheadSeeking, noteMapping, scoreContainer, scoreContainerOffsetY]): Observable<ScoreData> => {
         if (songIsPlaying || playheadSeeking) {
           return of(null, animationFrameScheduler).pipe(
             repeat(),
-            map(() => ({
+            map((): ScoreData => ({
               snapshot: keyEditor.getSnapshot(),
               noteMapping,
+              scoreContainer,
+              scoreContainerOffsetY,
             })),
           );
         }
         return never();
       }),
-      switchMap(({ snapshot, noteMapping }) => {
+      switchMap(({ snapshot, noteMapping, scoreContainer, scoreContainerOffsetY }) => {
         return zip(
           from(snapshot.notes.active)
             .pipe(
@@ -226,15 +231,6 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
               }),
               // get the y-position of the music system to calculate the scroll positions
               map(mapping => mapping.musicSystem.graphicalMeasures[0][0].stave.y),
-              // reduce((yPos, mapping) => {
-              //   const newY = mapping.musicSystem.graphicalMeasures[0][0].stave.y;
-              //   if (newY !== yPos) {
-              //     return newY;
-              //   }
-              //   return yPos;
-              // },
-              //   noteMapping[Object.keys(noteMapping)[0]].musicSystem.graphicalMeasures[0][0].stave.y
-              // ),
             ),
           // color inactive notes black
           from(snapshot.notes.stateChanged)
@@ -246,15 +242,21 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
                 const el: SVGGElement = mapping.vfnote.attrs.el;
                 setStaveNoteColor(el, 'black');
               }),
-              mapTo(null),
+              mapTo([scoreContainer, scoreContainerOffsetY]),
             ),
         );
       }),
-      map(([yPos, _]) => yPos),
-      distinctUntilChanged(),
+      distinctUntilChanged((a, b) => a[0] === b[0]),
     )
-    .subscribe((data) => {
-      console.log('yPos', data);
+    .subscribe((data: [number, [null | HTMLDivElement, number]]) => {
+      const [yPos, [scoreContainer, scoreContainerOffsetY]] = data;
+      console.log(data);
+      if (scoreContainer) {
+        scoreContainer.scroll({
+          top: yPos - scoreContainerOffsetY,
+          behavior: 'smooth'
+        });
+      }
     })
 
   // const timer$ = timer();
@@ -267,37 +269,6 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
   // )
 }
 
-
-const updateScore = ({ snapshot, song, osmd, noteMapping }: ScoreData) => {
-  from(snapshot.notes.stateChanged)
-    .pipe(
-      tap((note) => {
-        const mapping = noteMapping[note.noteOn.id];
-        if (mapping) {
-          const el: SVGGElement = mapping.vfnote.attrs.el;
-          setStaveNoteColor(el, 'black');
-        }
-      })
-    ).subscribe();
-
-  from(snapshot.notes.active)
-    .pipe(
-      tap((note) => {
-        const mapping = noteMapping[note.noteOn.id];
-        if (mapping) {
-          const el: SVGGElement = mapping.vfnote.attrs.el;
-          setStaveNoteColor(el, 'red');
-        }
-      })
-    ).subscribe();
-}
-
-
-const autoScroll = () => {
-
-}
-
-// @TODO; use song.playhead.activeNotes here instead of eventlisteners!!
 
 const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping, osmd: OpenSheetMusicDisplay) => {
   let scrollPos = 0;

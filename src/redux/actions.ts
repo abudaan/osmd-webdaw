@@ -50,9 +50,15 @@ export const songReady = (song: Heartbeat.Song, keyEditor: Heartbeat.KeyEditor) 
 });
 
 export const scoreReady = (osmd: OpenSheetMusicDisplay) => {
+  const scoreContainer = (osmd['container'] as HTMLDivElement).parentElement;
+  let scoreContainerOffsetY = 0;
+  if (!!scoreContainer) {
+    scoreContainerOffsetY = scoreContainer.offsetTop;
+  }
+
   return {
     type: SCORE_READY,
-    payload: { osmd },
+    payload: { osmd, scoreContainerOffsetY, scoreContainer },
   }
 
 };
