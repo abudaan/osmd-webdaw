@@ -8,6 +8,7 @@ export const MUSICXML_LOADED = 'MUSICXML_LOADED';
 export const MIDIFILE_LOADED = 'MIDIFILE_LOADED';
 export const UPDATE_NOTE_MAPPING = 'UPDATE_NOTE_MAPPING';
 export const UPDATE_POSITION_SLIDER = 'UPDATE_POSITION_SLIDER';
+export const PLAYHEAD_SEEKING = 'PLAYHEAD_SEEKING';
 
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 import { Dispatch, AnyAction } from 'redux'
@@ -43,9 +44,9 @@ export const loadInitData = (xmlDocUrl: string, midiFileUrl: string, instrumentU
   };
 }
 
-export const songReady = (song: Heartbeat.Song) => ({
+export const songReady = (song: Heartbeat.Song, keyEditor: Heartbeat.KeyEditor) => ({
   type: SONG_READY,
-  payload: { song },
+  payload: { song, keyEditor },
 });
 
 export const scoreReady = (osmd: OpenSheetMusicDisplay) => {

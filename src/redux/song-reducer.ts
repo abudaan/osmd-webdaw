@@ -1,7 +1,13 @@
-import { INITIALIZING, MIDIFILE_LOADED, MUSICXML_LOADED, SCORE_READY, SONG_READY, INIT_DATA_LOADED, UPDATE_SONG_ACTION, UPDATE_POSITION_SLIDER, UPDATE_NOTE_MAPPING } from './actions';
+import {
+  INITIALIZING,
+  MIDIFILE_LOADED,
+  MUSICXML_LOADED,
+  SCORE_READY,
+  SONG_READY, INIT_DATA_LOADED, UPDATE_SONG_ACTION, UPDATE_POSITION_SLIDER, UPDATE_NOTE_MAPPING, PLAYHEAD_SEEKING
+} from './actions';
 import { Observable } from 'rxjs';
 import { AppState } from './store';
-import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay/build/dist/src';
+import { OpenSheetMusicDisplay, PlaybackSettings } from 'opensheetmusicdisplay/build/dist/src';
 import { TypeGraphicalNoteData } from '../util/osmd-notes';
 import { TypeNoteMapping } from 'src/util/osmd-heartbeat';
 export const SongActions = {
@@ -26,11 +32,13 @@ export type SongState = {
   currentMIDIFile: null | Heartbeat.MIDIFileJSON,
   osmd: null | OpenSheetMusicDisplay
   song: null | Heartbeat.Song
+  keyEditor: null | Heartbeat.KeyEditor
   songAction: string
   songIsPlaying: boolean
   graphicalNotesPerBar: TypeGraphicalNoteData[][]
   noteMapping: null | TypeNoteMapping
   songAndScoreReady: boolean
+  playheadSeeking: boolean
 };
 
 const instrumentName = 'TP00-PianoStereo';
@@ -50,12 +58,14 @@ export const initialState = {
   currentXMLDoc: null,
   currentMIDIFile: null,
   song: null,
+  keyEditor: null,
   osmd: null,
   songAction: '',
   songIsPlaying: false,
   graphicalNotesPerBar: [],
   noteMapping: null,
-  songAndScoreReady: false
+  songAndScoreReady: false,
+  playheadSeeking: false,
 }
 
 export const song = (state: SongState = initialState, action: any) => {
@@ -93,6 +103,7 @@ export const song = (state: SongState = initialState, action: any) => {
     return {
       ...state,
       song: action.payload.song,
+      keyEditor: action.payload.keyEditor,
     };
   } else if (action.type === UPDATE_SONG_ACTION) {
     return {

@@ -3,8 +3,8 @@ import sequencer from 'heartbeat-sequencer';
 import { setStaveNoteColor } from './util/osmd-stavenote-color';
 import { TypeNoteMapping, mapOSMDToSequencer } from './util/osmd-heartbeat';
 import { AppState } from './redux/store';
-import { Observable, animationFrameScheduler, defer, of, never, Subject, merge, combineLatest, interval } from 'rxjs';
-import { distinctUntilChanged, pluck, tap, map, filter, distinctUntilKeyChanged, takeWhile, timeInterval, repeat, takeUntil, repeatWhen, mapTo, switchMap, take, multicast, share } from 'rxjs/operators';
+import { Observable, animationFrameScheduler, defer, of, never, Subject, merge, combineLatest, interval, BehaviorSubject, from } from 'rxjs';
+import { distinctUntilChanged, pluck, tap, map, filter, distinctUntilKeyChanged, takeWhile, timeInterval, repeat, takeUntil, repeatWhen, mapTo, switchMap, take, multicast, share, delay } from 'rxjs/operators';
 import { SongState, SongActions } from './redux/song-reducer';
 import { Dispatch } from 'redux';
 import { songReady, updateNoteMapping } from './redux/actions';
@@ -55,7 +55,7 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
 
   const song$: Observable<Heartbeat.Song> = state$.pipe(
     pluck('song'),
-    map(state => state.song),
+    pluck('song'),
     filter(notNull),
     // tap(console.log),
     distinctUntilChanged((a, b) => {
@@ -64,8 +64,25 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     share(),
   )
 
+  const keyEditor$: Observable<Heartbeat.KeyEditor> = state$.pipe(
+    pluck('song'),
+    pluck('keyEditor'),
+    filter(notNull),
+    // tap(console.log),
+    distinctUntilChanged((a, b) => {
+      return a.song.id === b.song.id;
+    }),
+    share(),
+  )
+
   const songIsPlaying$ = state$.pipe(
     map((state: AppState) => state.song.songIsPlaying),
+    share(),
+  )
+
+  const playheadSeeking$ = state$.pipe(
+    pluck('song'),
+    pluck('playheadSeeking'),
     share(),
   )
 
@@ -79,6 +96,15 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     share(),
   )
 
+  const songPositionMillis$ = state$.pipe(
+    pluck('song'),
+    pluck('song'),
+    // filter(song => song !== null),
+    // tap(song => { console.log(song.millis); }),
+    map((song) => song === null ? 0 : song.playhead.data.millis),
+    share(),
+  )
+
   const noteMapping$: Observable<null | TypeNoteMapping> = state$.pipe(
     pluck('song'),
     map(state => state.noteMapping),
@@ -89,7 +115,8 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
 
   const instrumentName$: Observable<string> = state$.pipe(
     pluck('song'),
-    map(state => state.instrumentName),
+    pluck('instrumentName'),
+    // map(state => state.instrumentName),
     filter(notNull),
     distinctUntilChanged(),
     share(),
@@ -105,7 +132,14 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
       song.tracks.forEach((t: Heartbeat.Track) => {
         t.setInstrument(instrumentName);
       });
-      dispatch(songReady(song));
+      const keyEditor = sequencer.createKeyEditor(song, {
+        viewportHeight: 100,
+        viewportWidth: 100,
+        lowestNote: 21,
+        highestNote: 108,
+        barsPerPage: 16
+      });
+      dispatch(songReady(song, keyEditor));
     });
 
   // setup note mapping between the graphical notes of the score and the MIDI events
@@ -120,10 +154,10 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
       const notesPerBar = await getGraphicalNotesPerBar(osmd, song.ppq);
       const noteMapping = mapOSMDToSequencer(notesPerBar, repeats as number[][], song);
       setupSongListeners(song, noteMapping, osmd);
-      dispatch(updateNoteMapping(noteMapping));
       // we need to skip a cycle here because, well actually I don't know why this is
-      // setTimeout(() => {
-      // }, 0);
+      setTimeout(() => {
+        dispatch(updateNoteMapping(noteMapping));
+      }, 0);
     });
 
   // get the position in bars and beat while the song is playing
@@ -159,6 +193,32 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     // console.log(song.playhead.activeNotes);
   })
 
+
+
+  // get the active notes based on the playhead positions
+  combineLatest(keyEditor$, songIsPlaying$, playheadSeeking$, song$, osmd$, noteMapping$)
+    .pipe(
+      distinctUntilChanged(),
+      tap(console.log),
+      switchMap(([keyEditor, songIsPlaying, playheadSeeking, song, osmd, noteMapping]) => {
+        if (songIsPlaying || playheadSeeking) {
+          return of(null, animationFrameScheduler).pipe(
+            repeat(),
+            map(() => ({
+              snapshot: keyEditor.getSnapshot(),
+              song,
+              osmd,
+              noteMapping,
+            })),
+          );
+        }
+        return never();
+      })
+    )
+    .subscribe((data) => {
+      updateScore(data)
+    })
+
   // const timer$ = timer();
 
   // const updatePosition$ = state$.pipe(
@@ -169,6 +229,37 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
   // )
 }
 
+
+type ScoreData =
+  { snapshot: Heartbeat.SnapShot, song: Heartbeat.Song, osmd: OpenSheetMusicDisplay, noteMapping: TypeNoteMapping };
+const updateScore = ({ snapshot, song, osmd, noteMapping }: ScoreData) => {
+  from(snapshot.notes.stateChanged)
+    .pipe(
+      tap((note) => {
+        const mapping = noteMapping[note.noteOn.id];
+        if (mapping) {
+          const el: SVGGElement = mapping.vfnote.attrs.el;
+          setStaveNoteColor(el, 'black');
+        }
+      })
+    ).subscribe();
+
+  from(snapshot.notes.active)
+    .pipe(
+      tap((note) => {
+        const mapping = noteMapping[note.noteOn.id];
+        if (mapping) {
+          const el: SVGGElement = mapping.vfnote.attrs.el;
+          setStaveNoteColor(el, 'red');
+        }
+      })
+    ).subscribe();
+}
+
+
+const autoScroll = () => {
+
+}
 
 // @TODO; use song.playhead.activeNotes here instead of eventlisteners!!
 
@@ -189,9 +280,6 @@ const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping, 
   song.addEventListener('event', 'type = NOTE_ON', (event: Heartbeat.MIDIEvent) => {
     const mapping = noteMapping[event.id];
     if (mapping) {
-      const el: SVGGElement = mapping.vfnote.attrs.el;
-      setStaveNoteColor(el, 'red');
-
       const tmp = mapping.musicSystem.graphicalMeasures[0][0].stave.y;
       // console.log(tmp, currentY);
       // if (currentY !== tmp) {
@@ -207,13 +295,5 @@ const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping, 
     }
   });
 
-  song.addEventListener('event', 'type = NOTE_OFF', (event) => {
-    const noteOn = event.midiNote.noteOn;
-    const mapping = noteMapping[noteOn.id];
-    if (mapping) {
-      const el: SVGGElement = mapping.vfnote.attrs.el;
-      setStaveNoteColor(el, 'black');
-    }
-  });
 }
 
