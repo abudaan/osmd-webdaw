@@ -3,8 +3,8 @@ import sequencer from 'heartbeat-sequencer';
 import { setStaveNoteColor } from './util/osmd-stavenote-color';
 import { TypeNoteMapping, mapOSMDToSequencer } from './util/osmd-heartbeat';
 import { AppState } from './redux/store';
-import { Observable, animationFrameScheduler, defer, of, never, Subject, merge, combineLatest, interval, BehaviorSubject, from } from 'rxjs';
-import { distinctUntilChanged, pluck, tap, map, filter, distinctUntilKeyChanged, takeWhile, timeInterval, repeat, takeUntil, repeatWhen, mapTo, switchMap, take, multicast, share, delay } from 'rxjs/operators';
+import { Observable, animationFrameScheduler, defer, of, never, Subject, merge, combineLatest, interval, BehaviorSubject, from, zip } from 'rxjs';
+import { distinctUntilChanged, pluck, tap, map, filter, distinctUntilKeyChanged, takeWhile, timeInterval, repeat, takeUntil, repeatWhen, mapTo, switchMap, take, multicast, share, delay, mergeMap, scan, reduce } from 'rxjs/operators';
 import { SongState, SongActions } from './redux/song-reducer';
 import { Dispatch } from 'redux';
 import { songReady, updateNoteMapping } from './redux/actions';
@@ -153,7 +153,7 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
       const [, , repeats] = parseMusicXML(xml, song.ppq);
       const notesPerBar = await getGraphicalNotesPerBar(osmd, song.ppq);
       const noteMapping = mapOSMDToSequencer(notesPerBar, repeats as number[][], song);
-      setupSongListeners(song, noteMapping, osmd);
+      // setupSongListeners(song, noteMapping, osmd);
       // we need to skip a cycle here because, well actually I don't know why this is
       setTimeout(() => {
         dispatch(updateNoteMapping(noteMapping));
@@ -196,27 +196,65 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
 
 
   // get the active notes based on the playhead positions
-  combineLatest(keyEditor$, songIsPlaying$, playheadSeeking$, song$, osmd$, noteMapping$)
+  combineLatest(keyEditor$, songIsPlaying$, playheadSeeking$, noteMapping$)
     .pipe(
       distinctUntilChanged(),
-      tap(console.log),
-      switchMap(([keyEditor, songIsPlaying, playheadSeeking, song, osmd, noteMapping]) => {
+      // filter(([, , , noteMapping]) => noteMapping !== null),
+      // tap(console.log),
+      switchMap(([keyEditor, songIsPlaying, playheadSeeking, noteMapping]) => {
         if (songIsPlaying || playheadSeeking) {
           return of(null, animationFrameScheduler).pipe(
             repeat(),
             map(() => ({
               snapshot: keyEditor.getSnapshot(),
-              song,
-              osmd,
               noteMapping,
             })),
           );
         }
         return never();
-      })
+      }),
+      switchMap(({ snapshot, noteMapping }) => {
+        return zip(
+          from(snapshot.notes.active)
+            .pipe(
+              // filter all active notes and color them red
+              map((note) => noteMapping[note.noteOn.id]),
+              filter(mapping => !!mapping),
+              tap(mapping => {
+                const el: SVGGElement = mapping.vfnote.attrs.el;
+                setStaveNoteColor(el, 'red');
+              }),
+              // get the y-position of the music system to calculate the scroll positions
+              map(mapping => mapping.musicSystem.graphicalMeasures[0][0].stave.y),
+              // reduce((yPos, mapping) => {
+              //   const newY = mapping.musicSystem.graphicalMeasures[0][0].stave.y;
+              //   if (newY !== yPos) {
+              //     return newY;
+              //   }
+              //   return yPos;
+              // },
+              //   noteMapping[Object.keys(noteMapping)[0]].musicSystem.graphicalMeasures[0][0].stave.y
+              // ),
+            ),
+          // color inactive notes black
+          from(snapshot.notes.stateChanged)
+            .pipe(
+              filter(note => note.active !== true),
+              map((note) => noteMapping[note.noteOn.id]),
+              filter(mapping => !!mapping),
+              tap(mapping => {
+                const el: SVGGElement = mapping.vfnote.attrs.el;
+                setStaveNoteColor(el, 'black');
+              }),
+              mapTo(null),
+            ),
+        );
+      }),
+      map(([yPos, _]) => yPos),
+      distinctUntilChanged(),
     )
     .subscribe((data) => {
-      updateScore(data)
+      console.log('yPos', data);
     })
 
   // const timer$ = timer();
@@ -230,8 +268,6 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
 }
 
 
-type ScoreData =
-  { snapshot: Heartbeat.SnapShot, song: Heartbeat.Song, osmd: OpenSheetMusicDisplay, noteMapping: TypeNoteMapping };
 const updateScore = ({ snapshot, song, osmd, noteMapping }: ScoreData) => {
   from(snapshot.notes.stateChanged)
     .pipe(
