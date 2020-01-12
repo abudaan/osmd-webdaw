@@ -5,14 +5,14 @@ import { TypeGraphicalNoteData } from './osmd-notes';
   This method maps the notes in the SVG document of the score to MIDI notes in the sequencer
 */
 
-export type TypeNoteMapping = {
+export type NoteMapping = {
   [index: string]: {
     vfnote: Vex.Flow.Note
     musicSystem: MusicSystem
   }
 }
 
-const mapOSMDToSequencer = (graphicalNotesPerBar: TypeGraphicalNoteData[][], repeats: number[][], song: Heartbeat.Song): TypeNoteMapping => {
+const mapOSMDToSequencer = (graphicalNotesPerBar: TypeGraphicalNoteData[][], repeats: number[][], song: Heartbeat.Song): NoteMapping => {
   let barIndex = -1;
   let barOffset = 0;
   let ticksOffset = 0; // not used, keep for reference
@@ -21,7 +21,7 @@ const mapOSMDToSequencer = (graphicalNotesPerBar: TypeGraphicalNoteData[][], rep
   const events = song.events.filter(event => event.command === 144);
   // console.log(events);
   const { bars: numBars, ppq } = song;
-  const mapping: TypeNoteMapping = {};
+  const mapping: NoteMapping = {};
 
   while (true) {
     barIndex++;

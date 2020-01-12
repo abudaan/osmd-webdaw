@@ -1,13 +1,13 @@
 import 'jzz';
 import sequencer from 'heartbeat-sequencer';
 import { setStaveNoteColor } from './util/osmd-stavenote-color';
-import { TypeNoteMapping, mapOSMDToSequencer } from './util/osmd-heartbeat';
+import { NoteMapping, mapOSMDToSequencer } from './util/osmd-heartbeat';
 import { AppState } from './redux/store';
-import { Observable, animationFrameScheduler, defer, of, never, Subject, merge, combineLatest, interval, BehaviorSubject, from, zip } from 'rxjs';
+import { Observable, animationFrameScheduler, defer, of, never, Subject, merge, combineLatest, interval, BehaviorSubject, from, zip, Subscriber } from 'rxjs';
 import { distinctUntilChanged, pluck, tap, map, filter, distinctUntilKeyChanged, takeWhile, timeInterval, repeat, takeUntil, repeatWhen, mapTo, switchMap, take, multicast, share, delay, mergeMap, scan, reduce } from 'rxjs/operators';
 import { SongState, SongActions } from './redux/song-reducer';
 import { Dispatch } from 'redux';
-import { songReady, updateNoteMapping } from './redux/actions';
+import { songReady, updateNoteMapping, updatePlayheadMillis } from './redux/actions';
 import { parseMusicXML } from './util/musicxml';
 import { getGraphicalNotesPerBar } from './util/osmd-notes';
 import { flatten } from 'ramda';
@@ -83,39 +83,35 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
   const playheadSeeking$ = state$.pipe(
     pluck('song'),
     pluck('playheadSeeking'),
+    distinctUntilChanged(),
     share(),
   )
 
   const songAction$ = state$.pipe(
     map((state: AppState) => state.song.songAction),
+    distinctUntilChanged(),
     share(),
   )
 
-  const songPositionPercentage$ = state$.pipe(
-    map((state: AppState) => state.song.songPositionPercentage),
+  const sliderPositionPercentage$ = state$.pipe(
+    map((state: AppState) => state.song.sliderPositionPercentage),
+    distinctUntilChanged(),
     share(),
   )
 
   const scoreContainer$ = state$.pipe(
     map((state: AppState) => state.song.scoreContainer),
+    distinctUntilChanged(),
     share(),
   )
 
   const scoreContainerOffsetY$ = state$.pipe(
     map((state: AppState) => state.song.scoreContainerOffsetY),
+    distinctUntilChanged(),
     share(),
   )
 
-  const songPositionMillis$ = state$.pipe(
-    pluck('song'),
-    pluck('song'),
-    // filter(song => song !== null),
-    // tap(song => { console.log(song.millis); }),
-    map((song) => song === null ? 0 : song.playhead.data.millis),
-    share(),
-  )
-
-  const noteMapping$: Observable<null | TypeNoteMapping> = state$.pipe(
+  const noteMapping$: Observable<null | NoteMapping> = state$.pipe(
     pluck('song'),
     map(state => state.noteMapping),
     // filter(notNull), -> don't filter null values because we check on a null value, see below
@@ -150,6 +146,7 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
         barsPerPage: 16
       });
       dispatch(songReady(song, keyEditor));
+      setupListeners(song);
     });
 
   // setup note mapping between the graphical notes of the score and the MIDI events
@@ -169,23 +166,108 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
         dispatch(updateNoteMapping(noteMapping));
       }, 0);
     });
-
-  // get the position in bars and beat while the song is playing
-  combineLatest(song$, songIsPlaying$)
-    .pipe(
-      switchMap(([song, playing]) => {
-        if (playing === true) {
-          return of(null, animationFrameScheduler).pipe(
-            repeat(),
-            map(() => song.playhead.data.barsAsString),
-          );
-        }
-        return never();
+  /*
+    // get the position in bars and beat while the song is playing
+    combineLatest(song$, songIsPlaying$)
+      .pipe(
+        switchMap(([song, playing]) => {
+          if (playing === true) {
+            return of(null, animationFrameScheduler).pipe(
+              repeat(),
+              map(() => song.playhead.data.barsAsString),
+            );
+          }
+          return never();
+        })
+      )
+      .subscribe((pos) => {
+        // console.log('POS', pos);
       })
+  */
+
+  const setupListeners = (song: Heartbeat.Song) => {
+    // a tiny bit of state:
+    let millis = 0;
+    console.log('setupListeners')
+
+    const songPositionObservable$ = new Observable((observer: Subscriber<Heartbeat.Song>) => {
+      observer.next(song);
+      return of(song, animationFrameScheduler).pipe(
+        repeat(),
+        distinctUntilChanged((a, _) => a.playhead.data.millis === millis),
+        tap(song => { millis = song.playhead.data.millis }),
+      ).subscribe(song => {
+        // console.log('Song position observer running for Song:', song.id);
+        observer.next(song);
+      })
+    });
+
+    // get the position in millis while the song is playing
+    const songPositionMillisObservable$ = songPositionObservable$.pipe(
+      map(song => song.playhead.data.millis),
+      share(),
     )
-    .subscribe((pos) => {
-      // console.log('POS', pos);
-    })
+
+    // update the position slider
+    songPositionMillisObservable$.subscribe(millis => {
+      dispatch(updatePlayheadMillis(millis))
+    });
+
+    // get the active notes based on the playhead positions
+    type ScoreData = { snapshot: Heartbeat.SnapShot, noteMapping: null | NoteMapping, scoreContainer: null | HTMLDivElement, scoreContainerOffsetY: number };
+    combineLatest(keyEditor$, noteMapping$, scoreContainer$, scoreContainerOffsetY$, songPositionMillisObservable$)
+      .pipe(
+        distinctUntilChanged(),
+        map(([keyEditor, noteMapping, scoreContainer, scoreContainerOffsetY]) => ({
+          snapshot: keyEditor.getSnapshot(),
+          noteMapping,
+          scoreContainer,
+          scoreContainerOffsetY,
+        })),
+        switchMap(({ snapshot, noteMapping, scoreContainer, scoreContainerOffsetY }) => {
+          return zip(
+            from(snapshot.notes.active)
+              .pipe(
+                // filter all active notes and color them red
+                map((note) => noteMapping[note.noteOn.id]),
+                filter(mapping => !!mapping),
+                tap(mapping => {
+                  const el: SVGGElement = mapping.vfnote.attrs.el;
+                  setStaveNoteColor(el, 'red');
+                }),
+                // get the y-position of the music system to calculate the scroll positions
+                map(mapping => mapping.musicSystem.graphicalMeasures[0][0].stave.y),
+              ),
+            // color inactive notes black
+            from(snapshot.notes.stateChanged)
+              .pipe(
+                filter(note => note.active !== true),
+                map((note) => noteMapping[note.noteOn.id]),
+                filter(mapping => !!mapping),
+                tap(mapping => {
+                  const el: SVGGElement = mapping.vfnote.attrs.el;
+                  setStaveNoteColor(el, 'black');
+                }),
+                mapTo([scoreContainer, scoreContainerOffsetY]),
+              ),
+          );
+        }),
+        // only emit when the y-position has changed
+        distinctUntilChanged((a, b) => a[0] === b[0]),
+      )
+      .subscribe((data: [number, [null | HTMLDivElement, number]]) => {
+        const [yPos, [scoreContainer, scoreContainerOffsetY]] = data;
+        // scrollPos = (tmp + scoreContainer.offsetTop) - distanceToFirstSystem - controlsHeight + systemOffset;
+        // console.log(data);
+        if (scoreContainer) {
+          scoreContainer.scroll({
+            top: yPos - scoreContainerOffsetY,
+            behavior: 'smooth'
+          });
+        }
+      })
+  }
+
 
   // update the transport controls
   combineLatest(song$, songAction$).subscribe(([song, action]) => {
@@ -198,66 +280,15 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     }
   });
 
-
-  // get the active notes based on the playhead positions
-  type ScoreData = { snapshot: Heartbeat.SnapShot, noteMapping: null | TypeNoteMapping, scoreContainer: null | HTMLDivElement, scoreContainerOffsetY: number };
-  combineLatest(keyEditor$, songIsPlaying$, playheadSeeking$, noteMapping$, scoreContainer$, scoreContainerOffsetY$)
+  // map position of slider to position in song (only when the user uses the slider)
+  combineLatest(song$, sliderPositionPercentage$, playheadSeeking$)
     .pipe(
-      distinctUntilChanged(),
-      switchMap(([keyEditor, songIsPlaying, playheadSeeking, noteMapping, scoreContainer, scoreContainerOffsetY]): Observable<ScoreData> => {
-        if (songIsPlaying || playheadSeeking) {
-          return of(null, animationFrameScheduler).pipe(
-            repeat(),
-            map((): ScoreData => ({
-              snapshot: keyEditor.getSnapshot(),
-              noteMapping,
-              scoreContainer,
-              scoreContainerOffsetY,
-            })),
-          );
-        }
-        return never();
-      }),
-      switchMap(({ snapshot, noteMapping, scoreContainer, scoreContainerOffsetY }) => {
-        return zip(
-          from(snapshot.notes.active)
-            .pipe(
-              // filter all active notes and color them red
-              map((note) => noteMapping[note.noteOn.id]),
-              filter(mapping => !!mapping),
-              tap(mapping => {
-                const el: SVGGElement = mapping.vfnote.attrs.el;
-                setStaveNoteColor(el, 'red');
-              }),
-              // get the y-position of the music system to calculate the scroll positions
-              map(mapping => mapping.musicSystem.graphicalMeasures[0][0].stave.y),
-            ),
-          // color inactive notes black
-          from(snapshot.notes.stateChanged)
-            .pipe(
-              filter(note => note.active !== true),
-              map((note) => noteMapping[note.noteOn.id]),
-              filter(mapping => !!mapping),
-              tap(mapping => {
-                const el: SVGGElement = mapping.vfnote.attrs.el;
-                setStaveNoteColor(el, 'black');
-              }),
-              mapTo([scoreContainer, scoreContainerOffsetY]),
-            ),
-        );
-      }),
-      distinctUntilChanged((a, b) => a[0] === b[0]),
+      filter(([, , seeking]) => seeking === true),
     )
-    .subscribe((data: [number, [null | HTMLDivElement, number]]) => {
-      const [yPos, [scoreContainer, scoreContainerOffsetY]] = data;
-      console.log(data);
-      if (scoreContainer) {
-        scoreContainer.scroll({
-          top: yPos - scoreContainerOffsetY,
-          behavior: 'smooth'
-        });
-      }
+    .subscribe(([song, percentage]) => {
+      song.setPlayhead('percentage', percentage);
     })
+
 
   // const timer$ = timer();
 
@@ -267,40 +298,5 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
   //   interval(),
   //   map(song => song.playhead.data.barsAsString)
   // )
-}
-
-
-const setupSongListeners = (song: Heartbeat.Song, noteMapping: TypeNoteMapping, osmd: OpenSheetMusicDisplay) => {
-  let scrollPos = 0;
-  let currentY = 0;
-  const scoreContainer = (osmd['container'] as HTMLDivElement).parentElement;
-  if (!scoreContainer) {
-    return;
-  }
-  const controlsHeight = scoreContainer.offsetTop;
-  // this is the initial distance from the top of the score to the first system (title, composer, etc.)
-  const distanceToFirstSystem = noteMapping[Object.keys(noteMapping)[0]].musicSystem.graphicalMeasures[0][0].stave.y;
-  // scoreContainer.onscroll = (e) => {
-  //   console.log(scoreContainer.scrollTop);
-  // }
-
-  song.addEventListener('event', 'type = NOTE_ON', (event: Heartbeat.MIDIEvent) => {
-    const mapping = noteMapping[event.id];
-    if (mapping) {
-      const tmp = mapping.musicSystem.graphicalMeasures[0][0].stave.y;
-      // console.log(tmp, currentY);
-      // if (currentY !== tmp) {
-      const systemOffset = 0;//currentY === 0 ? 0 : ((tmp - currentY) / 2);
-      console.log('SCROLL', tmp, currentY, systemOffset);
-      scrollPos = (tmp + scoreContainer.offsetTop) - distanceToFirstSystem - controlsHeight + systemOffset;
-      currentY = tmp;
-      scoreContainer.scroll({
-        top: scrollPos,
-        behavior: 'smooth'
-      });
-      // }
-    }
-  });
-
 }
 

@@ -7,15 +7,16 @@ export const UPDATE_SONG_ACTION = 'UPDATE_SONG_ACTION';
 export const MUSICXML_LOADED = 'MUSICXML_LOADED';
 export const MIDIFILE_LOADED = 'MIDIFILE_LOADED';
 export const UPDATE_NOTE_MAPPING = 'UPDATE_NOTE_MAPPING';
-export const UPDATE_POSITION_SLIDER = 'UPDATE_POSITION_SLIDER';
+export const POSITION_SLIDER_CHANGED = 'POSITION_SLIDER_CHANGED';
 export const PLAYHEAD_SEEKING = 'PLAYHEAD_SEEKING';
+export const UPDATE_PLAYHEAD_MILLIS = 'UPDATE_PLAYHEAD_MILLIS';
 
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 import { Dispatch, AnyAction } from 'redux'
 import { loadXML, addMIDIFile, loadJSON, addAssetPack } from '../util/heartbeat-utils';
 import { Observable } from 'rxjs';
 import { AppState } from './store';
-import { TypeNoteMapping } from 'src/util/osmd-heartbeat';
+import { NoteMapping } from 'src/util/osmd-heartbeat';
 
 export const init = (observable: Observable<AppState>) => ({
   type: INITIALIZING,
@@ -62,19 +63,29 @@ export const scoreReady = (osmd: OpenSheetMusicDisplay) => {
   }
 
 };
-export const updateNoteMapping = (noteMapping: TypeNoteMapping) => {
+export const updateNoteMapping = (noteMapping: NoteMapping) => {
   return {
     type: UPDATE_NOTE_MAPPING,
     payload: { noteMapping },
   }
 };
 
+export const updatePlayheadSeeking = (flag: boolean) => ({
+  type: PLAYHEAD_SEEKING,
+  payload: { flag },
+})
+
 export const updatePositionSlider = (position: number) => ({
-  type: UPDATE_POSITION_SLIDER,
+  type: POSITION_SLIDER_CHANGED,
   payload: { position },
 })
 
 export const updateSongAction = (action: string) => ({
   type: UPDATE_SONG_ACTION,
   payload: { action },
+})
+
+export const updatePlayheadMillis = (millis: number) => ({
+  type: UPDATE_PLAYHEAD_MILLIS,
+  payload: { millis },
 })

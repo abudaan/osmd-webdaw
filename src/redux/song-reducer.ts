@@ -3,13 +3,13 @@ import {
   MIDIFILE_LOADED,
   MUSICXML_LOADED,
   SCORE_READY,
-  SONG_READY, INIT_DATA_LOADED, UPDATE_SONG_ACTION, UPDATE_POSITION_SLIDER, UPDATE_NOTE_MAPPING, PLAYHEAD_SEEKING
+  SONG_READY, INIT_DATA_LOADED, UPDATE_SONG_ACTION, POSITION_SLIDER_CHANGED, UPDATE_NOTE_MAPPING, PLAYHEAD_SEEKING, UPDATE_PLAYHEAD_MILLIS
 } from './actions';
 import { Observable } from 'rxjs';
 import { AppState } from './store';
 import { OpenSheetMusicDisplay, PlaybackSettings } from 'opensheetmusicdisplay/build/dist/src';
 import { TypeGraphicalNoteData } from '../util/osmd-notes';
-import { TypeNoteMapping } from 'src/util/osmd-heartbeat';
+import { NoteMapping } from 'src/util/osmd-heartbeat';
 export const SongActions = {
   PLAY: 'PLAY',
   PAUSE: 'PAUSE',
@@ -26,7 +26,9 @@ export type SongState = {
   midiFiles: Heartbeat.MIDIFileJSON[],
   xmlDocs: XMLDocument[],
   songPosition: string,
+  songPositionMillis: number,
   songPositionPercentage: number,
+  sliderPositionPercentage: number,
   observable: null | Observable<AppState>
   currentXMLDoc: null | XMLDocument,
   currentMIDIFile: null | Heartbeat.MIDIFileJSON,
@@ -36,7 +38,7 @@ export type SongState = {
   songAction: string
   songIsPlaying: boolean
   graphicalNotesPerBar: TypeGraphicalNoteData[][]
-  noteMapping: null | TypeNoteMapping
+  noteMapping: null | NoteMapping
   songAndScoreReady: boolean
   playheadSeeking: boolean
   scoreContainer: null | HTMLDivElement
@@ -55,7 +57,9 @@ export const initialState = {
   xmlDocs: [],
   midiFiles: [],
   songPosition: '',
+  songPositionMillis: 0,
   songPositionPercentage: 0,
+  sliderPositionPercentage: 0,
   observable: null,
   currentXMLDoc: null,
   currentMIDIFile: null,
@@ -117,10 +121,22 @@ export const song = (state: SongState = initialState, action: any) => {
       songAction: action.payload.action,
       songIsPlaying: action.payload.action === SongActions.PLAY
     };
-  } else if (action.type === UPDATE_POSITION_SLIDER) {
+  } else if (action.type === PLAYHEAD_SEEKING) {
     return {
       ...state,
-      songPositionPercentage: action.payload.position,
+      playheadSeeking: action.payload.flag,
+    };
+  } else if (action.type === POSITION_SLIDER_CHANGED) {
+    return {
+      ...state,
+      sliderPositionPercentage: action.payload.position,
+    };
+  } else if (action.type === UPDATE_PLAYHEAD_MILLIS) {
+    const millis = action.payload.millis;
+    const duration = state.song ? state.song.durationMillis : 1;
+    return {
+      ...state,
+      sliderPositionPercentage: millis / duration,
     };
   } else if (action.type === UPDATE_NOTE_MAPPING) {
     return {
