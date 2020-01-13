@@ -166,24 +166,6 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
         dispatch(updateNoteMapping(noteMapping));
       }, 0);
     });
-  /*
-    // get the position in bars and beat while the song is playing
-    combineLatest(song$, songIsPlaying$)
-      .pipe(
-        switchMap(([song, playing]) => {
-          if (playing === true) {
-            return of(null, animationFrameScheduler).pipe(
-              repeat(),
-              map(() => song.playhead.data.barsAsString),
-            );
-          }
-          return never();
-        })
-      )
-      .subscribe((pos) => {
-        // console.log('POS', pos);
-      })
-  */
 
   const setupListeners = (song: Heartbeat.Song) => {
     // a tiny bit of state:
@@ -192,11 +174,11 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
 
     const songPositionObservable$ = new Observable((observer: Subscriber<Heartbeat.Song>) => {
       observer.next(song);
-      return of(song, animationFrameScheduler).pipe(
+      return of({ song, millis: 0 }, animationFrameScheduler).pipe(
         repeat(),
-        distinctUntilChanged((a, _) => a.playhead.data.millis === millis),
-        tap(song => { millis = song.playhead.data.millis }),
-      ).subscribe(song => {
+        distinctUntilChanged((a, _) => a.millis === a.song.playhead.data.millis),
+        scan((acc, cur) => { return { song: cur.song, millis: cur.song.playhead.data.millis } }),
+      ).subscribe(_ => {
         // console.log('Song position observer running for Song:', song.id);
         observer.next(song);
       })
@@ -288,15 +270,24 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     .subscribe(([song, percentage]) => {
       song.setPlayhead('percentage', percentage);
     })
-
-
-  // const timer$ = timer();
-
-  // const updatePosition$ = state$.pipe(
-  //   map((state: AppState) => state.song.song),
-  //   filter((song) => song !== null),
-  //   interval(),
-  //   map(song => song.playhead.data.barsAsString)
-  // )
 }
 
+
+/*
+  // get the position in bars and beat while the song is playing
+  combineLatest(song$, songIsPlaying$)
+    .pipe(
+      switchMap(([song, playing]) => {
+        if (playing === true) {
+          return of(null, animationFrameScheduler).pipe(
+            repeat(),
+            map(() => song.playhead.data.barsAsString),
+          );
+        }
+        return never();
+      })
+    )
+    .subscribe((pos) => {
+      // console.log('POS', pos);
+    })
+*/
