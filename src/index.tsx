@@ -25,11 +25,11 @@ const state$ = new Observable((observer: Subscriber<AppState>) => {
   return unsubscribe;
 });
 
-store.dispatch(init(state$));
+// store.dispatch(init(state$));
 manageSong(state$, store.dispatch);
 
 sequencer.ready()
   .then(() => {
-    const { initUrls: { xmlDoc, midiFile, instrument } } = store.getState().song;
+    const { initUrls: { xmlDoc, midiFile, instrument } } = store.getState().data;
     store.dispatch(loadInitData(xmlDoc, midiFile, instrument));
   })

@@ -25,7 +25,7 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
   const notNull = <T>(value: T | null): value is T => value !== null;
 
   const midiFile$ = state$.pipe(
-    pluck('song'),
+    pluck('data'),
     map(state => state.currentMIDIFile),
     filter(notNull),
     // tap(console.log),
@@ -36,7 +36,7 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
   );
 
   const xmlDoc$ = state$.pipe(
-    pluck('song'),
+    pluck('data'),
     map(state => state.currentXMLDoc),
     filter(notNull),
     distinctUntilChanged(),
@@ -111,16 +111,16 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     share(),
   )
 
-  const noteMapping$: Observable<null | NoteMapping> = state$.pipe(
+  const noteMapping$: Observable<NoteMapping> = state$.pipe(
     pluck('song'),
     map(state => state.noteMapping),
-    // filter(notNull), -> don't filter null values because we check on a null value, see below
+    filter(notNull), //-> don't filter null values because we check on a null value, see below
     distinctUntilChanged(),
     share(),
   );
 
   const instrumentName$: Observable<string> = state$.pipe(
-    pluck('song'),
+    pluck('data'),
     pluck('instrumentName'),
     // map(state => state.instrumentName),
     filter(notNull),
@@ -129,7 +129,7 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
   );
 
   // create a heartbeat song when both the MIDI file has loaded and the MusicXML file has been
-  // loaded and rendered to VefFlow (this is why we subscribe to osmd$)
+  // loaded and rendered to VexFlow (this is why we need subscribe to osmd$ as well)
   combineLatest(midiFile$, osmd$, instrumentName$)
     .pipe(take(1))
     .subscribe(([midiFile, osmd, instrumentName]) => {
@@ -151,10 +151,10 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
 
   // setup note mapping between the graphical notes of the score and the MIDI events
   // of the heartbeat song
-  combineLatest(song$, osmd$, xmlDoc$, noteMapping$)
-    .pipe(
-      filter(([, , , mapping]) => mapping === null),
-    )
+  combineLatest(song$, osmd$, xmlDoc$)
+    // .pipe(
+    //   filter(([, , , mapping]) => mapping === null),
+    // )
     .subscribe(async ([song, osmd, xml]) => {
       console.log('setup notemapping');
       const [, , repeats] = parseMusicXML(xml, song.ppq);
@@ -190,6 +190,7 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     // get the position in millis while the song is playing
     const songPositionMillisObservable$ = songPositionObservable$.pipe(
       map(song => song.playhead.data.millis),
+      distinctUntilChanged(),
       share(),
     )
 
