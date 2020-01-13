@@ -174,10 +174,13 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
 
     const songPositionObservable$ = new Observable((observer: Subscriber<Heartbeat.Song>) => {
       observer.next(song);
-      return of({ song, millis: 0 }, animationFrameScheduler).pipe(
+      // return of({ song, millis: 0 }, animationFrameScheduler).pipe(
+      return of(song, animationFrameScheduler).pipe(
         repeat(),
-        distinctUntilChanged((a, _) => a.millis === a.song.playhead.data.millis),
-        scan((acc, cur) => { return { song: cur.song, millis: cur.song.playhead.data.millis } }),
+        // distinctUntilChanged((a, _) => a.millis === a.song.playhead.data.millis),
+        distinctUntilChanged((a, _) => millis === a.playhead.data.millis),
+        // scan((acc, cur) => { return { song: cur.song, millis: cur.song.playhead.data.millis } }),
+        tap((song) => { millis = song.playhead.data.millis; }),
       ).subscribe(_ => {
         // console.log('Song position observer running for Song:', song.id);
         observer.next(song);
