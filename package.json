@@ -4,6 +4,7 @@
   "description": "Groovy React Rebuild",
   "main": "index.js",
   "dependencies": {
+    "@types/uniqid": "^4.1.3",
     "fast-xml-parser": "^3.13.0",
     "fetch-helpers": "^9.0.0",
     "glamor": "^2.20.40",
@@ -21,6 +22,7 @@
     "rxjs": "^6.5.2",
     "shortid": "^2.2.14",
     "src": "^1.1.2",
+    "uniqid": "^5.2.0",
     "vexflow": "^1.2.89"
   },
   "devDependencies": {

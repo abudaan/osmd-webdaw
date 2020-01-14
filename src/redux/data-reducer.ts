@@ -4,6 +4,7 @@ import {
   MUSICXML_LOADED,
   INIT_DATA_LOADED,
 } from './actions';
+import { baseName } from '../util/general';
 
 export type DataState = {
   initUrls: {
@@ -13,7 +14,9 @@ export type DataState = {
   }
   instrumentName: string,
   midiFiles: Heartbeat.MIDIFileJSON[],
+  midiFileNames: string[],
   xmlDocs: XMLDocument[],
+  xmlDocNames: string[],
   currentXMLDoc: null | XMLDocument,
   currentMIDIFile: null | Heartbeat.MIDIFileJSON,
 };
@@ -28,7 +31,9 @@ export const initialState = {
   },
   instrumentName,
   xmlDocs: [],
+  xmlDocNames: [],
   midiFiles: [],
+  midiFileNames: [],
   currentXMLDoc: null,
   currentMIDIFile: null,
 }
@@ -45,6 +50,8 @@ export const data = (state: DataState = initialState, action: any) => {
       ...state,
       xmlDocs: [xmlDoc],
       midiFiles: [midiFile],
+      xmlDocNames: [baseName(state.initUrls.xmlDoc)],
+      midiFileNames: [baseName(state.initUrls.midiFile)],
       instrumentName: instrumentName,
       currentXMLDoc: xmlDoc,
       currentMIDIFile: midiFile,
