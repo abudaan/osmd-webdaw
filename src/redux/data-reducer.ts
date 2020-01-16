@@ -3,6 +3,8 @@ import {
   MIDIFILE_LOADED,
   MUSICXML_LOADED,
   INIT_DATA_LOADED,
+  SELECT_XMLDOC,
+  SELECT_MIDIFILE,
 } from './actions';
 import { baseName } from '../util/general';
 
@@ -19,6 +21,8 @@ export type DataState = {
   xmlDocNames: string[],
   currentXMLDoc: null | XMLDocument,
   currentMIDIFile: null | Heartbeat.MIDIFileJSON,
+  xmlDocCurrentIndex: number,
+  midiFileCurrentIndex: number,
 };
 
 const instrumentName = 'TP00-PianoStereo';
@@ -36,6 +40,8 @@ export const initialState = {
   midiFileNames: [],
   currentXMLDoc: null,
   currentMIDIFile: null,
+  xmlDocCurrentIndex: 1,
+  midiFileCurrentIndex: 1,
 }
 
 export const data = (state: DataState = initialState, action: any) => {
@@ -65,6 +71,20 @@ export const data = (state: DataState = initialState, action: any) => {
     return {
       ...state,
       xmlDocs: [...state.xmlDocs, action.payload.xmlDoc],
+    }
+  } else if (action.type === SELECT_XMLDOC) {
+    const index = action.payload.index;
+    return {
+      ...state,
+      xmlDocCurrentIndex: index,
+      currentXMLDoc: state.xmlDocs[index],
+    }
+  } else if (action.type === SELECT_MIDIFILE) {
+    const index = action.payload.index;
+    return {
+      ...state,
+      midiFileCurrentIndex: index,
+      currentMIDIFile: state.midiFiles[index],
     }
   }
 
