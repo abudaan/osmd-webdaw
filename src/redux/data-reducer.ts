@@ -5,6 +5,8 @@ import {
   INIT_DATA_LOADED,
   SELECT_XMLDOC,
   SELECT_MIDIFILE,
+  UPLOAD_MIDIFILE,
+  UPLOAD_XMLDOC,
 } from './actions';
 import { baseName } from '../util/general';
 
@@ -85,6 +87,24 @@ export const data = (state: DataState = initialState, action: any) => {
       ...state,
       midiFileCurrentIndex: index,
       currentMIDIFile: state.midiFiles[index],
+    }
+  } else if (action.type === UPLOAD_MIDIFILE) {
+    // const index = action.payload.index;
+    console.log(action.payload.file);
+    return {
+      ...state,
+      // midiFileCurrentIndex: index,
+      // currentMIDIFile: state.midiFiles[index],
+      // midiFiles:
+    }
+  } else if (action.type === UPLOAD_XMLDOC) {
+    // const index = action.payload.index;
+    console.log(action.payload.file);
+    return {
+      ...state,
+      // midiFileCurrentIndex: index,
+      // currentMIDIFile: state.midiFiles[index],
+      // midiFiles:
     }
   }
 

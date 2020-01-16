@@ -1,7 +1,7 @@
 import React, { SyntheticEvent, useEffect, useRef, RefObject } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { Dispatch } from 'redux';
-import { selectXMLDoc, selectMIDIFile } from '../redux/actions';
+import { selectXMLDoc, selectMIDIFile, uploadMIDIFile, uploadXMLDoc } from '../redux/actions';
 import uniqid from 'uniqid';
 import { AppState } from '../redux/store';
 
@@ -56,11 +56,23 @@ export const Controls: React.FC<Props> = ({ }: Props) => {
       {midiFileNames.map((val, i) => (<option key={uniqid()}>{val}</option>))}
     </select>
     <input type="button" value="connect" />
-    <input ref={refInputXML} type="file" id="upload" accept=".xml,.musicxml" style={{ display: 'none' }} onChange={(e) => {
-      console.log(e);
+    <input ref={refInputXML} type="file" id="upload" accept=".xml,.musicxml, .mxl" style={{ display: 'none' }} onChange={(e) => {
+      const event = e.nativeEvent;
+      if (event !== null) {
+        const files = (event.target as HTMLInputElement).files;
+        if (files && files[0]) {
+          dispatch(uploadXMLDoc(files[0]));
+        }
+      }
     }}></input>
-    <input ref={refInputMIDI} type="file" id="upload" accept=".mid,.midi" style={{ display: 'none' }} onChange={(e) => {
-      console.log(e);
+    <input ref={refInputMIDI} type="file" id="upload" accept=".mid,.midi" style={{ display: 'none' }} onChange={(e: SyntheticEvent) => {
+      const event = e.nativeEvent;
+      if (event !== null) {
+        const files = (event.target as HTMLInputElement).files;
+        if (files && files[0]) {
+          dispatch(uploadMIDIFile(files[0]));
+        }
+      }
     }}></input>
   </div >
 }

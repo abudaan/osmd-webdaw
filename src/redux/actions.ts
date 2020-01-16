@@ -104,13 +104,38 @@ export const selectMIDIFile = (index: number) => ({
   payload: { index },
 })
 
-export const uploadXMLDoc = (index: number) => ({
-  type: UPLOAD_XMLDOC,
-  payload: { index },
-})
+export const uploadXMLDoc = (file: File) => {
+  return async (dispatch: Dispatch) => {
+    const fileReader = new FileReader();
+    fileReader.onload = (evt) => {
+      if (evt && evt.target) {
+        dispatch({
+          type: UPLOAD_XMLDOC,
+          payload: { file: evt.target.result },
+        });
+      } else {
+        throw new Error('upload xml failed')
+      }
+    };
+    fileReader.readAsText(file);
+  }
+}
 
-export const uploadMIDIFile = (index: number) => ({
-  type: UPLOAD_MIDIFILE,
-  payload: { index },
-})
+export const uploadMIDIFile = (file: File) => {
+  return async (dispatch: Dispatch) => {
+    const fileReader = new FileReader();
+    fileReader.onload = (evt) => {
+      if (evt && evt.target) {
+        dispatch({
+          type: UPLOAD_XMLDOC,
+          payload: { file: evt.target.result },
+        });
+      } else {
+        throw new Error('upload midi failed')
+      }
+    };
+    // fileReader.readAsArrayBuffer(file);
+    fileReader.readAsBinaryString(file);
+  }
+}
 
