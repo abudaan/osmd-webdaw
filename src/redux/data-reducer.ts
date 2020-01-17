@@ -7,6 +7,8 @@ import {
   SELECT_MIDIFILE,
   UPLOAD_MIDIFILE,
   UPLOAD_XMLDOC,
+  MIDIFILE_UPLOADED,
+  XMLDOC_UPLOADED,
 } from './actions';
 import { baseName } from '../util/general';
 
@@ -42,8 +44,8 @@ export const initialState = {
   midiFileNames: [],
   currentXMLDoc: null,
   currentMIDIFile: null,
-  xmlDocCurrentIndex: 1,
-  midiFileCurrentIndex: 1,
+  xmlDocCurrentIndex: 0,
+  midiFileCurrentIndex: 0,
 }
 
 export const data = (state: DataState = initialState, action: any) => {
@@ -88,23 +90,23 @@ export const data = (state: DataState = initialState, action: any) => {
       midiFileCurrentIndex: index,
       currentMIDIFile: state.midiFiles[index],
     }
-  } else if (action.type === UPLOAD_MIDIFILE) {
-    // const index = action.payload.index;
-    console.log(action.payload.file);
+  } else if (action.type === MIDIFILE_UPLOADED) {
+    const file = action.payload.file;
+    const index = state.midiFiles.length;
     return {
       ...state,
-      // midiFileCurrentIndex: index,
-      // currentMIDIFile: state.midiFiles[index],
-      // midiFiles:
+      currentMIDIFile: file,
+      midiFileCurrentIndex: index,
+      midiFiles: [...state.midiFiles, file]
     }
-  } else if (action.type === UPLOAD_XMLDOC) {
-    // const index = action.payload.index;
-    console.log(action.payload.file);
+  } else if (action.type === XMLDOC_UPLOADED) {
+    const file = action.payload.file;
+    const index = state.xmlDocs.length;
     return {
       ...state,
-      // midiFileCurrentIndex: index,
-      // currentMIDIFile: state.midiFiles[index],
-      // midiFiles:
+      currentXMLDoc: file,
+      xmlDocCurrentIndex: index,
+      xmlDocs: [...state.xmlDocs, file]
     }
   }
 

@@ -1,7 +1,7 @@
 import React, { SyntheticEvent, useEffect, useRef, RefObject } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
-import { Dispatch } from 'redux';
-import { selectXMLDoc, selectMIDIFile, uploadMIDIFile, uploadXMLDoc } from '../redux/actions';
+import { Dispatch, AnyAction } from 'redux';
+import { selectXMLDoc, selectMIDIFile, uploadMIDIFile, uploadXMLDoc, loadInitData } from '../redux/actions';
 import uniqid from 'uniqid';
 import { AppState } from '../redux/store';
 
@@ -15,13 +15,11 @@ export const Controls: React.FC<Props> = ({ }: Props) => {
   const xmlDocCurrentIndex = useSelector((state: AppState) => state.data.xmlDocCurrentIndex);
   const midiFileCurrentIndex = useSelector((state: AppState) => state.data.midiFileCurrentIndex);
 
-  xmlDocNames.unshift('select MusicXML file');
-  midiFileNames.unshift('select MIDI file');
-  xmlDocNames.push('upload new');
-  midiFileNames.push('upload new');
+  const select1 = ['select MusicXML file', ...xmlDocNames, 'upload new'];
+  const select2 = ['select MIDI file', ...midiFileNames, 'upload new'];
 
-  const indexUploadXMLDoc = xmlDocNames.length - 1;
-  const indexUploadMIDIFile = xmlDocNames.length - 1;
+  const indexUploadXMLDoc = select1.length - 1;
+  const indexUploadMIDIFile = select2.length - 1;
 
   // useEffect(() => {
   //   if (refInput && refInput.current) {
@@ -37,23 +35,23 @@ export const Controls: React.FC<Props> = ({ }: Props) => {
         return;
       } else if (index === indexUploadXMLDoc && refInputXML.current) {
         refInputXML.current.click();
-      } else {
-        dispatch(selectXMLDoc(index));
+      } else if (index !== xmlDocCurrentIndex + 1) {
+        dispatch(selectXMLDoc(index - 1));
       }
     }}>
-      {xmlDocNames.map((val, i) => (<option key={uniqid()}>{val}</option>))}
+      {select1.map((val, i) => (<option key={uniqid()}>{val}</option>))}
     </select>
     <select defaultValue={midiFileCurrentIndex} onChange={(e) => {
       const index = e.target.selectedIndex;
       if (index === 0) {
         return;
+      } else if (index !== midiFileCurrentIndex + 1) {
+        dispatch(selectMIDIFile(index - 1));
       } else if (index === indexUploadMIDIFile && refInputMIDI.current) {
         refInputMIDI.current.click();
-      } else {
-        dispatch(selectMIDIFile(index));
       }
     }}>
-      {midiFileNames.map((val, i) => (<option key={uniqid()}>{val}</option>))}
+      {select2.map((val, i) => (<option key={uniqid()}>{val}</option>))}
     </select>
     <input type="button" value="connect" />
     <input ref={refInputXML} type="file" id="upload" accept=".xml,.musicxml, .mxl" style={{ display: 'none' }} onChange={(e) => {

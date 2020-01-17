@@ -8,6 +8,7 @@ let i: number = 0;
 
 export const Score: React.FC<{}> = ({ }) => {
   const xmlDoc = useSelector((state: AppState) => { return state.data.currentXMLDoc; }, shallowEqual)
+  // const xmlDoc = useSelector((state: AppState) => { return state.data.currentXMLDoc; })
   const dispatch = useDispatch();
   const refScore: RefObject<HTMLDivElement> = useRef(null);
 

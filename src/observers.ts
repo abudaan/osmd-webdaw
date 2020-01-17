@@ -153,7 +153,7 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
   // of the heartbeat song
   combineLatest(song$, osmd$, xmlDoc$)
     // .pipe(
-    //   filter(([, , , mapping]) => mapping === null),
+    //   filter(([, osmd,]) => osmd === null),
     // )
     .subscribe(async ([song, osmd, xml]) => {
       console.log('setup notemapping');

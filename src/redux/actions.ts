@@ -10,6 +10,8 @@ export const SELECT_XMLDOC = 'SELECT_XMLDOC';
 export const SELECT_MIDIFILE = 'SELECT_MIDIFILE';
 export const UPLOAD_XMLDOC = 'UPLOAD_XMLDOC';
 export const UPLOAD_MIDIFILE = 'UPLOAD_MIDIFILE';
+export const XMLDOC_UPLOADED = 'XMLDOC_UPLOADED';
+export const MIDIFILE_UPLOADED = 'MIDIFILE_UPLOADED';
 export const UPDATE_NOTE_MAPPING = 'UPDATE_NOTE_MAPPING';
 export const POSITION_SLIDER_CHANGED = 'POSITION_SLIDER_CHANGED';
 export const PLAYHEAD_SEEKING = 'PLAYHEAD_SEEKING';
@@ -104,38 +106,57 @@ export const selectMIDIFile = (index: number) => ({
   payload: { index },
 })
 
+const fileReader = new FileReader();
+const fileReaderPromise = (type: string, data: Blob): Promise<ProgressEvent<FileReader>> => {
+  return new Promise((resolve, reject) => {
+    fileReader.onload = (evt) => {
+      resolve(evt);
+    }
+    fileReader.onerror = (evt) => {
+      reject(evt);
+    }
+    if (type === 'text') {
+      fileReader.readAsText(data);
+    } else if (type === 'binary') {
+      fileReader.readAsBinaryString(data);
+    }
+  })
+}
+
+// export const uploadXMLDoc = (file: File) => {
+//   return {
+//     type: XMLDOC_UPLOADED,
+//     payload: { file },
+//   }
+// }
+
 export const uploadXMLDoc = (file: File) => {
   return async (dispatch: Dispatch) => {
-    const fileReader = new FileReader();
-    fileReader.onload = (evt) => {
-      if (evt && evt.target) {
-        dispatch({
-          type: UPLOAD_XMLDOC,
-          payload: { file: evt.target.result },
-        });
-      } else {
-        throw new Error('upload xml failed')
-      }
+    dispatch({
+      type: UPLOAD_XMLDOC,
+    });
+    const evt = await fileReaderPromise('text', file);
+    if (evt && evt.target) {
+      dispatch({
+        type: XMLDOC_UPLOADED,
+        payload: { file: new DOMParser().parseFromString(evt.target.result as string, 'application/xml') },
+      });
     };
-    fileReader.readAsText(file);
   }
 }
 
 export const uploadMIDIFile = (file: File) => {
   return async (dispatch: Dispatch) => {
-    const fileReader = new FileReader();
-    fileReader.onload = (evt) => {
-      if (evt && evt.target) {
-        dispatch({
-          type: UPLOAD_XMLDOC,
-          payload: { file: evt.target.result },
-        });
-      } else {
-        throw new Error('upload midi failed')
-      }
+    dispatch({
+      type: UPLOAD_MIDIFILE,
+    });
+    const evt = await fileReaderPromise('binary', file);
+    if (evt && evt.target) {
+      dispatch({
+        type: MIDIFILE_UPLOADED,
+        payload: { file: evt.target.result },
+      });
     };
-    // fileReader.readAsArrayBuffer(file);
-    fileReader.readAsBinaryString(file);
   }
 }
 
