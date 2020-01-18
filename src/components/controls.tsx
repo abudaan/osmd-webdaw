@@ -45,10 +45,10 @@ export const Controls: React.FC<Props> = ({ }: Props) => {
       const index = e.target.selectedIndex;
       if (index === 0) {
         return;
-      } else if (index !== midiFileCurrentIndex + 1) {
-        dispatch(selectMIDIFile(index - 1));
       } else if (index === indexUploadMIDIFile && refInputMIDI.current) {
         refInputMIDI.current.click();
+      } else if (index !== midiFileCurrentIndex + 1) {
+        dispatch(selectMIDIFile(index - 1));
       }
     }}>
       {select2.map((val, i) => (<option key={uniqid()}>{val}</option>))}

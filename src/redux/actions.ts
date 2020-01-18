@@ -37,7 +37,7 @@ export const loadInitData = (xmlDocUrl: string, midiFileUrl: string, instrumentU
       type: LOAD_INIT_DATA
     });
     const xmlDoc = await loadXML(xmlDocUrl);
-    const midiFile = await addMIDIFile(midiFileUrl);
+    const midiFile = await addMIDIFile({ url: midiFileUrl });
     const assetPack = await loadJSON(instrumentUrl);
     await addAssetPack(assetPack);
     dispatch({
@@ -106,8 +106,12 @@ export const selectMIDIFile = (index: number) => ({
   payload: { index },
 })
 
-const fileReader = new FileReader();
-const fileReaderPromise = (type: string, data: Blob): Promise<ProgressEvent<FileReader>> => {
+let fileReader: FileReader;
+const fileReaderPromise = (file: File): Promise<ProgressEvent<FileReader>> => {
+  if (!fileReader) {
+    fileReader = new FileReader()
+  }
+  const type = file.type;
   return new Promise((resolve, reject) => {
     fileReader.onload = (evt) => {
       resolve(evt);
@@ -115,27 +119,20 @@ const fileReaderPromise = (type: string, data: Blob): Promise<ProgressEvent<File
     fileReader.onerror = (evt) => {
       reject(evt);
     }
-    if (type === 'text') {
-      fileReader.readAsText(data);
-    } else if (type === 'binary') {
-      fileReader.readAsBinaryString(data);
+    if (type.indexOf('xml') !== -1) {
+      fileReader.readAsText(file);
+    } else if (type.indexOf('mid') !== -1) {
+      fileReader.readAsArrayBuffer(file);
     }
   })
 }
-
-// export const uploadXMLDoc = (file: File) => {
-//   return {
-//     type: XMLDOC_UPLOADED,
-//     payload: { file },
-//   }
-// }
 
 export const uploadXMLDoc = (file: File) => {
   return async (dispatch: Dispatch) => {
     dispatch({
       type: UPLOAD_XMLDOC,
     });
-    const evt = await fileReaderPromise('text', file);
+    const evt = await fileReaderPromise(file);
     if (evt && evt.target) {
       dispatch({
         type: XMLDOC_UPLOADED,
@@ -150,11 +147,13 @@ export const uploadMIDIFile = (file: File) => {
     dispatch({
       type: UPLOAD_MIDIFILE,
     });
-    const evt = await fileReaderPromise('binary', file);
-    if (evt && evt.target) {
+    const evt = await fileReaderPromise(file);
+    if (evt && evt.target && evt.target.result) {
+      const arraybuffer = evt.target.result as ArrayBuffer;
+      const file = await addMIDIFile({ arraybuffer });
       dispatch({
         type: MIDIFILE_UPLOADED,
-        payload: { file: evt.target.result },
+        payload: { file },
       });
     };
   }

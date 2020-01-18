@@ -56,8 +56,8 @@ const getLoadedInstruments = () =>
     .filter((t: [number, string]) => t[1] !== 'metronome');
 
 
-const addMIDIFile = (url: string): Promise<Heartbeat.MIDIFileJSON> => new Promise((resolve) => {
-  sequencer.addMidiFile({ url }, (json: Heartbeat.MIDIFileJSON) => {
+const addMIDIFile = (config: { url?: string, arraybuffer?: ArrayBuffer }): Promise<Heartbeat.MIDIFileJSON> => new Promise((resolve) => {
+  sequencer.addMidiFile(config, (json: Heartbeat.MIDIFileJSON) => {
     // console.log(url);
     // console.log(sequencer.getMidiFiles())
     resolve(json);
