@@ -38,7 +38,7 @@ const store = createStore(
   // )),
   applyMiddleware(
     thunkMiddleware,
-    createLogger()
+    createLogger({ collapsed: true })
   ),
 );
 

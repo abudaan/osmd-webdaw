@@ -38,9 +38,9 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
   const xmlDoc$ = state$.pipe(
     pluck('data'),
     map(state => state.currentXMLDoc),
+    tap(console.log),
     filter(notNull),
     distinctUntilChanged(),
-    // tap(console.log),
     share(),
   );
 
@@ -131,7 +131,7 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
   // create a heartbeat song when both the MIDI file has loaded and the MusicXML file has been
   // loaded and rendered to VexFlow (this is why we need subscribe to osmd$ as well)
   combineLatest(midiFile$, osmd$, instrumentName$)
-    .pipe(take(1))
+    // .pipe(take(1))
     .subscribe(([midiFile, osmd, instrumentName]) => {
       console.log('create song');
       const song = sequencer.createSong(sequencer.getMidiFile(midiFile.name));
@@ -155,6 +155,7 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     // .pipe(
     //   filter(([, osmd,]) => osmd === null),
     // )
+    .pipe(take(1))
     .subscribe(async ([song, osmd, xml]) => {
       console.log('setup notemapping');
       const [, , repeats] = parseMusicXML(xml, song.ppq);

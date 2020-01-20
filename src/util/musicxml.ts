@@ -16,6 +16,8 @@ type EventDataPerPart = {
 type PartData = {
   id: string,
   name: string,
+  instrument: string,
+  volume: number
 }[];
 
 export type TypeRepeats = {
@@ -62,14 +64,24 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
     // get id and name of the part
     const partId = xmlDoc.evaluate('@id', partNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
     const partName = xmlDoc.evaluate('part-name', partNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
-    parts.push({ id: partId, name: partName });
-    events[partId] = [];
 
-    let velocity = 100;
+    // let velocity = 100;
+    let volume = 70;
     tmp = xmlDoc.evaluate('midi-instrument/volume', partNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
     if (!isNaN(tmp)) {
-      velocity = (tmp / 100) * 127;
+      // velocity = (tmp / 100) * 127;
+      volume = tmp;
     }
+    const velocity = (volume / 100) * 127;
+
+    let instrument = 'piano'
+    tmp = xmlDoc.evaluate('score-instrument/instrument-name', partNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
+    if (!!tmp) {
+      instrument = tmp;
+    }
+
+    parts.push({ id: partId, name: partName, volume, instrument });
+    events[partId] = [];
 
     const measureIterator = xmlDoc.evaluate('//part[@id="' + partId + '"]/measure', partNode, nsResolver, XPathResult.ANY_TYPE, null);
     let measureNode;

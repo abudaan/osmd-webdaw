@@ -10,8 +10,8 @@ export const Controls: React.FC<Props> = ({ }: Props) => {
   const refInputXML: RefObject<HTMLInputElement> = useRef(null);
   const refInputMIDI: RefObject<HTMLInputElement> = useRef(null);
   const dispatch: Dispatch = useDispatch();
-  const xmlDocNames = useSelector((state: AppState) => { return state.data.xmlDocNames; }, shallowEqual)
-  const midiFileNames = useSelector((state: AppState) => { return state.data.midiFileNames; }, shallowEqual)
+  const xmlDocNames = useSelector((state: AppState) => { return state.data.xmlDocs.map(val => val.name); }, shallowEqual)
+  const midiFileNames = useSelector((state: AppState) => { return state.data.midiFiles.map(val => val.name); }, shallowEqual)
   const xmlDocCurrentIndex = useSelector((state: AppState) => state.data.xmlDocCurrentIndex);
   const midiFileCurrentIndex = useSelector((state: AppState) => state.data.midiFileCurrentIndex);
 

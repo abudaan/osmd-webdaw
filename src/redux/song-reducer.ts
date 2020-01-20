@@ -6,6 +6,7 @@ import {
   UPDATE_NOTE_MAPPING,
   PLAYHEAD_SEEKING,
   UPDATE_PLAYHEAD_MILLIS,
+  XMLDOC_UPLOADED,
 } from './actions';
 
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay/build/dist/src';

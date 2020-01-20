@@ -10,8 +10,6 @@ export const SELECT_XMLDOC = 'SELECT_XMLDOC';
 export const SELECT_MIDIFILE = 'SELECT_MIDIFILE';
 export const UPLOAD_XMLDOC = 'UPLOAD_XMLDOC';
 export const UPLOAD_MIDIFILE = 'UPLOAD_MIDIFILE';
-export const XMLDOC_UPLOADED = 'XMLDOC_UPLOADED';
-export const MIDIFILE_UPLOADED = 'MIDIFILE_UPLOADED';
 export const UPDATE_NOTE_MAPPING = 'UPDATE_NOTE_MAPPING';
 export const POSITION_SLIDER_CHANGED = 'POSITION_SLIDER_CHANGED';
 export const PLAYHEAD_SEEKING = 'PLAYHEAD_SEEKING';
@@ -134,9 +132,13 @@ export const uploadXMLDoc = (file: File) => {
     });
     const evt = await fileReaderPromise(file);
     if (evt && evt.target) {
+      const file1 = new DOMParser().parseFromString(evt.target.result as string, 'application/xml');
       dispatch({
-        type: XMLDOC_UPLOADED,
-        payload: { file: new DOMParser().parseFromString(evt.target.result as string, 'application/xml') },
+        type: MUSICXML_LOADED,
+        payload: {
+          file: file1,
+          name: file.name,
+        },
       });
     };
   }
@@ -150,10 +152,10 @@ export const uploadMIDIFile = (file: File) => {
     const evt = await fileReaderPromise(file);
     if (evt && evt.target && evt.target.result) {
       const arraybuffer = evt.target.result as ArrayBuffer;
-      const file = await addMIDIFile({ arraybuffer });
+      const file1 = await addMIDIFile({ arraybuffer });
       dispatch({
-        type: MIDIFILE_UPLOADED,
-        payload: { file },
+        type: MIDIFILE_LOADED,
+        payload: { name: file.name, file: file1 },
       });
     };
   }
