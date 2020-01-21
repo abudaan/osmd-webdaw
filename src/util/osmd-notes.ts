@@ -11,7 +11,7 @@
 */
 
 import { from } from 'rxjs';
-import { map, reduce } from 'rxjs/operators';
+import { map, reduce, tap } from 'rxjs/operators';
 import { OpenSheetMusicDisplay, GraphicalStaffEntry, GraphicalNote, VexFlowGraphicalNote, MusicSystem } from 'opensheetmusicdisplay'
 
 type TypeStave = {
@@ -48,20 +48,22 @@ const getGraphicalNotesPerBar = (osmd: OpenSheetMusicDisplay, ppq: number): Prom
                     parentMusicSystem, // necessary to get the y-position if the note in the score
                   };
                 })
-              // .sort((a, b) => {
-              //   if (a.ticks < b.ticks) {
-              //     return -1;
-              //   } else if (a.ticks > b.ticks) {
-              //     return 1;
-              //   }
-              //   return 0;
-              // });
             });
-          });
-        });
+          })
+        })
       }),
+      // tap(console.log),
       reduce((acc: any[], val) => {
-        acc.push(val.flat(3));
+        const flat: TypeGraphicalNoteData[] = val.flat(3);
+        flat.sort((a, b) => {
+          if (a.ticks < b.ticks) {
+            return -1;
+          } else if (a.ticks > b.ticks) {
+            return 1;
+          }
+          return 0;
+        })
+        acc.push(flat);
         return acc;
       }, []),
     ).toPromise();

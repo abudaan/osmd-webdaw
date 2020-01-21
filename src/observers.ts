@@ -49,7 +49,7 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     map(state => state.osmd),
     filter(notNull),
     distinctUntilChanged(),
-    // tap(console.log),
+    tap(console.log),
     share(),
   );
 

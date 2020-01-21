@@ -24,6 +24,7 @@ export type SongState = {
   songPositionMillis: number,
   songPositionPercentage: number,
   sliderPositionPercentage: number,
+  notesPerBar: TypeGraphicalNoteData[][],
   osmd: null | OpenSheetMusicDisplay
   song: null | Heartbeat.Song
   keyEditor: null | Heartbeat.KeyEditor
@@ -43,6 +44,7 @@ export const initialState = {
   osmd: null,
   keyEditor: null,
   noteMapping: null,
+  notesPerBar: [],
   songPosition: '',
   songPositionMillis: 0,
   songPositionPercentage: 0,
@@ -58,9 +60,11 @@ export const initialState = {
 
 export const song = (state: SongState = initialState, action: any) => {
   if (action.type === SCORE_READY) {
+    // console.log(action.payload.notesPerBar);
     return {
       ...state,
-      osmd: action.payload.osmd,
+      // osmd: action.payload.osmd,
+      notesPerBar: action.payload.notesPerBar,
       scoreContainer: action.payload.scoreContainer,
       scoreContainerOffsetY: action.payload.scoreContainerOffsetY,
     };

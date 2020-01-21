@@ -20,7 +20,8 @@ import { Dispatch, AnyAction } from 'redux'
 import { loadXML, addMIDIFile, loadJSON, addAssetPack } from '../util/heartbeat-utils';
 import { Observable } from 'rxjs';
 import { AppState } from './store';
-import { NoteMapping } from 'src/util/osmd-heartbeat';
+import { NoteMapping } from '../util/osmd-heartbeat';
+import { getGraphicalNotesPerBar } from '../util/osmd-notes';
 
 export const init = (observable: Observable<AppState>) => ({
   type: INITIALIZING,
@@ -55,18 +56,20 @@ export const songReady = (song: Heartbeat.Song, keyEditor: Heartbeat.KeyEditor) 
 });
 
 export const scoreReady = (osmd: OpenSheetMusicDisplay) => {
-  const scoreContainer = (osmd['container'] as HTMLDivElement).parentElement;
-  let scoreContainerOffsetY = 0;
-  if (!!scoreContainer) {
-    scoreContainerOffsetY = scoreContainer.offsetTop;
+  return async (dispatch: Dispatch) => {
+    const scoreContainer = (osmd['container'] as HTMLDivElement).parentElement;
+    let scoreContainerOffsetY = 0;
+    if (!!scoreContainer) {
+      scoreContainerOffsetY = scoreContainer.offsetTop;
+    }
+    const notesPerBar = await getGraphicalNotesPerBar(osmd, 960);
+    dispatch({
+      type: SCORE_READY,
+      payload: { notesPerBar, scoreContainerOffsetY, scoreContainer },
+    });
   }
-
-  return {
-    type: SCORE_READY,
-    payload: { osmd, scoreContainerOffsetY, scoreContainer },
-  }
-
 };
+
 export const updateNoteMapping = (noteMapping: NoteMapping) => {
   return {
     type: UPDATE_NOTE_MAPPING,
