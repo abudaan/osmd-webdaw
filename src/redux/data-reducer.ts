@@ -87,7 +87,7 @@ export const data = (state: DataState = initialState, action: any) => {
     const file = action.payload.file;
     const name = action.payload.name;
     const index = state.xmlDocs.length;
-    console.log('XML', file);
+    // console.log('XML', file);
     return {
       ...state,
       currentXMLDoc: file,

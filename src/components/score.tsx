@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, RefObject } from 'react';
+import React, { useEffect, useRef, RefObject, useState } from 'react';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 import { useSelector, useDispatch, shallowEqual } from 'react-redux';
 import { AppState } from '../redux/store';
@@ -7,7 +7,8 @@ import { scoreReady } from '../redux/actions';
 let i: number = 0;
 
 export const Score: React.FC<{}> = ({ }) => {
-  const xmlDoc = useSelector((state: AppState) => { return state.data.currentXMLDoc; }, shallowEqual)
+  const [osmd, setOSMD] = useState<OpenSheetMusicDisplay | null>(null);
+  const xmlDoc = useSelector((state: AppState) => { return state.data.currentXMLDoc; })
   // const xmlDoc = useSelector((state: AppState) => { return state.data.currentXMLDoc; })
   const dispatch = useDispatch();
   const refScore: RefObject<HTMLDivElement> = useRef(null);
@@ -17,22 +18,25 @@ export const Score: React.FC<{}> = ({ }) => {
       console.log('[Score] useEffect');
       const scoreDiv = refScore.current;
       if (scoreDiv) {
-        const osmd = new OpenSheetMusicDisplay(scoreDiv, {
-          backend: 'svg',
-          autoResize: true,
-        });
-        // window.openSheetMusicDisplay = openSheetMusicDisplay;  
-        osmd.load(xmlDoc)
-          .then(() => {
-            osmd.render();
-            // idString is not set by osmd which is I believe a bug -> the default value is "random idString, not initialized"
-            // osmd.idString = `score-${new Date().getTime()}`;
-            dispatch(scoreReady(osmd))
+        if (osmd === null) {
+          const o = new OpenSheetMusicDisplay(scoreDiv, {
+            backend: 'svg',
+            autoResize: true,
           });
-
+          setOSMD(o);
+        } else {
+          // window.openSheetMusicDisplay = openSheetMusicDisplay;  
+          osmd.load(xmlDoc)
+            .then(() => {
+              osmd.render();
+              // idString is not set by osmd which is I believe a bug -> the default value is "random idString, not initialized"
+              // osmd.idString = `score-${new Date().getTime()}`;
+              dispatch(scoreReady(osmd))
+            });
+        }
       }
     }
-  }, [xmlDoc])
+  });
 
   console.log('[Score] render (xmlDoc === null) ->', xmlDoc === null);
 

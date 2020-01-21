@@ -38,7 +38,7 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
   const xmlDoc$ = state$.pipe(
     pluck('data'),
     map(state => state.currentXMLDoc),
-    tap(console.log),
+    // tap(console.log),
     filter(notNull),
     distinctUntilChanged(),
     share(),
