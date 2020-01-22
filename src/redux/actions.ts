@@ -22,6 +22,7 @@ import { Observable } from 'rxjs';
 import { AppState } from './store';
 import { NoteMapping } from '../util/osmd-heartbeat';
 import { getGraphicalNotesPerBar } from '../util/osmd-notes';
+import { parseMusicXML } from '../util/musicxml';
 
 export const init = (observable: Observable<AppState>) => ({
   type: INITIALIZING,
@@ -136,6 +137,7 @@ export const uploadXMLDoc = (file: File) => {
     const evt = await fileReaderPromise(file);
     if (evt && evt.target) {
       const file1 = new DOMParser().parseFromString(evt.target.result as string, 'application/xml');
+      const [repeats, events, parts] = parseMusicXML(file1);
       dispatch({
         type: MUSICXML_LOADED,
         payload: {

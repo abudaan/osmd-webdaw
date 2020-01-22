@@ -2,14 +2,42 @@ import sequencer from 'heartbeat-sequencer';
 import { from } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-type EventData = {
-  command: number,
-  data1: number,
-  data2: number,
-  ticks: number,
-  // voice?: number,
-  // staff?: number,
+const NOTE_ON = 0x90; // 144
+const NOTE_OFF = 0x80; // 128
+const TEMPO = 0x51; // 81
+const TIME_SIGNATURE = 0x58; // 88
+
+enum NOTE {
+  NOTE_ON,
+  NOTE_OFF,
 }
+
+type NoteEvent = {
+  command: NOTE,
+  channel: number,
+  ticks: number,
+  velocity: number,
+  noteNumber: number,
+  octave: number,
+  noteName: string,
+}
+
+type TempoEvent = {
+  command: 0x51,
+  channel: number,
+  ticks: number,
+  bpm: number,
+}
+
+type SignatureEvent = {
+  command: 0x58,
+  channel: number,
+  ticks: number,
+  numerator: number,
+  denominator: number,
+}
+
+type EventData = NoteEvent | TempoEvent | SignatureEvent;
 
 type EventDataPerPart = {
   [partId: string]: EventData[],
@@ -27,11 +55,7 @@ export type TypeRepeats = {
   type: string
 }[];
 
-const NOTE_ON = 0x90; // 144
-const NOTE_OFF = 0x80; // 128
-const TIME_SIGNATURE = 0x58; // 88
-
-const parseMusicXML = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPerPart, number[][]] | null => {
+const parseMusicXML = (xmlDoc: XMLDocument, ppq: number = 960): [PartData, EventDataPerPart, number[][]] | null => {
   if (xmlDoc === null) {
     return null;
   }
@@ -76,6 +100,12 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
     }
     const velocity = (volume / 100) * 127;
 
+    let channel = 0;
+    tmp = xmlDoc.evaluate('midi-instrument/midi-channel', partNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
+    if (!isNaN(tmp)) {
+      channel = tmp - 1;
+    }
+
     let instrument = 'piano'
     tmp = xmlDoc.evaluate('score-instrument/instrument-name', partNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
     if (!!tmp) {
@@ -103,13 +133,24 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
       if (!isNaN(tmp) && !isNaN(tmp1)) {
         numerator = tmp;
         denominator = tmp1;
-        events[partId].push({ command: TIME_SIGNATURE, data1: numerator, data2: denominator, ticks });
+        events[partId].push({
+          command: TIME_SIGNATURE,
+          channel,
+          ticks,
+          numerator,
+          denominator,
+        });
       }
 
-      let bpm = 120;
       tmp = xmlDoc.evaluate('direction/sound/@tempo', measureNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
       if (!isNaN(tmp)) {
-        bpm = tmp;
+        // console.log('BPM', tmp);
+        events[partId].push({
+          command: TEMPO,
+          channel,
+          ticks,
+          bpm: tmp,
+        });
       }
 
       tmp = xmlDoc.evaluate('barline/repeat/@direction', measureNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
@@ -188,9 +229,12 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
           const noteNumber = sequencer.getNoteNumber(noteName, octave);
           const note = {
             command: NOTE_ON,
+            channel,
             ticks,
-            data1: noteNumber,
-            data2: velocity,
+            noteName,
+            octave,
+            noteNumber,
+            velocity,
             // voice,
             // staff,
           };
@@ -207,9 +251,12 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
             //console.log('no ties', measureNumber, voice, noteNumber, tiedNotes);
             events[partId].push({
               command: NOTE_OFF,
+              channel,
               ticks,
-              data1: noteNumber,
-              data2: 0,
+              noteNumber,
+              velocity: 0,
+              noteName,
+              octave,
               // voice,
               // staff,
             });
@@ -226,9 +273,12 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
             tiedNotes[`N_${staff}-${voice}-${noteNumber}`] += noteDurationTicks;
             events[partId].push({
               command: NOTE_OFF,
+              channel,
               ticks: tiedNotes[`N_${staff}-${voice}-${noteNumber}`],
-              data1: noteNumber,
-              data2: 0,
+              octave,
+              noteName,
+              noteNumber,
+              velocity: 0,
               // voice,
               // staff,
             });
@@ -267,6 +317,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
 }
 
 const parseTimeWise = (doc: XMLDocument): [PartData, EventDataPerPart, number[][]] | null => {
+  // to be implemented
   return null;
 }
 
