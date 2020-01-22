@@ -137,12 +137,18 @@ export const uploadXMLDoc = (file: File) => {
     const evt = await fileReaderPromise(file);
     if (evt && evt.target) {
       const file1 = new DOMParser().parseFromString(evt.target.result as string, 'application/xml');
-      const [repeats, events, parts] = parseMusicXML(file1);
+      const parsed = parseMusicXML(file1);
+      if (parsed === null) {
+        throw new Error('not a valid XML file');
+      }
+      const { repeats, parts } = parsed;
       dispatch({
         type: MUSICXML_LOADED,
         payload: {
           file: file1,
           name: file.name,
+          repeats,
+          parts,
         },
       });
     };

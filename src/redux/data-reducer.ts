@@ -9,6 +9,7 @@ import {
   UPLOAD_XMLDOC,
 } from './actions';
 import { baseName } from '../util/general';
+import { PartData } from 'src/util/musicxml';
 
 export type DataState = {
   initUrls: {
@@ -18,7 +19,7 @@ export type DataState = {
   }
   instrumentName: string,
   midiFiles: { name: string, file: Heartbeat.MIDIFileJSON }[],
-  xmlDocs: { name: string, file: XMLDocument, repeats: number[][] }[],
+  xmlDocs: { name: string, file: XMLDocument, repeats: number[][], parts: PartData }[],
   currentXMLDoc: null | XMLDocument,
   currentMIDIFile: null | Heartbeat.MIDIFileJSON,
   xmlDocCurrentIndex: number,
@@ -86,13 +87,15 @@ export const data = (state: DataState = initialState, action: any) => {
   } else if (action.type === MUSICXML_LOADED) {
     const file = action.payload.file;
     const name = action.payload.name;
+    const parts = action.payload.parts;
+    const repeats = action.payload.repeats;
     const index = state.xmlDocs.length;
     // console.log('XML', file);
     return {
       ...state,
-      currentXMLDoc: file,
-      xmlDocCurrentIndex: index,
-      xmlDocs: [...state.xmlDocs, { name, file }],
+      // currentXMLDoc: file,
+      // xmlDocCurrentIndex: index,
+      xmlDocs: [...state.xmlDocs, { name, file, repeats, parts }],
       // xmlDocNames: [baseName(state.initUrls.xmlDoc)],
     }
   }

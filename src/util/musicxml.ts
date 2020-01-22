@@ -12,7 +12,7 @@ enum NOTE {
   NOTE_OFF,
 }
 
-type NoteEvent = {
+export type NoteEvent = {
   command: NOTE,
   channel: number,
   ticks: number,
@@ -22,14 +22,14 @@ type NoteEvent = {
   noteName: string,
 }
 
-type TempoEvent = {
+export type TempoEvent = {
   command: 0x51,
   channel: number,
   ticks: number,
   bpm: number,
 }
 
-type SignatureEvent = {
+export type SignatureEvent = {
   command: 0x58,
   channel: number,
   ticks: number,
@@ -37,25 +37,27 @@ type SignatureEvent = {
   denominator: number,
 }
 
-type EventData = NoteEvent | TempoEvent | SignatureEvent;
+export type EventData = NoteEvent | TempoEvent | SignatureEvent;
 
-type EventDataPerPart = {
-  [partId: string]: EventData[],
-};
-
-type PartData = {
+export type PartData = {
   id: string,
   name: string,
   instrument: string,
   volume: number
-}[];
+  events: EventData[],
+};
 
-export type TypeRepeats = {
+export type Repeat = {
   bar: number
   type: string
 }[];
 
-const parseMusicXML = (xmlDoc: XMLDocument, ppq: number = 960): [PartData, EventDataPerPart, number[][]] | null => {
+export type ParsedMusicXML = {
+  parts: PartData[],
+  repeats: number[][],
+}
+
+const parseMusicXML = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML | null => {
   if (xmlDoc === null) {
     return null;
   }
@@ -75,18 +77,19 @@ const parseMusicXML = (xmlDoc: XMLDocument, ppq: number = 960): [PartData, Event
   return null;
 }
 
-const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPerPart, number[][]] => {
+const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
   const nsResolver = xmlDoc.createNSResolver(xmlDoc.ownerDocument === null ? xmlDoc.documentElement : xmlDoc.ownerDocument.documentElement);
   const partIterator = xmlDoc.evaluate('//score-part', xmlDoc, nsResolver, XPathResult.ANY_TYPE, null);
-  const events: EventDataPerPart = {};
-  const parts: PartData = [];
+  const parts: PartData[] = [];
   const tiedNotes: { [id: string]: number } = {};
-  const repeats: TypeRepeats = [{ bar: 1, type: 'forward' }];
+  const repeats: Repeat = [{ bar: 1, type: 'forward' }];
 
+  let index = -1;
   let tmp;
   let tmp1;
   let partNode;
   while (partNode = partIterator.iterateNext()) {
+    index += 1;
     // get id and name of the part
     const partId = xmlDoc.evaluate('@id', partNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
     const partName = xmlDoc.evaluate('part-name', partNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
@@ -112,8 +115,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
       instrument = tmp;
     }
 
-    parts.push({ id: partId, name: partName, volume, instrument });
-    events[partId] = [];
+    parts.push({ id: partId, name: partName, volume, instrument, events: [] });
 
     const measureIterator = xmlDoc.evaluate('//part[@id="' + partId + '"]/measure', partNode, nsResolver, XPathResult.ANY_TYPE, null);
     let measureNode;
@@ -133,7 +135,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
       if (!isNaN(tmp) && !isNaN(tmp1)) {
         numerator = tmp;
         denominator = tmp1;
-        events[partId].push({
+        parts[index].events.push({
           command: TIME_SIGNATURE,
           channel,
           ticks,
@@ -145,7 +147,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
       tmp = xmlDoc.evaluate('direction/sound/@tempo', measureNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
       if (!isNaN(tmp)) {
         // console.log('BPM', tmp);
-        events[partId].push({
+        parts[index].events.push({
           command: TEMPO,
           channel,
           ticks,
@@ -243,13 +245,13 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
             ticks -= noteDurationTicks;
           }
 
-          events[partId].push(note);
+          parts[index].events.push(note);
           //console.log('tie', tieStart, tieStop);
 
           if (tieStart === false && tieStop === false) {
             // no ties
             //console.log('no ties', measureNumber, voice, noteNumber, tiedNotes);
-            events[partId].push({
+            parts[index].events.push({
               command: NOTE_OFF,
               channel,
               ticks,
@@ -271,7 +273,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
           } else if (tieStart === false && tieStop === true) {
             // end of tie
             tiedNotes[`N_${staff}-${voice}-${noteNumber}`] += noteDurationTicks;
-            events[partId].push({
+            parts[index].events.push({
               command: NOTE_OFF,
               channel,
               ticks: tiedNotes[`N_${staff}-${voice}-${noteNumber}`],
@@ -313,10 +315,10 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
     }
   });
 
-  return [parts, events, repeats2];
+  return { parts, repeats: repeats2 };
 }
 
-const parseTimeWise = (doc: XMLDocument): [PartData, EventDataPerPart, number[][]] | null => {
+const parseTimeWise = (doc: XMLDocument): ParsedMusicXML | null => {
   // to be implemented
   return null;
 }
