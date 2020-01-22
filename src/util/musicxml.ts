@@ -1,12 +1,14 @@
 import sequencer from 'heartbeat-sequencer';
+import { from } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 type EventData = {
   command: number,
   data1: number,
   data2: number,
   ticks: number,
-  voice?: number,
-  staff?: number,
+  // voice?: number,
+  // staff?: number,
 }
 
 type EventDataPerPart = {
@@ -189,8 +191,8 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
             ticks,
             data1: noteNumber,
             data2: velocity,
-            voice,
-            staff,
+            // voice,
+            // staff,
           };
           ticks += noteDurationTicks;
           if (chord !== null) {
@@ -208,8 +210,8 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
               ticks,
               data1: noteNumber,
               data2: 0,
-              voice,
-              staff,
+              // voice,
+              // staff,
             });
           } else if (tieStart === true && tieStop === false) {
             // start of tie
@@ -227,8 +229,8 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): [PartData, EventDataPe
               ticks: tiedNotes[`N_${staff}-${voice}-${noteNumber}`],
               data1: noteNumber,
               data2: 0,
-              voice,
-              staff,
+              // voice,
+              // staff,
             });
             delete tiedNotes[`N_${staff}-${voice}-${noteNumber}`];
             //console.log('end', measureNumber, voice, noteNumber, tiedNotes);

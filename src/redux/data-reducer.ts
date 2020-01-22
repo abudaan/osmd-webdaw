@@ -18,7 +18,7 @@ export type DataState = {
   }
   instrumentName: string,
   midiFiles: { name: string, file: Heartbeat.MIDIFileJSON }[],
-  xmlDocs: { name: string, file: XMLDocument }[],
+  xmlDocs: { name: string, file: XMLDocument, repeats: number[][] }[],
   currentXMLDoc: null | XMLDocument,
   currentMIDIFile: null | Heartbeat.MIDIFileJSON,
   xmlDocCurrentIndex: number,
