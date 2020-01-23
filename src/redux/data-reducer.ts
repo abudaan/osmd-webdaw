@@ -19,11 +19,18 @@ export type DataState = {
   }
   instrumentName: string,
   midiFiles: { name: string, file: Heartbeat.MIDIFileJSON }[],
-  xmlDocs: { name: string, file: XMLDocument, repeats: number[][], parts: PartData }[],
+  xmlDocs: {
+    name: string,
+    file: XMLDocument,
+    repeats: number[][],
+    parts: PartData,
+    interpretations: Heartbeat.MIDIFileJSON[],
+  }[],
   currentXMLDoc: null | XMLDocument,
   currentMIDIFile: null | Heartbeat.MIDIFileJSON,
   xmlDocCurrentIndex: number,
   midiFileCurrentIndex: number,
+  interpretationsCurrentIndex: number,
 };
 
 const instrumentName = 'TP00-PianoStereo';

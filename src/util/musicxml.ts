@@ -37,7 +37,7 @@ export type SignatureEvent = {
   denominator: number,
 }
 
-export type EventData = NoteEvent | TempoEvent | SignatureEvent;
+export type EventData = NoteEvent;// | TempoEvent | SignatureEvent;
 
 export type PartData = {
   id: string,
@@ -55,6 +55,7 @@ export type Repeat = {
 export type ParsedMusicXML = {
   parts: PartData[],
   repeats: number[][],
+  timeEvents: (TempoEvent | SignatureEvent)[],
 }
 
 const parseMusicXML = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML | null => {
@@ -83,6 +84,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
   const parts: PartData[] = [];
   const tiedNotes: { [id: string]: number } = {};
   const repeats: Repeat = [{ bar: 1, type: 'forward' }];
+  const timeEvents: (TempoEvent | SignatureEvent)[] = [];
 
   let index = -1;
   let tmp;
@@ -135,24 +137,28 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
       if (!isNaN(tmp) && !isNaN(tmp1)) {
         numerator = tmp;
         denominator = tmp1;
-        parts[index].events.push({
+        const event: SignatureEvent = {
           command: TIME_SIGNATURE,
           channel,
           ticks,
           numerator,
           denominator,
-        });
+        }
+        // parts[index].events.push(event);
+        timeEvents.push(event)
       }
 
       tmp = xmlDoc.evaluate('direction/sound/@tempo', measureNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
       if (!isNaN(tmp)) {
         // console.log('BPM', tmp);
-        parts[index].events.push({
+        const event: TempoEvent = {
           command: TEMPO,
           channel,
           ticks,
           bpm: tmp,
-        });
+        };
+        // parts[index].events.push(event);
+        timeEvents.push(event);
       }
 
       tmp = xmlDoc.evaluate('barline/repeat/@direction', measureNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
@@ -315,7 +321,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
     }
   });
 
-  return { parts, repeats: repeats2 };
+  return { parts, repeats: repeats2, timeEvents };
 }
 
 const parseTimeWise = (doc: XMLDocument): ParsedMusicXML | null => {

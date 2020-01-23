@@ -16,13 +16,15 @@ export const PLAYHEAD_SEEKING = 'PLAYHEAD_SEEKING';
 export const UPDATE_PLAYHEAD_MILLIS = 'UPDATE_PLAYHEAD_MILLIS';
 
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
+import sequencer from 'heartbeat-sequencer';
 import { Dispatch, AnyAction } from 'redux'
 import { loadXML, addMIDIFile, loadJSON, addAssetPack } from '../util/heartbeat-utils';
 import { Observable } from 'rxjs';
 import { AppState } from './store';
 import { NoteMapping } from '../util/osmd-heartbeat';
 import { getGraphicalNotesPerBar } from '../util/osmd-notes';
-import { parseMusicXML } from '../util/musicxml';
+import { parseMusicXML, TempoEvent, SignatureEvent } from '../util/musicxml';
+import { find } from 'ramda';
 
 export const init = (observable: Observable<AppState>) => ({
   type: INITIALIZING,
@@ -141,7 +143,33 @@ export const uploadXMLDoc = (file: File) => {
       if (parsed === null) {
         throw new Error('not a valid XML file');
       }
-      const { repeats, parts } = parsed;
+      const { repeats, parts, timeEvents } = parsed;
+      const firstTempoEvent = find((event: TempoEvent | SignatureEvent) => event.command === 0x51)(timeEvents);
+      let bpm = 120;
+      if (firstTempoEvent) {
+        bpm = (firstTempoEvent as TempoEvent).bpm;
+      }
+      const firstSignatureEvent = find((event: TempoEvent | SignatureEvent) => event.command === 0x58)(timeEvents);
+      const { denominator, numerator: nominator } = firstSignatureEvent as SignatureEvent;
+      const tracks = parts.map(part => {
+        const midiEvents: Heartbeat.MIDIEvent = part.events.map(event => {
+          const { command, ticks, noteNumber, velocity } = event;
+          return sequencer.createMidiEvent(ticks, command, noteNumber, velocity);
+        });
+        const t = sequencer.createTrack(part.name);
+        const p = sequencer.createPart();
+        p.addEvents(midiEvents);
+      })
+      const json = {
+        id: file.name,
+        name: file.name,
+        ppq: 960,
+        bpm,
+        nominator,
+        denominator,
+        tracks,
+        timeEvents,
+      }
       dispatch({
         type: MUSICXML_LOADED,
         payload: {

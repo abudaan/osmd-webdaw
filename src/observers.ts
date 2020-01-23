@@ -158,7 +158,7 @@ export const manageSong = async (state$: Observable<AppState>, dispatch: Dispatc
     .pipe(take(1))
     .subscribe(async ([song, osmd, xml]) => {
       console.log('setup notemapping');
-      const [, , repeats] = parseMusicXML(xml, song.ppq);
+      const { repeats } = parseMusicXML(xml, song.ppq);
       const notesPerBar = await getGraphicalNotesPerBar(osmd, song.ppq);
       const noteMapping = mapOSMDToSequencer(notesPerBar, repeats as number[][], song);
       // setupSongListeners(song, noteMapping, osmd);
