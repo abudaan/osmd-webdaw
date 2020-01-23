@@ -1,5 +1,6 @@
 // utils used by ./actions/actions.ts
 import sequencer from 'heartbeat-sequencer';
+import { arrayBuffer } from './fetch_helpers';
 // import { isNil } from 'ramda';
 
 const status = (response: Response) => {
@@ -208,6 +209,11 @@ const getAverageNote = (events: Heartbeat.MIDIEvent[]): number => {
   return Math.round(average);
 }
 
+const loadBinary = (url: string): Promise<ArrayBuffer> =>
+  fetch(url)
+    .then(status)
+    .then(arrayBuffer)
+
 
 export {
   initSequencer,
@@ -226,4 +232,5 @@ export {
   getHighestNote,
   getAverageNote,
   loadXML,
+  loadBinary,
 }

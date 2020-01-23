@@ -16,6 +16,7 @@ export type NoteEvent = {
   command: NOTE,
   channel: number,
   ticks: number,
+  millis: number,
   velocity: number,
   noteNumber: number,
   octave: number,
@@ -26,6 +27,7 @@ export type TempoEvent = {
   command: 0x51,
   channel: number,
   ticks: number,
+  millis: number,
   bpm: number,
 }
 
@@ -33,6 +35,7 @@ export type SignatureEvent = {
   command: 0x58,
   channel: number,
   ticks: number,
+  millis: number,
   numerator: number,
   denominator: number,
 }
@@ -85,6 +88,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
   const tiedNotes: { [id: string]: number } = {};
   const repeats: Repeat = [{ bar: 1, type: 'forward' }];
   const timeEvents: (TempoEvent | SignatureEvent)[] = [];
+  const playbackSpeed = 1;
 
   let index = -1;
   let tmp;
@@ -125,6 +129,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
     let divisions = 1;
     let numerator = 4;
     let denominator = 4;
+    let millisPerTick = 0;
     while (measureNode = measureIterator.iterateNext()) {
       const measureNumber = xmlDoc.evaluate('@number', measureNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
       tmp = xmlDoc.evaluate('attributes/divisions', measureNode, nsResolver, XPathResult.NUMBER_TYPE, null).numberValue;
@@ -141,6 +146,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
           command: TIME_SIGNATURE,
           channel,
           ticks,
+          millis: ticks * millisPerTick,
           numerator,
           denominator,
         }
@@ -155,10 +161,12 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
           command: TEMPO,
           channel,
           ticks,
+          millis: ticks * millisPerTick,
           bpm: tmp,
         };
         // parts[index].events.push(event);
         timeEvents.push(event);
+        millisPerTick = ((1 / playbackSpeed * 60) / tmp / ppq) * 1000;
       }
 
       tmp = xmlDoc.evaluate('barline/repeat/@direction', measureNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
@@ -239,6 +247,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
             command: NOTE_ON,
             channel,
             ticks,
+            millis: ticks * millisPerTick,
             noteName,
             octave,
             noteNumber,
@@ -261,6 +270,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
               command: NOTE_OFF,
               channel,
               ticks,
+              millis: ticks * millisPerTick,
               noteNumber,
               velocity: 0,
               noteName,
@@ -283,6 +293,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
               command: NOTE_OFF,
               channel,
               ticks: tiedNotes[`N_${staff}-${voice}-${noteNumber}`],
+              millis: ticks * millisPerTick,
               octave,
               noteName,
               noteNumber,

@@ -18,13 +18,14 @@ export const UPDATE_PLAYHEAD_MILLIS = 'UPDATE_PLAYHEAD_MILLIS';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 import sequencer from 'heartbeat-sequencer';
 import { Dispatch, AnyAction } from 'redux'
-import { loadXML, addMIDIFile, loadJSON, addAssetPack } from '../util/heartbeat-utils';
+import { loadXML, addMIDIFile, loadJSON, addAssetPack, loadBinary } from '../util/heartbeat-utils';
 import { Observable } from 'rxjs';
 import { AppState } from './store';
 import { NoteMapping } from '../util/osmd-heartbeat';
 import { getGraphicalNotesPerBar } from '../util/osmd-notes';
 import { parseMusicXML, TempoEvent, SignatureEvent } from '../util/musicxml';
 import { find } from 'ramda';
+import { parseMidiFile } from '../util/parse_midi_binary';
 
 export const init = (observable: Observable<AppState>) => ({
   type: INITIALIZING,
@@ -40,6 +41,10 @@ export const loadInitData = (xmlDocUrl: string, midiFileUrl: string, instrumentU
     });
     const xmlDoc = await loadXML(xmlDocUrl);
     const midiFile = await addMIDIFile({ url: midiFileUrl });
+    const ab = await loadBinary(midiFileUrl);
+    parseMidiFile(ab);
+    // console.log(midiFile);
+    // throw new Error();
     const assetPack = await loadJSON(instrumentUrl);
     await addAssetPack(assetPack);
     dispatch({
@@ -152,7 +157,7 @@ export const uploadXMLDoc = (file: File) => {
       const firstSignatureEvent = find((event: TempoEvent | SignatureEvent) => event.command === 0x58)(timeEvents);
       const { denominator, numerator: nominator } = firstSignatureEvent as SignatureEvent;
       const tracks = parts.map(part => {
-        const midiEvents: Heartbeat.MIDIEvent = part.events.map(event => {
+        const midiEvents: Heartbeat.MIDIEvent[] = part.events.map(event => {
           const { command, ticks, noteNumber, velocity } = event;
           return sequencer.createMidiEvent(ticks, command, noteNumber, velocity);
         });

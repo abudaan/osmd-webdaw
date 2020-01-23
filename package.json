@@ -10,6 +10,7 @@
     "fetch-helpers": "^9.0.0",
     "glamor": "^2.20.40",
     "heartbeat-sequencer": "file:../heartbeat",
+    "jasmid.ts": "^2.1.0",
     "jszip": "^3.2.2",
     "jzz": "^0.7.9",
     "opensheetmusicdisplay": "^0.7.2",
