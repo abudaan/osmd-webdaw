@@ -42,8 +42,9 @@ export const loadInitData = (xmlDocUrl: string, midiFileUrl: string, instrumentU
     const xmlDoc = await loadXML(xmlDocUrl);
     const midiFile = await addMIDIFile({ url: midiFileUrl });
     const ab = await loadBinary(midiFileUrl);
-    parseMidiFile(ab);
-    // console.log(midiFile);
+    const { header, tracks } = parseMidiFile(ab);
+    console.log(header);
+    console.log(tracks);
     // throw new Error();
     const assetPack = await loadJSON(instrumentUrl);
     await addAssetPack(assetPack);

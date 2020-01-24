@@ -9,7 +9,6 @@ const playbackSpeed = 1;
 export type ParsedData = {
   event: any,
   deltaTime: number,
-  lastTypeByte?: number,
   bpm?: number,
 }
 
@@ -25,7 +24,7 @@ export function parseMidiFile(buffer: ArrayBufferLike) {
 function parseHeader(reader: BufferReader) {
   const headerChunk = reader.midiChunk()
   if (headerChunk.id !== "MThd" || headerChunk.length !== 6) {
-    throw "Bad .mid file, header not found"
+    throw new Error('Bad .mid file, header not found');
   }
 
   const headerReader = new BufferReader(headerChunk.data)
@@ -33,7 +32,7 @@ function parseHeader(reader: BufferReader) {
   const trackCount = headerReader.uint16()
   const timeDivision = headerReader.uint16()
   if (timeDivision & 0x8000) {
-    throw "Expressing time division in SMTPE frames is not supported yet"
+    throw new Error('Expressing time division in SMTPE frames is not supported yet');
   }
   const ticksPerBeat = timeDivision
 
@@ -46,7 +45,7 @@ function parseTracks(reader: BufferReader, ppq: number) {
     const trackChunk = reader.midiChunk()
 
     if (trackChunk.id !== "MTrk") {
-      throw "Unexpected chunk, expected MTrk, got " + trackChunk.id
+      throw new Error(`Unexpected chunk, expected MTrk, got ${trackChunk.id}`);
     }
 
     const trackTrack = new BufferReader(trackChunk.data)
@@ -57,15 +56,14 @@ function parseTracks(reader: BufferReader, ppq: number) {
     let lastTypeByte = null;
     while (!trackTrack.eof()) {
       let data = parseEvent(trackTrack, lastTypeByte)
-      const { event, lastTypeByte: ltb, deltaTime, bpm } = data;
+      const { event, deltaTime, bpm } = data;
       ticks += deltaTime;
+      // console.log('TICKS', ticks);
       if (bpm) {
         millisPerTick = ((1 / playbackSpeed * 60) / bpm / ppq) * 1000;
-        console.log(bpm, ppq, millisPerTick);
+        // console.log(bpm, ppq, millisPerTick);
       }
-      if (ltb) {
-        lastTypeByte = ltb;
-      }
+      lastTypeByte = event.type[0];
       millis = ticks * millisPerTick;
       track = [...track, {
         ...event,
@@ -95,7 +93,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       // sequence number
       case 0x00:
         if (length !== 2) {
-          throw "Expected length for sequenceNumber event is 2, got " + length
+          throw new Error(`Expected length for sequenceNumber event is 2, got ${length}`);
         }
         return {
           event: {
@@ -170,7 +168,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       // channel prefix
       case 0x20:
         if (length !== 1) {
-          throw "Expected length for midiChannelPrefix event is 1, got " + length
+          throw new Error(`Expected length for midiChannelPrefix event is 1, got ${length}`);
         }
         return {
           event: {
@@ -182,7 +180,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       // end of track
       case 0x2f:
         if (length !== 0) {
-          throw "Expected length for endOfTrack event is 0, got " + length
+          throw new Error(`Expected length for endOfTrack event is 0, got ${length}`);
         }
         return {
           event: {
@@ -193,7 +191,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       // tempo
       case 0x51:
         if (length !== 3) {
-          throw "Expected length for setTempo event is 3, got " + length
+          throw new Error(`Expected length for setTempo event is 3, got ${length}`);
         }
         const microsecondsPerBeat = (reader.uint8() << 16) + (reader.uint8() << 8) + reader.uint8();
         const bpm = 60000000 / microsecondsPerBeat;
@@ -208,7 +206,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       // smpte offset
       case 0x54:
         if (length != 5) {
-          throw "Expected length for smpteOffset event is 5, got " + length
+          throw new Error(`Expected length for smpteOffset event is 5, got ${length}`);
         }
         const hourByte = reader.uint8()
         return {
@@ -226,7 +224,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       // time signature
       case 0x58:
         if (length != 4) {
-          throw "Expected length for timeSignature event is 4, got " + length
+          throw new Error(`Expected length for timeSignature event is 4, got ${length}`);
         }
         return {
           event: {
@@ -241,7 +239,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       // key signature
       case 0x59:
         if (length != 2) {
-          throw "Expected length for keySignature event is 2, got " + length
+          throw new Error(`Expected length for keySignature event is 2, got ${length}`);
         }
         return {
           event: {
@@ -299,7 +297,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
     const value = isRunningStatus ? typeByte : reader.uint8()
     typeByte = isRunningStatus ? (lastTypeByte === null ? 0 : lastTypeByte) : typeByte
 
-    console.log(isRunningStatus, typeByte, value);
+    // console.log(isRunningStatus, typeByte, value);
 
     const channel = typeByte & 0x0f
 
@@ -381,7 +379,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
         }
     }
   }
-  throw `Unrecognised MIDI event type byte: ${typeByte}`;
+  throw new Error(`Unrecognised MIDI event type byte: ${typeByte}`);
 }
 
 function getFrameRate(hourByte: number) {
