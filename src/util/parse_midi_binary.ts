@@ -5,24 +5,24 @@ import { BufferReader } from './bufferreader';
 
 const descriptions: { [index: number]: { [index: number]: string } | string } = {
   0xff: {
-    0x00: 'sequenceNumber',
+    0x00: 'sequence number',
     0x01: 'text',
-    0x02: 'copyrightNotice',
-    0x03: 'trackName',
-    0x04: 'instrumentName',
+    0x02: 'copyright notice',
+    0x03: 'track name',
+    0x04: 'instrument name',
     0x05: 'lyrics',
     0x06: 'marker',
-    0x07: 'cuePoint',
-    0x20: 'midiChannelPrefix',
-    0x2f: 'endOfTrack',
-    0x51: 'setTempo',
-    0x54: 'smpteOffset',
-    0x58: 'timeSignature',
-    0x59: 'keySignature',
-    0x7f: 'sequencerSpecific',
+    0x07: 'cue point',
+    0x20: 'channel prefix',
+    0x2f: 'end of track',
+    0x51: 'tempo',
+    0x54: 'smpte offset',
+    0x58: 'time signature',
+    0x59: 'key signature',
+    0x7f: 'sequencer specific',
   },
-  0xf0: 'system eclusive',
-  0xf7: 'dividedSysEx',
+  0xf0: 'system exclusive',
+  0xf7: 'divided sysex',
   0x80: 'note on',
   0x90: 'note off',
   0xa0: 'note aftertouch',
@@ -38,8 +38,9 @@ export const getMIDIEventDescription = (event: MidiEvent): string => {
     return descriptions[type] as string;
   }
   return descriptions[type][subType] || 'undefined';
-
 }
+
+const playbackSpeed = 1;
 
 export type ParsedData = {
   event: any,
@@ -64,22 +65,7 @@ export type NoteOffEvent = {
   velocity: 0,
 }
 
-export type TempoEvent = {
-  type: [0xff, 0x51],
-  ticks: number,
-  millis: number,
-  bpm: number,
-}
-
-export type TimeSignatureEvent = {
-  type: [0xff, 0x58],
-  ticks: number,
-  millis: number,
-  numerator: number,
-  denominator: number,
-}
-
-export type SequencerNumberEvent = {
+export type SequenceNumberEvent = {
   type: [0xff, 0x00],
   number: number,
   ticks: 0,
@@ -107,7 +93,95 @@ export type TrackNameEvent = {
   millis: 0,
 }
 
-export type MidiEvent = NoteOnEvent | NoteOffEvent | TempoEvent | TimeSignatureEvent | SequencerNumberEvent;
+export type InstrumentNameEvent = {
+  type: [0xff, 0x04],
+  text: string,
+  ticks: number,
+  millis: number,
+}
+
+export type LyricsEvent = {
+  type: [0xff, 0x05],
+  text: string,
+  ticks: number,
+  millis: number,
+}
+
+export type MarkerEvent = {
+  type: [0xff, 0x06],
+  text: string,
+  ticks: number,
+  millis: number,
+}
+
+export type CuePointEvent = {
+  type: [0xff, 0x07],
+  text: string,
+  ticks: number,
+  millis: number,
+}
+
+export type ChannelPrefixEvent = {
+  type: [0xff, 0x20],
+  channel: number,
+  ticks: number,
+  millis: number,
+}
+
+export type EndOfTrackEvent = {
+  type: [0xff, 0x2f],
+  channel: number,
+  ticks: number,
+  millis: number,
+}
+
+export type TempoEvent = {
+  type: [0xff, 0x51],
+  ticks: number,
+  millis: number,
+  bpm: number,
+}
+
+export type SMPTEOffsetEvent = {
+  type: [0xff, 0x54],
+  ticks: number,
+  millis: number,
+  frameRate: number,
+  hour: number,
+  min: number,
+  sec: number,
+  frame: number,
+  subFrame: number,
+}
+
+export type TimeSignatureEvent = {
+  type: [0xff, 0x58],
+  ticks: number,
+  millis: number,
+  numerator: number,
+  denominator: number,
+  metronome: number,
+  thirtySeconds: number,
+}
+
+export type KeySignatureEvent = {
+  type: [0xff, 0x59],
+  ticks: number,
+  millis: number,
+  key: number,
+  scale: number,
+}
+
+export type SequenceSpecificEvent = {
+  type: [0xff, 0x7f],
+  ticks: number,
+  millis: number,
+  key: number,
+  scale: number,
+}
+
+
+export type MidiEvent = NoteOnEvent | NoteOffEvent | TempoEvent | TimeSignatureEvent | SequenceNumberEvent;
 
 export function parseMidiFile(buffer: ArrayBufferLike) {
   const reader = new BufferReader(buffer)
@@ -186,6 +260,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
     const length = reader.midiInt()
 
     switch (subTypeByte) {
+      // sequence number
       case 0x00:
         if (length !== 2) {
           throw "Expected length for sequenceNumber event is 2, got " + length
@@ -197,7 +272,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
           },
           deltaTime,
         }
-
+      // text
       case 0x01:
         return {
           event: {
@@ -206,6 +281,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
           },
           deltaTime,
         }
+      // copyright
       case 0x02:
         return {
           event: {
@@ -214,6 +290,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
           },
           deltaTime,
         }
+      // track name
       case 0x03:
         return {
           event: {
@@ -222,65 +299,66 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
           },
           deltaTime,
         }
+      // instrument name
       case 0x04:
         return {
-          type,
-          subType: "instrumentName" as "instrumentName",
-          typeByte,
-          subTypeByte,
+          event: {
+            type: [typeByte, subTypeByte],
+            text: reader.string(length),
+          },
           deltaTime,
-          text: reader.string(length),
         }
+      // lyrics
       case 0x05:
         return {
-          type,
-          subType: "lyrics" as "lyrics",
-          typeByte,
-          subTypeByte,
+          event: {
+            type: [typeByte, subTypeByte],
+            text: reader.string(length),
+          },
           deltaTime,
-          text: reader.string(length),
         }
+      // marker
       case 0x06:
         return {
-          type,
-          subType: "marker" as "marker",
-          typeByte,
-          subTypeByte,
+          event: {
+            type: [typeByte, subTypeByte],
+            text: reader.string(length),
+          },
           deltaTime,
-          text: reader.string(length),
         }
+      // cue point
       case 0x07:
         return {
-          type,
-          subType: "cuePoint" as "cuePoint",
-          typeByte,
-          subTypeByte,
+          event: {
+            type: [typeByte, subTypeByte],
+            text: reader.string(length),
+          },
           deltaTime,
-          text: reader.string(length),
         }
+      // channel prefix
       case 0x20:
         if (length !== 1) {
           throw "Expected length for midiChannelPrefix event is 1, got " + length
         }
         return {
-          type,
-          subType: "midiChannelPrefix" as "midiChannelPrefix",
-          typeByte,
-          subTypeByte,
+          event: {
+            type: [typeByte, subTypeByte],
+            channel: reader.uint8(),
+          },
           deltaTime,
-          channel: reader.uint8(),
         }
+      // end of track
       case 0x2f:
         if (length !== 0) {
           throw "Expected length for endOfTrack event is 0, got " + length
         }
         return {
-          type,
-          subType: "endOfTrack" as "endOfTrack",
-          typeByte,
-          subTypeByte,
+          event: {
+            type: [typeByte, subTypeByte],
+          },
           deltaTime,
         }
+      // tempo
       case 0x51:
         if (length !== 3) {
           throw "Expected length for setTempo event is 3, got " + length
@@ -288,74 +366,76 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
         const microsecondsPerBeat = (reader.uint8() << 16) + (reader.uint8() << 8) + reader.uint8();
         const bpm = 60000000 / microsecondsPerBeat;
         return {
-          type: 0x51,
-          ticks: 0,
-          millis: 0,
-          bpm,
+          event: {
+            type: [typeByte, subTypeByte],
+            bpm,
+          },
+          deltaTime,
+          millisPerTick: (1 / playbackSpeed * 60) / bpm / ppq,
         }
+      // smpte offset
       case 0x54:
         if (length != 5) {
           throw "Expected length for smpteOffset event is 5, got " + length
         }
         const hourByte = reader.uint8()
         return {
-          type,
-          subType: "smpteOffset" as "smpteOffset",
-          typeByte,
-          subTypeByte,
+          event: {
+            type: [typeByte, subTypeByte],
+            frameRate: getFrameRate(hourByte),
+            hour: hourByte & 0x1f,
+            min: reader.uint8(),
+            sec: reader.uint8(),
+            frame: reader.uint8(),
+            subFrame: reader.uint8(),
+          },
           deltaTime,
-          frameRate: getFrameRate(hourByte),
-          hour: hourByte & 0x1f,
-          min: reader.uint8(),
-          sec: reader.uint8(),
-          frame: reader.uint8(),
-          subFrame: reader.uint8(),
         }
+      // time signature
       case 0x58:
         if (length != 4) {
           throw "Expected length for timeSignature event is 4, got " + length
         }
         return {
-          type,
-          subType: "timeSignature" as "timeSignature",
-          typeByte,
-          subTypeByte,
+          event: {
+            type: [typeByte, subTypeByte],
+            numerator: reader.uint8(),
+            denominator: Math.pow(2, reader.uint8()),
+            metronome: reader.uint8(),
+            thirtySeconds: reader.uint8(),
+          },
           deltaTime,
-          numerator: reader.uint8(),
-          denominator: Math.pow(2, reader.uint8()),
-          metronome: reader.uint8(),
-          thirtySeconds: reader.uint8(),
         }
+      // key signature
       case 0x59:
         if (length != 2) {
           throw "Expected length for keySignature event is 2, got " + length
         }
         return {
-          type,
-          subType: "keySignature" as "keySignature",
-          typeByte,
-          subTypeByte,
+          event: {
+            type: [typeByte, subTypeByte],
+            key: reader.int8(),
+            scale: reader.uint8(),
+          },
           deltaTime,
-          key: reader.int8(),
-          scale: reader.uint8(),
         }
+      // sequencer specific
       case 0x7f:
         return {
-          type,
-          subType: "sequencerSpecific" as "sequencerSpecific",
-          typeByte,
-          subTypeByte,
+          event: {
+            type: [typeByte, subTypeByte],
+            data: reader.read(length),
+          },
           deltaTime,
-          data: reader.read(length),
         }
+      // undefined
       default:
         return {
-          type,
-          subType: undefined,
-          typeByte,
-          subTypeByte,
+          event: {
+            type: [typeByte, subTypeByte],
+            data: reader.read(length),
+          },
           deltaTime,
-          data: reader.read(length),
         }
     }
   } else if (typeByte === 0xf0) {
