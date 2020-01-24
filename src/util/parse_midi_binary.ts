@@ -1,35 +1,113 @@
 // based on: https://github.com/pravdomil/jasmid.ts
 
-
 // import { BufferReader } from 'jasmid.ts';
 import { BufferReader } from './bufferreader';
 
-export type MidiEvent =
-  | { type: "meta"; subType: "sequenceNumber"; typeByte: number; subTypeByte: number; deltaTime: number; number: number }
-  | { type: "meta"; subType: "text"; typeByte: number; subTypeByte: number; deltaTime: number; text: string }
-  | { type: "meta"; subType: "copyrightNotice"; typeByte: number; subTypeByte: number; deltaTime: number; text: string }
-  | { type: "meta"; subType: "trackName"; typeByte: number; subTypeByte: number; deltaTime: number; text: string }
-  | { type: "meta"; subType: "instrumentName"; typeByte: number; subTypeByte: number; deltaTime: number; text: string }
-  | { type: "meta"; subType: "lyrics"; typeByte: number; subTypeByte: number; deltaTime: number; text: string }
-  | { type: "meta"; subType: "marker"; typeByte: number; subTypeByte: number; deltaTime: number; text: string }
-  | { type: "meta"; subType: "cuePoint"; typeByte: number; subTypeByte: number; deltaTime: number; text: string }
-  | { type: "meta"; subType: "midiChannelPrefix"; typeByte: number; subTypeByte: number; deltaTime: number; channel: number }
-  | { type: "meta"; subType: "endOfTrack"; typeByte: number; subTypeByte: number; deltaTime: number }
-  | { type: "meta"; subType: "setTempo"; typeByte: number; subTypeByte: number; deltaTime: number; microsecondsPerBeat: number }
-  | { type: "meta"; subType: "smpteOffset"; typeByte: number; subTypeByte: number; deltaTime: number; frameRate: number; hour: number; min: number; sec: number; frame: number; subFrame: number }
-  | { type: "meta"; subType: "timeSignature"; typeByte: number; subTypeByte: number; deltaTime: number; numerator: number; denominator: number; metronome: number; thirtySeconds: number }
-  | { type: "meta"; subType: "keySignature"; typeByte: number; subTypeByte: number; deltaTime: number; key: number; scale: number }
-  | { type: "meta"; subType: "sequencerSpecific"; typeByte: number; subTypeByte: number; deltaTime: number; data: ArrayBuffer }
-  | { type: "meta"; subType: undefined; typeByte: number; subTypeByte: number; deltaTime: number; data: ArrayBuffer }
-  | { type: "sysEx"; subType: undefined; typeByte: number; deltaTime: number; data: ArrayBuffer }
-  | { type: "dividedSysEx"; subType: undefined; typeByte: number; deltaTime: number; data: ArrayBuffer }
-  | { type: "midi"; subType: "noteOff"; typeByte: number; deltaTime: number; channel: number; note: number; velocity: number }
-  | { type: "midi"; subType: "noteOff" | "noteOn"; typeByte: number; deltaTime: number; channel: number; note: number; velocity: number }
-  | { type: "midi"; subType: "noteAftertouch"; typeByte: number; deltaTime: number; channel: number; note: number; amount: number }
-  | { type: "midi"; subType: "controller"; typeByte: number; deltaTime: number; channel: number; controllerType: number; value: number }
-  | { type: "midi"; subType: "programChange"; typeByte: number; deltaTime: number; channel: number; program: number }
-  | { type: "midi"; subType: "channelAftertouch"; typeByte: number; deltaTime: number; channel: number; amount: number }
-  | { type: "midi"; subType: "pitchBend"; typeByte: number; deltaTime: number; channel: number; value: number }
+const descriptions: { [index: number]: { [index: number]: string } | string } = {
+  0xff: {
+    0x00: 'sequenceNumber',
+    0x01: 'text',
+    0x02: 'copyrightNotice',
+    0x03: 'trackName',
+    0x04: 'instrumentName',
+    0x05: 'lyrics',
+    0x06: 'marker',
+    0x07: 'cuePoint',
+    0x20: 'midiChannelPrefix',
+    0x2f: 'endOfTrack',
+    0x51: 'setTempo',
+    0x54: 'smpteOffset',
+    0x58: 'timeSignature',
+    0x59: 'keySignature',
+    0x7f: 'sequencerSpecific',
+  },
+  0xf0: 'system eclusive',
+  0xf7: 'dividedSysEx',
+  0x80: 'note on',
+  0x90: 'note off',
+  0xa0: 'note aftertouch',
+  0xb0: 'controller',
+  0xc0: 'program change',
+  0xd0: 'channel aftertouch',
+  0xe0: 'pitch bend',
+}
+
+export const getMIDIEventDescription = (event: MidiEvent): string => {
+  const [type, subType] = event.type;
+  if (typeof subType === 'undefined') {
+    return descriptions[type] as string;
+  }
+  return descriptions[type][subType] || 'undefined';
+
+}
+
+export type ParsedData = {
+  event: any,
+  deltaTime: number,
+  lastTypeByte?: number,
+  millisPerTick?: number,
+}
+
+export type NoteOnEvent = {
+  type: [0x90],
+  ticks: number,
+  millis: number,
+  noteNumber: number,
+  velocity: number,
+}
+
+export type NoteOffEvent = {
+  type: [0x80],
+  ticks: number,
+  millis: number,
+  noteNumber: number,
+  velocity: 0,
+}
+
+export type TempoEvent = {
+  type: [0xff, 0x51],
+  ticks: number,
+  millis: number,
+  bpm: number,
+}
+
+export type TimeSignatureEvent = {
+  type: [0xff, 0x58],
+  ticks: number,
+  millis: number,
+  numerator: number,
+  denominator: number,
+}
+
+export type SequencerNumberEvent = {
+  type: [0xff, 0x00],
+  number: number,
+  ticks: 0,
+  millis: 0,
+}
+
+export type TextEvent = {
+  type: [0xff, 0x01],
+  text: string,
+  ticks: number,
+  millis: number,
+}
+
+export type CopyrightEvent = {
+  type: [0xff, 0x02],
+  text: string,
+  ticks: 0,
+  millis: 0,
+}
+
+export type TrackNameEvent = {
+  type: [0xff, 0x03],
+  text: string,
+  ticks: 0,
+  millis: 0,
+}
+
+export type MidiEvent = NoteOnEvent | NoteOffEvent | TempoEvent | TimeSignatureEvent | SequencerNumberEvent;
 
 export function parseMidiFile(buffer: ArrayBufferLike) {
   const reader = new BufferReader(buffer)
@@ -69,10 +147,26 @@ function parseTracks(reader: BufferReader) {
 
     const trackTrack = new BufferReader(trackChunk.data)
     let track: MidiEvent[] = []
+    let ticks = 0;
+    let millis = 0;
+    let millisPerTick = 0;
+    let lastTypeByte = null;
     while (!trackTrack.eof()) {
-      const lastEvent = track[track.length - 1]
-      const event = parseEvent(trackTrack, lastEvent ? lastEvent.typeByte : undefined)
-      track = [...track, event]
+      let data = parseEvent(trackTrack, lastTypeByte)
+      const { event, lastTypeByte: ltb, deltaTime, millisPerTick: mpt } = data;
+      ticks += deltaTime;
+      if (mpt) {
+        millisPerTick = mpt;
+      }
+      if (ltb) {
+        lastTypeByte = ltb;
+      }
+      millis = ticks * millisPerTick;
+      track = [...track, {
+        ...event,
+        ticks,
+        millis,
+      }]
     }
 
     tracks = [...tracks, track]
@@ -80,7 +174,7 @@ function parseTracks(reader: BufferReader) {
   return tracks
 }
 
-function parseEvent(reader: BufferReader, lastTypeByte: number | undefined): MidiEvent {
+function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedData {
   const deltaTime = reader.midiInt()
   let typeByte = reader.uint8()
 
@@ -97,39 +191,36 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | undefined): Mid
           throw "Expected length for sequenceNumber event is 2, got " + length
         }
         return {
-          type,
-          subType: "sequenceNumber" as "sequenceNumber",
-          typeByte,
-          subTypeByte,
+          event: {
+            type: [typeByte, subTypeByte],
+            number: reader.uint16(),
+          },
           deltaTime,
-          number: reader.uint16(),
         }
+
       case 0x01:
         return {
-          type,
-          subType: "text" as "text",
-          typeByte,
-          subTypeByte,
+          event: {
+            type: [typeByte, subTypeByte],
+            text: reader.string(length),
+          },
           deltaTime,
-          text: reader.string(length),
         }
       case 0x02:
         return {
-          type,
-          subType: "copyrightNotice" as "copyrightNotice",
-          typeByte,
-          subTypeByte,
+          event: {
+            type: [typeByte, subTypeByte],
+            text: reader.string(length),
+          },
           deltaTime,
-          text: reader.string(length),
         }
       case 0x03:
         return {
-          type,
-          subType: "trackName" as "trackName",
-          typeByte,
-          subTypeByte,
+          event: {
+            type: [typeByte, subTypeByte],
+            text: reader.string(length),
+          },
           deltaTime,
-          text: reader.string(length),
         }
       case 0x04:
         return {
@@ -194,13 +285,13 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | undefined): Mid
         if (length !== 3) {
           throw "Expected length for setTempo event is 3, got " + length
         }
+        const microsecondsPerBeat = (reader.uint8() << 16) + (reader.uint8() << 8) + reader.uint8();
+        const bpm = 60000000 / microsecondsPerBeat;
         return {
-          type,
-          subType: "setTempo" as "setTempo",
-          typeByte,
-          subTypeByte,
-          deltaTime,
-          microsecondsPerBeat: (reader.uint8() << 16) + (reader.uint8() << 8) + reader.uint8(),
+          type: 0x51,
+          ticks: 0,
+          millis: 0,
+          bpm,
         }
       case 0x54:
         if (length != 5) {
@@ -300,7 +391,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | undefined): Mid
      */
     const isRunningStatus = (typeByte & 0b10000000) === 0
     const value = isRunningStatus ? typeByte : reader.uint8()
-    typeByte = isRunningStatus ? (lastTypeByte === undefined ? 0 : lastTypeByte) : typeByte
+    typeByte = isRunningStatus ? (lastTypeByte === null ? 0 : lastTypeByte) : typeByte
 
     console.log(isRunningStatus, typeByte, value);
 
