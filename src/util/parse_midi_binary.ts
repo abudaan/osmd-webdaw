@@ -2,43 +2,7 @@
 
 // import { BufferReader } from 'jasmid.ts';
 import { BufferReader } from './bufferreader';
-
-const descriptions: { [index: number]: { [index: number]: string } | string } = {
-  0xff: {
-    0x00: 'sequence number',
-    0x01: 'text',
-    0x02: 'copyright notice',
-    0x03: 'track name',
-    0x04: 'instrument name',
-    0x05: 'lyrics',
-    0x06: 'marker',
-    0x07: 'cue point',
-    0x20: 'channel prefix',
-    0x2f: 'end of track',
-    0x51: 'tempo',
-    0x54: 'smpte offset',
-    0x58: 'time signature',
-    0x59: 'key signature',
-    0x7f: 'sequencer specific',
-  },
-  0xf0: 'system exclusive',
-  0xf7: 'divided sysex',
-  0x80: 'note on',
-  0x90: 'note off',
-  0xa0: 'note aftertouch',
-  0xb0: 'controller',
-  0xc0: 'program change',
-  0xd0: 'channel aftertouch',
-  0xe0: 'pitch bend',
-}
-
-export const getMIDIEventDescription = (event: MidiEvent): string => {
-  const [type, subType] = event.type;
-  if (typeof subType === 'undefined') {
-    return descriptions[type] as string;
-  }
-  return descriptions[type][subType] || 'undefined';
-}
+import { MidiEvent } from '../midi_events';
 
 const playbackSpeed = 1;
 
@@ -46,148 +10,14 @@ export type ParsedData = {
   event: any,
   deltaTime: number,
   lastTypeByte?: number,
-  millisPerTick?: number,
+  bpm?: number,
 }
-
-export type NoteOnEvent = {
-  type: [0x90],
-  ticks: number,
-  millis: number,
-  noteNumber: number,
-  velocity: number,
-}
-
-export type NoteOffEvent = {
-  type: [0x80],
-  ticks: number,
-  millis: number,
-  noteNumber: number,
-  velocity: 0,
-}
-
-export type SequenceNumberEvent = {
-  type: [0xff, 0x00],
-  number: number,
-  ticks: 0,
-  millis: 0,
-}
-
-export type TextEvent = {
-  type: [0xff, 0x01],
-  text: string,
-  ticks: number,
-  millis: number,
-}
-
-export type CopyrightEvent = {
-  type: [0xff, 0x02],
-  text: string,
-  ticks: 0,
-  millis: 0,
-}
-
-export type TrackNameEvent = {
-  type: [0xff, 0x03],
-  text: string,
-  ticks: 0,
-  millis: 0,
-}
-
-export type InstrumentNameEvent = {
-  type: [0xff, 0x04],
-  text: string,
-  ticks: number,
-  millis: number,
-}
-
-export type LyricsEvent = {
-  type: [0xff, 0x05],
-  text: string,
-  ticks: number,
-  millis: number,
-}
-
-export type MarkerEvent = {
-  type: [0xff, 0x06],
-  text: string,
-  ticks: number,
-  millis: number,
-}
-
-export type CuePointEvent = {
-  type: [0xff, 0x07],
-  text: string,
-  ticks: number,
-  millis: number,
-}
-
-export type ChannelPrefixEvent = {
-  type: [0xff, 0x20],
-  channel: number,
-  ticks: number,
-  millis: number,
-}
-
-export type EndOfTrackEvent = {
-  type: [0xff, 0x2f],
-  channel: number,
-  ticks: number,
-  millis: number,
-}
-
-export type TempoEvent = {
-  type: [0xff, 0x51],
-  ticks: number,
-  millis: number,
-  bpm: number,
-}
-
-export type SMPTEOffsetEvent = {
-  type: [0xff, 0x54],
-  ticks: number,
-  millis: number,
-  frameRate: number,
-  hour: number,
-  min: number,
-  sec: number,
-  frame: number,
-  subFrame: number,
-}
-
-export type TimeSignatureEvent = {
-  type: [0xff, 0x58],
-  ticks: number,
-  millis: number,
-  numerator: number,
-  denominator: number,
-  metronome: number,
-  thirtySeconds: number,
-}
-
-export type KeySignatureEvent = {
-  type: [0xff, 0x59],
-  ticks: number,
-  millis: number,
-  key: number,
-  scale: number,
-}
-
-export type SequenceSpecificEvent = {
-  type: [0xff, 0x7f],
-  ticks: number,
-  millis: number,
-  key: number,
-  scale: number,
-}
-
-
-export type MidiEvent = NoteOnEvent | NoteOffEvent | TempoEvent | TimeSignatureEvent | SequenceNumberEvent;
 
 export function parseMidiFile(buffer: ArrayBufferLike) {
   const reader = new BufferReader(buffer)
 
   const header = parseHeader(reader)
-  const tracks = parseTracks(reader)
+  const tracks = parseTracks(reader, header.ticksPerBeat)
 
   return { header, tracks }
 }
@@ -210,7 +40,7 @@ function parseHeader(reader: BufferReader) {
   return { formatType, trackCount, ticksPerBeat }
 }
 
-function parseTracks(reader: BufferReader) {
+function parseTracks(reader: BufferReader, ppq: number) {
   let tracks: MidiEvent[][] = []
   while (!reader.eof()) {
     const trackChunk = reader.midiChunk()
@@ -227,10 +57,11 @@ function parseTracks(reader: BufferReader) {
     let lastTypeByte = null;
     while (!trackTrack.eof()) {
       let data = parseEvent(trackTrack, lastTypeByte)
-      const { event, lastTypeByte: ltb, deltaTime, millisPerTick: mpt } = data;
+      const { event, lastTypeByte: ltb, deltaTime, bpm } = data;
       ticks += deltaTime;
-      if (mpt) {
-        millisPerTick = mpt;
+      if (bpm) {
+        millisPerTick = ((1 / playbackSpeed * 60) / bpm / ppq) * 1000;
+        console.log(bpm, ppq, millisPerTick);
       }
       if (ltb) {
         lastTypeByte = ltb;
@@ -252,10 +83,11 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
   const deltaTime = reader.midiInt()
   let typeByte = reader.uint8()
 
-  if (typeByte === 0xff) {
-    /** meta event */
+  // meta events: 0xff
+  // system events: 0xf0, 0xf7
+  // midi events: all other bytes
 
-    const type = "meta" as "meta"
+  if (typeByte === 0xff) {
     const subTypeByte = reader.uint8()
     const length = reader.midiInt()
 
@@ -370,8 +202,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
             type: [typeByte, subTypeByte],
             bpm,
           },
+          bpm,
           deltaTime,
-          millisPerTick: (1 / playbackSpeed * 60) / bpm / ppq,
         }
       // smpte offset
       case 0x54:
@@ -439,32 +271,26 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
         }
     }
   } else if (typeByte === 0xf0) {
-    /** system event */
-
+    // system exclusive
     const length = reader.midiInt()
     return {
-      type: "sysEx" as "sysEx",
-      subType: undefined,
-      typeByte,
+      event: {
+        type: [0xf0],
+        data: reader.read(length),
+      },
       deltaTime,
-      data: reader.read(length),
     }
   } else if (typeByte === 0xf7) {
-    /** divided system event */
-
+    // divided system exclusive
     const length = reader.midiInt()
     return {
-      type: "dividedSysEx" as "dividedSysEx",
-      subType: undefined,
-      typeByte,
+      event: {
+        type: [0xf0],
+        data: reader.read(length),
+      },
       deltaTime,
-      data: reader.read(length),
     }
   } else {
-    /** midi event */
-
-    const type = "midi" as "midi"
-
     /**
      * running status - reuse lastEventTypeByte as the event type
      * typeByte is actually the first parameter
@@ -477,78 +303,85 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
 
     const channel = typeByte & 0x0f
 
-    switch (typeByte >> 4) {
-      case 0x08:
+    switch (typeByte) {
+      // note on
+      case 0x80:
         return {
-          type,
-          subType: "noteOff" as "noteOff",
-          typeByte,
+          event: {
+            type: [typeByte],
+            channel,
+            note: value,
+            velocity: reader.uint8(),
+          },
           deltaTime,
-          channel,
-          note: value,
-          velocity: reader.uint8(),
         }
-      case 0x09:
+      // note off
+      case 0x90:
         const velocity = reader.uint8()
         return {
-          type,
-          subType: velocity === 0 ? ("noteOff" as "noteOff") : ("noteOn" as "noteOn"),
-          typeByte,
+          event: {
+            type: [velocity === 0 ? 0x90 : 0x80],
+            channel,
+            note: value,
+            velocity,
+          },
           deltaTime,
-          channel,
-          note: value,
-          velocity,
         }
-      case 0x0a:
+      // note aftertouch
+      case 0xa0:
         return {
-          type,
-          subType: "noteAftertouch" as "noteAftertouch",
-          typeByte,
+          event: {
+            type: [0xa0],
+            channel,
+            note: value,
+            amount: reader.uint8(),
+          },
           deltaTime,
-          channel,
-          note: value,
-          amount: reader.uint8(),
         }
-      case 0x0b:
+      // controller
+      case 0xb0:
         return {
-          type,
-          subType: "controller" as "controller",
-          typeByte,
+          event: {
+            type: [0xb0],
+            channel,
+            controllerNumber: value,
+            value: reader.uint8(),
+          },
           deltaTime,
-          channel,
-          controllerType: value,
-          value: reader.uint8(),
         }
-      case 0x0c:
+      // program change
+      case 0xc0:
         return {
-          type,
-          subType: "programChange" as "programChange",
-          typeByte,
+          event: {
+            type: [0xc0],
+            channel,
+            program: value,
+          },
           deltaTime,
-          channel,
-          program: value,
         }
-      case 0x0d:
+      // channel aftertouch
+      case 0xd0:
         return {
-          type,
-          subType: "channelAftertouch" as "channelAftertouch",
-          typeByte,
+          event: {
+            type: [0xd0],
+            channel,
+            amount: value,
+          },
           deltaTime,
-          channel,
-          amount: value,
         }
-      case 0x0e:
+      // pitch bend
+      case 0xe0:
         return {
-          type,
-          subType: "pitchBend" as "pitchBend",
-          typeByte,
+          event: {
+            type: [0xe0],
+            channel,
+            value: value + (reader.uint8() << 7),
+          },
           deltaTime,
-          channel,
-          value: value + (reader.uint8() << 7),
         }
     }
   }
-  throw "Unrecognised MIDI event type byte: " + typeByte
+  throw `Unrecognised MIDI event type byte: ${typeByte}`;
 }
 
 function getFrameRate(hourByte: number) {
