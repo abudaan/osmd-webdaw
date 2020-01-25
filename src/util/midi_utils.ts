@@ -29,10 +29,15 @@ const descriptions: { [index: number]: { [index: number]: string } | string } = 
   0xe0: 'pitch bend',
 }
 
-export const getMIDIEventDescription = (event: MidiEvent): string => {
-  const [type, subType] = event.type;
+export const getMIDIEventDescription = (type: number, subType?: number): string => {
   if (typeof subType === 'undefined') {
     return descriptions[type] as string;
   }
   return descriptions[type][subType] || 'undefined';
+}
+
+export const getMIDIMessageEvent = (event: MidiEvent) => {
+  switch (event.description) {
+    case 
+  }
 }
