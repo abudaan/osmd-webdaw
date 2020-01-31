@@ -1,6 +1,7 @@
 import sequencer from 'heartbeat-sequencer';
 import { from } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { getNoteNumber } from './midi_utils';
 
 const NOTE_ON = 0x90; // 144
 const NOTE_OFF = 0x80; // 128
@@ -242,7 +243,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
             }
           }
 
-          const noteNumber = sequencer.getNoteNumber(noteName, octave);
+          const noteNumber = getNoteNumber(noteName, octave);
           const note = {
             command: NOTE_ON,
             channel,
