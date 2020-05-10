@@ -39,7 +39,8 @@ export const initialState = {
   initUrls: {
     // xmlDoc: './assets/mozk545a_musescore.musicxml',
     xmlDoc: './assets/score.xml',
-    midiFile: './assets/mozk545a_musescore.mid',
+    // midiFile: './assets/mozk545a_musescore.mid',
+    midiFile: './assets/minute_waltz.mid',
     instrument: `./assets/${instrumentName}.mp3.json`,
   },
   instrumentName,
