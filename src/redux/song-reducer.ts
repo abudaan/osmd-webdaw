@@ -7,37 +7,36 @@ import {
   PLAYHEAD_SEEKING,
   UPDATE_PLAYHEAD_MILLIS,
   XMLDOC_UPLOADED,
-} from './actions';
+} from "./actions1";
 
-import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay/build/dist/src';
-import { TypeGraphicalNoteData } from '../util/osmd-notes';
-import { NoteMapping } from 'src/util/osmd-heartbeat';
+import { OpenSheetMusicDisplay } from "opensheetmusicdisplay/build/dist/src";
+import { TypeGraphicalNoteData } from "../util/osmd-notes";
+import { NoteMapping } from "src/util/osmd-heartbeat";
 
 export const SongActions = {
-  PLAY: 'PLAY',
-  PAUSE: 'PAUSE',
-  STOP: 'STOP',
-}
-
-export type SongState = {
-  songPosition: string,
-  songPositionMillis: number,
-  songPositionPercentage: number,
-  sliderPositionPercentage: number,
-  notesPerBar: TypeGraphicalNoteData[][],
-  osmd: null | OpenSheetMusicDisplay
-  song: null | Heartbeat.Song
-  keyEditor: null | Heartbeat.KeyEditor
-  songAction: string
-  songIsPlaying: boolean
-  graphicalNotesPerBar: TypeGraphicalNoteData[][]
-  noteMapping: null | NoteMapping
-  songAndScoreReady: boolean
-  playheadSeeking: boolean
-  scoreContainer: null | HTMLDivElement
-  scoreContainerOffsetY: number
+  PLAY: "PLAY",
+  PAUSE: "PAUSE",
+  STOP: "STOP",
 };
 
+export type SongState = {
+  songPosition: string;
+  songPositionMillis: number;
+  songPositionPercentage: number;
+  sliderPositionPercentage: number;
+  notesPerBar: TypeGraphicalNoteData[][];
+  osmd: null | OpenSheetMusicDisplay;
+  song: null | Heartbeat.Song;
+  keyEditor: null | Heartbeat.KeyEditor;
+  songAction: string;
+  songIsPlaying: boolean;
+  graphicalNotesPerBar: TypeGraphicalNoteData[][];
+  noteMapping: null | NoteMapping;
+  songAndScoreReady: boolean;
+  playheadSeeking: boolean;
+  scoreContainer: null | HTMLDivElement;
+  scoreContainerOffsetY: number;
+};
 
 export const initialState = {
   song: null,
@@ -45,18 +44,18 @@ export const initialState = {
   keyEditor: null,
   noteMapping: null,
   notesPerBar: [],
-  songPosition: '',
+  songPosition: "",
   songPositionMillis: 0,
   songPositionPercentage: 0,
   sliderPositionPercentage: 0,
-  songAction: '',
+  songAction: "",
   songIsPlaying: false,
   graphicalNotesPerBar: [],
   songAndScoreReady: false,
   playheadSeeking: false,
   scoreContainer: null,
   scoreContainerOffsetY: 0,
-}
+};
 
 export const song = (state: SongState = initialState, action: any) => {
   if (action.type === SCORE_READY) {
@@ -78,7 +77,7 @@ export const song = (state: SongState = initialState, action: any) => {
     return {
       ...state,
       songAction: action.payload.action,
-      songIsPlaying: action.payload.action === SongActions.PLAY
+      songIsPlaying: action.payload.action === SongActions.PLAY,
     };
   } else if (action.type === PLAYHEAD_SEEKING) {
     return {
@@ -106,4 +105,4 @@ export const song = (state: SongState = initialState, action: any) => {
   }
 
   return state;
-}
+};
