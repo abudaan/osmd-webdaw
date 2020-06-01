@@ -1,7 +1,7 @@
 // based on: https://github.com/pravdomil/jasmid.ts
 
 // import { BufferReader } from 'jasmid.ts';
-import uniquid from "uniquid";
+import uniquid from "uniqid";
 import { BufferReader } from "./bufferreader";
 import { MIDIEvent } from "./midi_events";
 import {
@@ -154,7 +154,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
         }
         return {
           event: {
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
             descr: SEQUENCE_NUMBER,
             number: reader.uint16(),
           },
@@ -164,7 +165,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       case 0x01:
         return {
           event: {
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
             descr: TEXT,
             text: reader.string(length),
           },
@@ -174,7 +176,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       case 0x02:
         return {
           event: {
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
             descr: COPYRIGHT_NOTICE,
             text: reader.string(length),
           },
@@ -185,7 +188,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
         const trackName = reader.string(length);
         return {
           event: {
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
             descr: TRACK_NAME,
             text: trackName,
           },
@@ -196,7 +200,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       case 0x04:
         return {
           event: {
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
             descr: INSTRUMENT_NAME,
             text: reader.string(length),
           },
@@ -206,7 +211,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       case 0x05:
         return {
           event: {
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
             descr: LYRICS,
             text: reader.string(length),
           },
@@ -216,7 +222,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       case 0x06:
         return {
           event: {
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
             descr: MARKER,
             text: reader.string(length),
           },
@@ -226,7 +233,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       case 0x07:
         return {
           event: {
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
             descr: CUE_POINT,
             text: reader.string(length),
           },
@@ -239,7 +247,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
         }
         return {
           event: {
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
             descr: CHANNEL_PREFIX,
             channel: reader.uint8(),
           },
@@ -253,7 +262,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
         return {
           event: {
             descr: END_OF_TRACK,
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
           },
           deltaTime,
         };
@@ -266,7 +276,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
         const bpm = 60000000 / microsecondsPerBeat;
         return {
           event: {
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
             descr: TEMPO,
             bpm,
           },
@@ -281,7 +292,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
         const hourByte = reader.uint8();
         return {
           event: {
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
             descr: SMPTE_OFFSET,
             frameRate: getFrameRate(hourByte),
             hour: hourByte & 0x1f,
@@ -300,7 +312,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
         const numerator = reader.uint8();
         return {
           event: {
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
             descr: TIME_SIGNATURE,
             numerator,
             denominator: Math.pow(2, reader.uint8()),
@@ -317,7 +330,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
         }
         return {
           event: {
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
             descr: KEY_SIGNATURE,
             key: reader.int8(),
             scale: reader.uint8(),
@@ -328,7 +342,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       case 0x7f:
         return {
           event: {
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
             descr: SEQUENCER_SPECIFIC,
             data: reader.read(length),
           },
@@ -338,7 +353,8 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       default:
         return {
           event: {
-            type: [typeByte, subTypeByte],
+            type: typeByte,
+            subType: subTypeByte,
             descr: "undefined",
             data: reader.read(length),
           },
@@ -350,7 +366,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
     const length = reader.midiInt();
     return {
       event: {
-        type: [0xf0],
+        type: 0xf0,
         descr: SYSTEM_EXCLUSIVE,
         data: reader.read(length),
       },
@@ -361,7 +377,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
     const length = reader.midiInt();
     return {
       event: {
-        type: [0xf0],
+        type: 0xf0,
         descr: DIVIDED_SYSTEM_EXCLUSIVE,
         data: reader.read(length),
       },
@@ -379,13 +395,14 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
     // console.log(isRunningStatus, typeByte, value);
 
     const channel = typeByte & 0x0f;
+    // channels[channel] = true;
 
     switch (typeByte >> 4) {
       // note off
       case 0x08:
         return {
           event: {
-            type: [typeByte],
+            type: 0x80,
             descr: NOTE_OFF,
             channel,
             noteNumber: value,
@@ -398,7 +415,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
         const velocity = reader.uint8();
         return {
           event: {
-            type: [velocity === 0 ? 0x80 : 0x90],
+            type: velocity === 0 ? 0x80 : 0x90,
             descr: velocity === 0 ? NOTE_OFF : NOTE_ON,
             channel,
             noteNumber: value,
@@ -410,7 +427,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       case 0x0a:
         return {
           event: {
-            type: [0xa0],
+            type: 0xa0,
             descr: NOTE_AFTERTOUCH,
             channel,
             noteNumber: value,
@@ -422,7 +439,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       case 0x0b:
         return {
           event: {
-            type: [0xb0],
+            type: 0xb0,
             descr: CONTROLLER,
             channel,
             controllerNumber: value,
@@ -434,7 +451,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       case 0x0c:
         return {
           event: {
-            type: [0xc0],
+            type: 0xc0,
             descr: PROGRAM_CHANGE,
             channel,
             program: value,
@@ -445,7 +462,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       case 0x0d:
         return {
           event: {
-            type: [0xd0],
+            type: 0xd0,
             descr: CHANNEL_AFTERTOUCH,
             channel,
             amount: value,
@@ -456,7 +473,7 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
       case 0x0e:
         return {
           event: {
-            type: [0xe0],
+            type: 0xe0,
             descr: PITCH_BEND,
             channel,
             value: value + (reader.uint8() << 7),
@@ -465,14 +482,14 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
         };
     }
   }
-  console.log(`Unrecognized MIDI event type byte: ${typeByte} (fix this)`);
-  return {
-    event: {
-      type: [typeByte === 255 ? 0 : typeByte],
-    },
-    deltaTime,
-  };
-  // throw new Error(`Unrecognized MIDI event type byte: ${typeByte}`);
+  // console.log(`Unrecognized MIDI event type byte: ${typeByte} (fix this)`);
+  // return {
+  //   event: {
+  //     type: typeByte === 255 ? 0 : typeByte,
+  //   },
+  //   deltaTime,
+  // };
+  throw new Error(`Unrecognized MIDI event type byte: ${typeByte}`);
 }
 
 function getFrameRate(hourByte: number) {

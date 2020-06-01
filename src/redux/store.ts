@@ -4,7 +4,7 @@ import { createStore,applyMiddleware, AnyAction, Action } from "redux";
 // import { data, initialState as dataInitialState, DataState } from "./data-reducer";
 // import { composeWithDevTools } from "redux-devtools-extension";
 // import { createLogger } from "redux-logger";
-import { PartData } from "../util/musicxml";
+import { PartData } from "../webdaw/musicxml";
 import { Song } from "../webdaw/types";
 import { rootReducer } from "./rootReducer";
 
@@ -25,11 +25,14 @@ export type Score = {
   file: XMLDocument;
   repeats: number[][];
   parts: PartData[];
-  interpretations: Song[];
+  interpretations?: Song[];
 };
 
+
+
 export type AppState = {
-  scores: any[];
+  // scores: Score[],
+  scores: any[],
 };
 
 const initialState: AppState = { scores: [] };

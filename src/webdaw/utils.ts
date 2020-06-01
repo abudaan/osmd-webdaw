@@ -31,6 +31,7 @@ export const getNiceTime = (
   millisecond: number;
   timeAsString: string;
   timeAsArray: [number, number, number, number];
+  timeAsArrayString: [string, string, string, string];
 } => {
   let timeAsString = "";
 
@@ -47,6 +48,11 @@ export const getNiceTime = (
   timeAsString += ":";
   timeAsString += ms === 0 ? "000" : ms < 10 ? "00" + ms : ms < 100 ? "0" + ms : ms;
 
+
+  const hS = `${h}`;
+  const mS = m < 10 ? `0${m}` : `${m}`;
+  const sS = s < 10 ? `0${s}` : `${s}`;
+  const msS = ms === 0 ? "000" : ms < 10 ? `00${ms}` : ms < 100 ? `0${ms}` : `${ms}`;
   //console.log(h, m, s, ms);
 
   return {
@@ -56,5 +62,6 @@ export const getNiceTime = (
     millisecond: ms,
     timeAsString: timeAsString,
     timeAsArray: [h, m, s, ms],
+    timeAsArrayString: [hS, mS, sS, msS],
   };
 };

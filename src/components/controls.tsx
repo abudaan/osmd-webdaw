@@ -11,7 +11,9 @@ import { AppDispatch } from "./types";
 type Props = {};
 export const Controls: React.FC<Props> = ({}: Props) => {
   const dispatch: AppDispatch = useDispatch();
-  // const xmlDocNames = useSelector((state: AppState) => { return state.data.xmlDocs.map(val => val.name); }, shallowEqual)
+  const xmlDocNames = useSelector((state: AppState) => {
+    return state.scores.map(val => val.name);
+  }, shallowEqual);
   // const midiFileNames = useSelector((state: AppState) => { return state.data.midiFiles.map(val => val.name); }, shallowEqual)
   // const xmlDocCurrentIndex = useSelector((state: AppState) => state.data.xmlDocCurrentIndex);
   // const midiFileCurrentIndex = useSelector((state: AppState) => state.data.midiFileCurrentIndex);
@@ -34,7 +36,6 @@ export const Controls: React.FC<Props> = ({}: Props) => {
 
   const onClick = (type: string): void => {
     const ref = refs[type];
-    console.log(type, ref);
     if (ref.current) {
       ref.current.value = null;
       ref.current.click();
@@ -43,7 +44,6 @@ export const Controls: React.FC<Props> = ({}: Props) => {
 
   const xmlDocCurrentIndex = 0;
   const midiFileCurrentIndex = 0;
-  const xmlDocNames = ["mxml"];
   const midiFileNames = ["midi"];
   const select1 = ["select MusicXML file", ...xmlDocNames];
   const select2 = ["select MIDI file", ...midiFileNames];

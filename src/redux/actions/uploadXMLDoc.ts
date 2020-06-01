@@ -1,11 +1,10 @@
 import { Dispatch, Action, AnyAction } from "redux";
 import { UPLOAD_XMLDOC, MUSICXML_LOADED } from "../actions1";
-// import { parseMusicXML, SignatureEvent } from "src/util/musicxml";
-import { find } from "rxjs/operators";
-// import { TempoEvent } from "src/midi_events";
-import { fileReaderPromise } from "../fileReaderPromise";
 import { ThunkAction } from "redux-thunk";
 import { AppState } from "../store";
+import { parseMusicXML } from "../../webdaw/musicxml";
+import { MIDIEvent, TimeSignatureEvent, TempoEvent } from "../../webdaw/midi_events";
+import { Song, Track } from "../../webdaw/types";
 
 export const uploadXMLDoc = (
   file: File
@@ -13,57 +12,57 @@ export const uploadXMLDoc = (
   dispatch({
     type: UPLOAD_XMLDOC,
   });
-  /*
-  const evt = await fileReaderPromise(file);
-    if (evt && evt.target) {
-      const file1 = new DOMParser().parseFromString(evt.target.result as string, "application/xml");
-      const parsed = parseMusicXML(file1);
-      if (parsed === null) {
-        throw new Error("not a valid XML file");
-      }
-      const { repeats, parts, timeEvents } = parsed;
-      const firstTempoEvent = find((event: TempoEvent | SignatureEvent) => event.command === 0x51)(
-        timeEvents
-      );
-      let bpm = 120;
-      if (firstTempoEvent) {
-        bpm = ((firstTempoEvent as unknown) as TempoEvent).bpm;
-      }
-      const firstSignatureEvent = find(
-        (event: TempoEvent | SignatureEvent) => event.command === 0x58
-      )(timeEvents);
-      const {
-        denominator,
-        numerator: nominator,
-      } = (firstSignatureEvent as unknown) as SignatureEvent;
-      const tracks = parts.map(part => {
-        const midiEvents: Heartbeat.MIDIEvent[] = part.events.map(event => {
-          const { command, ticks, noteNumber, velocity } = event;
-          return sequencer.createMidiEvent(ticks, command, noteNumber, velocity);
-        });
-        const t = sequencer.createTrack(part.name);
-        const p = sequencer.createPart();
-        p.addEvents(midiEvents);
-      });
-      const json = {
-        id: file.name,
-        name: file.name,
-        ppq: 960,
-        bpm,
-        nominator,
-        denominator,
-        tracks,
-        timeEvents,
+  const s = await file.text();
+  const mxml = new DOMParser().parseFromString(s, "application/xml");
+  const { parts, repeats, timeEvents } = parseMusicXML(mxml);
+
+  let i = timeEvents.findIndex((event: TempoEvent | TimeSignatureEvent) => event.subType === 0x51);
+  const firstTempoEvent = timeEvents[i];
+  let bpm = 120;
+  if (firstTempoEvent) {
+    bpm = ((firstTempoEvent as unknown) as TempoEvent).bpm;
+  }
+
+  i = timeEvents.findIndex((event: TempoEvent | TimeSignatureEvent) => event.subType === 0x58);
+  const firstSignatureEvent = timeEvents[i];
+  const { denominator, numerator: nominator } = firstSignatureEvent as TimeSignatureEvent;
+  const { tracks, events }: { tracks: Track[]; events: MIDIEvent[] } = parts.reduce(
+    (acc, val) => {
+      acc.events.push(...val.events);
+      const t: Track = {
+        id: val.name,
+        latency: 0,
+        inputs: [],
+        outputs: [],
       };
-      dispatch({
-        type: MUSICXML_LOADED,
-        payload: {
-          file: file1,
-          name: file.name,
-          repeats,
-          parts,
-        },
-      });
-    }
-    */
+      acc.tracks.push(t);
+      return acc;
+    },
+    { tracks: [], events: [] }
+  );
+
+  const song: Song = {
+    ppq: 960,
+    latency: 17, // value in milliseconds -> the length of a single frame @ 60Hz refresh rate
+    bufferTime: 100, // value in milliseconds
+    tracks,
+    tracksById: tracks.reduce((acc: { [id: string]: Track }, value) => {
+      acc[value.id] = value;
+      return acc;
+    }, {}),
+    events,
+    initialTempo: bpm,
+    // timeTrack,
+    // tracks: tracks.map(track => ({ events: [...track] })),
+  };
+
+  dispatch({
+    type: MUSICXML_LOADED,
+    payload: {
+      file: mxml,
+      name: file.name,
+      repeats,
+      parts,
+    },
+  });
 };
