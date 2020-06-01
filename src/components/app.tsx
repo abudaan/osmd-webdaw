@@ -1,7 +1,7 @@
 import React from "react";
 import { Controls } from "./controls";
-import { Score } from "./score";
-import { Transport } from "./transport";
+// import { Score } from "./score";
+// import { Transport } from "./transport";
 
 type Props = {};
 export const App: React.FC<Props> = () => {

@@ -1,5 +1,5 @@
 import thunk, { ThunkMiddleware } from "redux-thunk";
-import { createStore,applyMiddleware, AnyAction, Action } from "redux";
+import { createStore, applyMiddleware, AnyAction, Action } from "redux";
 // import { song, initialState as songInitialState, SongState } from "./song-reducer";
 // import { data, initialState as dataInitialState, DataState } from "./data-reducer";
 // import { composeWithDevTools } from "redux-devtools-extension";
@@ -25,17 +25,20 @@ export type Score = {
   file: XMLDocument;
   repeats: number[][];
   parts: PartData[];
-  interpretations?: Song[];
+  interpretations?: string[];
 };
 
-
+export type Interpretation = {
+  name: string;
+  file: Song;
+};
 
 export type AppState = {
-  // scores: Score[],
-  scores: any[],
+  scores: Score[];
+  interpretations: Interpretation[];
 };
 
-const initialState: AppState = { scores: [] };
+const initialState: AppState = { scores: [], interpretations: [] };
 
 const store = createStore(
   // combineReducers({ song, data }),
@@ -46,7 +49,7 @@ const store = createStore(
   //   createLogger()
   // )),
   // applyMiddleware(thunk as ThunkMiddleware<AppState, AnyAction>, createLogger({ collapsed: true }))
-  applyMiddleware(thunk as ThunkMiddleware<AppState, AnyAction>))
+  applyMiddleware(thunk as ThunkMiddleware<AppState, AnyAction>)
 );
 
 export { store };

@@ -1,22 +1,23 @@
 import { Dispatch } from "redux";
-import { UPLOAD_MIDIFILE, MIDIFILE_LOADED } from "../actions1";
-import { fileReaderPromise } from "../fileReaderPromise";
-// import { addMIDIFile } from "src/util/heartbeat-utils";
+import { UPLOAD_MIDIFILE, MIDIFILE_LOADED } from "../../contants";
+import { createSongFromMIDIFile } from "../../webdaw/sugar_coating";
+import { outputs } from "../../media";
 
 export const uploadMIDIFile = (file: File) => {
   return async (dispatch: Dispatch) => {
     dispatch({
       type: UPLOAD_MIDIFILE,
     });
-    const evt = await fileReaderPromise(file);
-    if (evt && evt.target && evt.target.result) {
-      const arraybuffer = evt.target.result as ArrayBuffer;
-      // const file1 = await addMIDIFile({ arraybuffer });
-      const file1 = "";
-      dispatch({
-        type: MIDIFILE_LOADED,
-        payload: { name: file.name, file: file1 },
-      });
-    }
+    const ab = await file.arrayBuffer();
+    const song = await createSongFromMIDIFile(ab);
+    song.tracks.forEach(track => {
+      // track.outputs.push(...outputs.map(o => o.id));
+      track.outputs = outputs.map(o => o.id);
+    });
+
+    dispatch({
+      type: MIDIFILE_LOADED,
+      payload: { name: file.name, file: song },
+    });
   };
 };

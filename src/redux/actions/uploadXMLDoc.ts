@@ -1,10 +1,11 @@
 import { Dispatch, Action, AnyAction } from "redux";
-import { UPLOAD_XMLDOC, MUSICXML_LOADED } from "../actions1";
+import { UPLOAD_XMLDOC, MUSICXML_LOADED } from "../../contants";
 import { ThunkAction } from "redux-thunk";
 import { AppState } from "../store";
 import { parseMusicXML } from "../../webdaw/musicxml";
 import { MIDIEvent, TimeSignatureEvent, TempoEvent } from "../../webdaw/midi_events";
 import { Song, Track } from "../../webdaw/types";
+import { outputs } from "../../media";
 
 export const uploadXMLDoc = (
   file: File
@@ -33,8 +34,9 @@ export const uploadXMLDoc = (
         id: val.name,
         latency: 0,
         inputs: [],
-        outputs: [],
+        outputs: outputs.map(o => o.id),
       };
+
       acc.tracks.push(t);
       return acc;
     },

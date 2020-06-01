@@ -1,7 +1,7 @@
-import React, { SyntheticEvent, useEffect, useRef, RefObject } from "react";
+import React, { SyntheticEvent, useRef, RefObject } from "react";
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
-import { Dispatch, AnyAction } from "redux";
-import { selectXMLDoc, selectMIDIFile } from "../redux/actions1";
+import { selectScore } from "../redux/actions/selectScore";
+import { selectInterpretation } from "../redux/actions/selectInterpretation";
 import uniqid from "uniqid";
 import { AppState } from "../redux/store";
 import { uploadXMLDoc } from "../redux/actions/uploadXMLDoc";
@@ -14,7 +14,9 @@ export const Controls: React.FC<Props> = ({}: Props) => {
   const xmlDocNames = useSelector((state: AppState) => {
     return state.scores.map(val => val.name);
   }, shallowEqual);
-  // const midiFileNames = useSelector((state: AppState) => { return state.data.midiFiles.map(val => val.name); }, shallowEqual)
+  const midiFileNames = useSelector((state: AppState) => {
+    return state.interpretations.map(val => val.name);
+  }, shallowEqual);
   // const xmlDocCurrentIndex = useSelector((state: AppState) => state.data.xmlDocCurrentIndex);
   // const midiFileCurrentIndex = useSelector((state: AppState) => state.data.midiFileCurrentIndex);
 
@@ -44,7 +46,6 @@ export const Controls: React.FC<Props> = ({}: Props) => {
 
   const xmlDocCurrentIndex = 0;
   const midiFileCurrentIndex = 0;
-  const midiFileNames = ["midi"];
   const select1 = ["select MusicXML file", ...xmlDocNames];
   const select2 = ["select MIDI file", ...midiFileNames];
 
@@ -59,7 +60,7 @@ export const Controls: React.FC<Props> = ({}: Props) => {
           if (index === 0) {
             return;
           } else if (index !== xmlDocCurrentIndex + 1) {
-            dispatch(selectXMLDoc(index - 1));
+            dispatch(selectScore(index - 1));
           }
         }}
       >
@@ -97,7 +98,7 @@ export const Controls: React.FC<Props> = ({}: Props) => {
           if (index === 0) {
             return;
           } else if (index !== midiFileCurrentIndex + 1) {
-            dispatch(selectMIDIFile(index - 1));
+            dispatch(selectInterpretation(index - 1));
           }
         }}
       >

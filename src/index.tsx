@@ -3,10 +3,13 @@ import ReactDOM from "react-dom";
 import { Provider } from "react-redux";
 import { store, AppState } from "./redux/store";
 import { App } from "./components/app";
+import { init } from "./media";
 
-ReactDOM.render(
-  <Provider store={store}>
-    <App />
-  </Provider>,
-  document.getElementById("app")
-);
+init().then(() => {
+  ReactDOM.render(
+    <Provider store={store}>
+      <App />
+    </Provider>,
+    document.getElementById("app")
+  );
+});

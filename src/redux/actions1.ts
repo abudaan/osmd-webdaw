@@ -1,20 +1,3 @@
-export const INITIALIZING = "INITIALIZING";
-export const LOAD_INIT_DATA = "LOAD_INIT_DATA";
-export const INIT_DATA_LOADED = "INIT_DATA_LOADED";
-export const SCORE_READY = "SCORE_READY";
-export const SONG_READY = "SONG_READY";
-export const UPDATE_SONG_ACTION = "UPDATE_SONG_ACTION";
-export const MUSICXML_LOADED = "MUSICXML_LOADED";
-export const MIDIFILE_LOADED = "MIDIFILE_LOADED";
-export const SELECT_XMLDOC = "SELECT_XMLDOC";
-export const SELECT_MIDIFILE = "SELECT_MIDIFILE";
-export const UPLOAD_XMLDOC = "UPLOAD_XMLDOC";
-export const UPLOAD_MIDIFILE = "UPLOAD_MIDIFILE";
-export const UPDATE_NOTE_MAPPING = "UPDATE_NOTE_MAPPING";
-export const POSITION_SLIDER_CHANGED = "POSITION_SLIDER_CHANGED";
-export const PLAYHEAD_SEEKING = "PLAYHEAD_SEEKING";
-export const UPDATE_PLAYHEAD_MILLIS = "UPDATE_PLAYHEAD_MILLIS";
-
 import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
 import sequencer from "heartbeat-sequencer";
 import { Dispatch, AnyAction } from "redux";
@@ -104,14 +87,4 @@ export const updateSongAction = (action: string) => ({
 export const updatePlayheadMillis = (millis: number) => ({
   type: UPDATE_PLAYHEAD_MILLIS,
   payload: { millis },
-});
-
-export const selectXMLDoc = (index: number) => ({
-  type: SELECT_XMLDOC,
-  payload: { index },
-});
-
-export const selectMIDIFile = (index: number) => ({
-  type: UPLOAD_MIDIFILE,
-  payload: { index },
 });
