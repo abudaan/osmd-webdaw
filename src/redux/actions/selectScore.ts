@@ -1,6 +1,6 @@
-import { SELECT_XMLDOC } from "../../contants";
+import { MUSICXML_SELECTED } from "../../contants";
 
 export const selectScore = (index: number) => ({
-  type: SELECT_XMLDOC,
+  type: MUSICXML_SELECTED,
   payload: { index },
 });

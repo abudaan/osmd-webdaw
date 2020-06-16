@@ -2,7 +2,7 @@ import thunk, { ThunkMiddleware } from "redux-thunk";
 import { createStore, applyMiddleware, AnyAction, Action } from "redux";
 // import { song, initialState as songInitialState, SongState } from "./song-reducer";
 // import { data, initialState as dataInitialState, DataState } from "./data-reducer";
-// import { composeWithDevTools } from "redux-devtools-extension";
+import { composeWithDevTools } from "redux-devtools-extension";
 // import { createLogger } from "redux-logger";
 import { PartData } from "../webdaw/musicxml";
 import { Song } from "../webdaw/types";
@@ -36,9 +36,20 @@ export type Interpretation = {
 export type AppState = {
   scores: Score[];
   interpretations: Interpretation[];
+  selectedScoreIndex: number;
+  selectedInterpretationIndex: number;
 };
 
-const initialState: AppState = { scores: [], interpretations: [] };
+const initialState: AppState = {
+  scores: [],
+  interpretations: [],
+  selectedScoreIndex: 0,
+  selectedInterpretationIndex: 0,
+};
+
+const composeEnhancers = composeWithDevTools({
+  // Specify name here, actionsBlacklist, actionsCreators and other options if needed
+});
 
 const store = createStore(
   // combineReducers({ song, data }),
@@ -49,7 +60,7 @@ const store = createStore(
   //   createLogger()
   // )),
   // applyMiddleware(thunk as ThunkMiddleware<AppState, AnyAction>, createLogger({ collapsed: true }))
-  applyMiddleware(thunk as ThunkMiddleware<AppState, AnyAction>)
+  composeEnhancers(applyMiddleware(thunk as ThunkMiddleware<AppState, AnyAction>))
 );
 
 export { store };

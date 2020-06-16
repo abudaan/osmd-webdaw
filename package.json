@@ -21,6 +21,7 @@
     "redux": "^4.0.5",
     "redux-logger": "^3.0.6",
     "redux-thunk": "^2.3.0",
+    "reselect": "^4.0.0",
     "rxjs": "^6.5.5",
     "shortid": "^2.2.15",
     "src": "^1.1.2",

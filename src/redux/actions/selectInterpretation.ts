@@ -1,6 +1,6 @@
-import { UPLOAD_MIDIFILE } from "../../contants";
+import { MIDIFILE_SELECTED } from "../../contants";
 
 export const selectInterpretation = (index: number) => ({
-  type: UPLOAD_MIDIFILE,
+  type: MIDIFILE_SELECTED,
   payload: { index },
 });

@@ -1,6 +1,6 @@
 import React from "react";
 import { Controls } from "./controls";
-// import { Score } from "./score";
+import { Score } from "./score";
 // import { Transport } from "./transport";
 
 type Props = {};
@@ -9,7 +9,7 @@ export const App: React.FC<Props> = () => {
   return (
     <>
       <Controls />
-      {/* <Score /> */}
+      <Score />
       {/* <Sequencer /> */}
       {/* <Transport /> */}
     </>

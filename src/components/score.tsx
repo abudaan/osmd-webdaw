@@ -2,21 +2,29 @@ import React, { useEffect, useRef, RefObject, useState } from "react";
 import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
 import { useSelector, useDispatch, shallowEqual } from "react-redux";
 import { AppState } from "../redux/store";
-import { scoreReady } from "../redux/actions1";
+import { createSelector } from "reselect";
+import { scoreReady } from "../redux/actions/scoreReady";
+
+const getSelectedScore = createSelector(
+  (state: AppState, index: number) => state.scores[index],
+  score => score
+);
 
 let i: number = 0;
 
 export const Score: React.FC<{}> = ({}) => {
-  const [osmd, setOSMD] = useState<OpenSheetMusicDisplay | null>(null);
-  const xmlDoc = useSelector((state: AppState) => {
-    return state.data.currentXMLDoc;
-  });
-  // const xmlDoc = useSelector((state: AppState) => { return state.data.currentXMLDoc; })
   const dispatch = useDispatch();
+  const [osmd, setOSMD] = useState<OpenSheetMusicDisplay | null>(null);
+  const score = useSelector((state: AppState) => {
+    if (state.selectedScoreIndex === 0) {
+      return null;
+    }
+    return getSelectedScore(state, state.selectedScoreIndex - 1);
+  });
   const refScore: RefObject<HTMLDivElement> = useRef(null);
 
   useEffect(() => {
-    if (xmlDoc) {
+    if (score) {
       console.log("[Score] useEffect");
       const scoreDiv = refScore.current;
       if (scoreDiv) {
@@ -28,10 +36,10 @@ export const Score: React.FC<{}> = ({}) => {
           setOSMD(o);
         } else {
           // window.openSheetMusicDisplay = openSheetMusicDisplay;
-          osmd.clear();
+          // osmd.clear();
           try {
             osmd
-              .load(xmlDoc)
+              .load(score.file)
               .then(
                 () => {
                   osmd.render();
@@ -55,7 +63,7 @@ export const Score: React.FC<{}> = ({}) => {
     }
   });
 
-  console.log("[Score] render (xmlDoc === null) ->", xmlDoc === null);
+  // console.log("[Score] render (xmlDoc === null) ->", score === null);
 
   return (
     <div id="score-container" className={`render-${i++}`}>

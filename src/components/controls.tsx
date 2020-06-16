@@ -17,19 +17,10 @@ export const Controls: React.FC<Props> = ({}: Props) => {
   const midiFileNames = useSelector((state: AppState) => {
     return state.interpretations.map(val => val.name);
   }, shallowEqual);
-  // const xmlDocCurrentIndex = useSelector((state: AppState) => state.data.xmlDocCurrentIndex);
-  // const midiFileCurrentIndex = useSelector((state: AppState) => state.data.midiFileCurrentIndex);
-
-  // const select1 = ['select MusicXML file', ...xmlDocNames, 'upload new'];
-  // const select2 = ['select MIDI file', ...midiFileNames, 'upload new'];
-
-  // const indexUploadXMLDoc = select1.length - 1;
-  // const indexUploadMIDIFile = select2.length - 1;
-
-  // useEffect(() => {
-  //   if (refInput && refInput.current) {
-  //   }
-  // }, [refInput.current]);
+  const selectedScoreIndex = useSelector((state: AppState) => state.selectedScoreIndex);
+  const selectedInterpretationIndex = useSelector(
+    (state: AppState) => state.selectedInterpretationIndex
+  );
 
   const refs: { [id: string]: RefObject<HTMLInputElement> } = {
     mxml: useRef(),
@@ -44,8 +35,6 @@ export const Controls: React.FC<Props> = ({}: Props) => {
     }
   };
 
-  const xmlDocCurrentIndex = 0;
-  const midiFileCurrentIndex = 0;
   const select1 = ["select MusicXML file", ...xmlDocNames];
   const select2 = ["select MIDI file", ...midiFileNames];
 
@@ -54,13 +43,13 @@ export const Controls: React.FC<Props> = ({}: Props) => {
   return (
     <div id="controls">
       <select
-        defaultValue={xmlDocCurrentIndex}
+        defaultValue={selectedScoreIndex}
         onChange={e => {
           const index = e.target.selectedIndex;
           if (index === 0) {
             return;
-          } else if (index !== xmlDocCurrentIndex + 1) {
-            dispatch(selectScore(index - 1));
+          } else if (index !== selectedScoreIndex) {
+            dispatch(selectScore(index));
           }
         }}
       >
@@ -92,13 +81,13 @@ export const Controls: React.FC<Props> = ({}: Props) => {
       </button>
 
       <select
-        defaultValue={midiFileCurrentIndex}
+        defaultValue={selectedInterpretationIndex}
         onChange={e => {
           const index = e.target.selectedIndex;
           if (index === 0) {
             return;
-          } else if (index !== midiFileCurrentIndex + 1) {
-            dispatch(selectInterpretation(index - 1));
+          } else if (index !== selectedInterpretationIndex) {
+            dispatch(selectInterpretation(index));
           }
         }}
       >
