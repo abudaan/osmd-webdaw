@@ -1,5 +1,5 @@
 import { Dispatch } from "redux";
-import { UPLOAD_MIDIFILE, MIDIFILE_LOADED } from "../../contants";
+import { UPLOAD_MIDIFILE, MIDIFILE_LOADED } from "../../constants";
 import { createSongFromMIDIFile } from "../../webdaw/sugar_coating";
 import { outputs } from "../../media";
 

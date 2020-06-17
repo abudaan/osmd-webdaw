@@ -1,7 +1,7 @@
 import { OpenSheetMusicDisplay } from "opensheetmusicdisplay/build/dist/src";
 import { Dispatch } from "redux";
 import { getGraphicalNotesPerBar } from "../../util/osmd-notes";
-import { SCORE_READY } from "../../contants";
+import { SCORE_READY } from "../../constants";
 
 export const scoreReady = (osmd: OpenSheetMusicDisplay) => {
   return async (dispatch: Dispatch) => {

@@ -1,12 +1,13 @@
-import { AppState } from "./store";
+import { AppState } from "../types";
 import {
   MUSICXML_LOADED,
   MIDIFILE_LOADED,
   MUSICXML_SELECTED,
   MIDIFILE_SELECTED,
-} from "../contants";
+  SET_TRANSPORT,
+} from "../constants";
 
-export const rootReducer = (state: AppState, action: any) => {
+export const rootReducer = (state: AppState, action: any): AppState => {
   if (action.type === MUSICXML_LOADED) {
     return {
       ...state,
@@ -27,6 +28,18 @@ export const rootReducer = (state: AppState, action: any) => {
     return {
       ...state,
       selectedInterpretationIndex: action.payload.index,
+      currentInterpretation: action.payload.currentInterpretation,
+    };
+  } else if (action.type === SET_TRANSPORT) {
+    return {
+      ...state,
+      transport: action.payload.transport,
+      playheadMillis: action.payload.playheadMillis,
+      currentInterpretation: action.payload.currentInterpretation,
+    };
+  } else if (action.type === SET_TRANSPORT) {
+    return {
+      ...state,
     };
   }
 

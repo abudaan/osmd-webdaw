@@ -1,5 +1,5 @@
-import { MusicSystem } from 'opensheetmusicdisplay';
-import { TypeGraphicalNoteData } from './osmd-notes';
+import { MusicSystem } from "opensheetmusicdisplay";
+import { TypeGraphicalNoteData } from "./osmd-notes";
 
 /*
   This method maps the notes in the SVG document of the score to MIDI notes in the sequencer
@@ -7,12 +7,16 @@ import { TypeGraphicalNoteData } from './osmd-notes';
 
 export type NoteMapping = {
   [index: string]: {
-    vfnote: Vex.Flow.Note
-    musicSystem: MusicSystem
-  }
-}
+    vfnote: Vex.Flow.Note;
+    musicSystem: MusicSystem;
+  };
+};
 
-const mapOSMDToSequencer = (graphicalNotesPerBar: TypeGraphicalNoteData[][], repeats: number[][], song: Heartbeat.Song): NoteMapping => {
+const mapOSMDToSequencer = (
+  graphicalNotesPerBar: TypeGraphicalNoteData[][],
+  repeats: number[][],
+  song: Heartbeat.Song
+): NoteMapping => {
   let barIndex = -1;
   let barOffset = 0;
   let ticksOffset = 0; // not used, keep for reference
@@ -48,7 +52,7 @@ const mapOSMDToSequencer = (graphicalNotesPerBar: TypeGraphicalNoteData[][], rep
     }
 
     // get all sequencer MIDI events in this bar
-    const filtered = events.filter(e => e.bar === barIndex + 1 + barOffset)
+    const filtered = events.filter(e => e.bar === barIndex + 1 + barOffset);
     // console.log(barIndex + 1 + barOffset, filtered.length);
 
     graphicalNotesPerBar[barIndex]
@@ -64,16 +68,20 @@ const mapOSMDToSequencer = (graphicalNotesPerBar: TypeGraphicalNoteData[][], rep
         const { vfnote, noteNumber, bar, parentMusicSystem } = bd;
         for (let j = 0; j < filtered.length; j++) {
           const event = filtered[j];
-          if (!mapping[event.id] && event.bar == (bar + barOffset) && event.noteNumber == noteNumber) {
+          if (
+            !mapping[event.id] &&
+            event.bar == bar + barOffset &&
+            event.noteNumber == noteNumber
+          ) {
             mapping[event.id] = { vfnote, musicSystem: parentMusicSystem };
             // filtered.splice(j, 1);
             break;
           }
         }
-      })
-  };
+      });
+  }
 
   return mapping;
-}
+};
 
 export { mapOSMDToSequencer };

@@ -4,9 +4,10 @@ import { createStore, applyMiddleware, AnyAction, Action } from "redux";
 // import { data, initialState as dataInitialState, DataState } from "./data-reducer";
 import { composeWithDevTools } from "redux-devtools-extension";
 // import { createLogger } from "redux-logger";
-import { PartData } from "../webdaw/musicxml";
-import { Song } from "../webdaw/types";
+
 import { rootReducer } from "./rootReducer";
+import { Observable, Subscriber } from "rxjs";
+import { Transport } from "../types";
 
 // import { data, createDataState } from './data_reducer';
 // import { scanResult, scanResultState } from './scan_result_reducer';
@@ -20,31 +21,14 @@ import { rootReducer } from "./rootReducer";
 //   scanResult: scanResultState
 // }
 
-export type Score = {
-  name: string;
-  file: XMLDocument;
-  repeats: number[][];
-  parts: PartData[];
-  interpretations?: string[];
-};
-
-export type Interpretation = {
-  name: string;
-  file: Song;
-};
-
-export type AppState = {
-  scores: Score[];
-  interpretations: Interpretation[];
-  selectedScoreIndex: number;
-  selectedInterpretationIndex: number;
-};
-
 const initialState: AppState = {
   scores: [],
   interpretations: [],
   selectedScoreIndex: 0,
   selectedInterpretationIndex: 0,
+  transport: Transport.STOP,
+  currentInterpretation: null,
+  playheadMillis: 0,
 };
 
 const composeEnhancers = composeWithDevTools({
@@ -64,4 +48,16 @@ const store = createStore(
   applyMiddleware(thunk as ThunkMiddleware<AppState, AnyAction>)
 );
 
-export { store };
+const state$ = new Observable((observer: Subscriber<AppState>) => {
+  observer.next(store.getState());
+  const unsubscribe = store.subscribe(() => {
+    observer.next(store.getState());
+  });
+  return unsubscribe;
+});
+
+const getState$ = (): Observable<AppState> => {
+  return state$;
+};
+
+export { getState$, store };

@@ -6,7 +6,7 @@ import uniqid from "uniqid";
 import { AppState } from "../redux/store";
 import { uploadXMLDoc } from "../redux/actions/uploadXMLDoc";
 import { uploadMIDIFile } from "../redux/actions/uploadMIDIFile";
-import { AppDispatch } from "./types";
+import { AppDispatch, Transport } from "../types";
 
 type Props = {};
 export const Controls: React.FC<Props> = ({}: Props) => {
@@ -21,6 +21,8 @@ export const Controls: React.FC<Props> = ({}: Props) => {
   const selectedInterpretationIndex = useSelector(
     (state: AppState) => state.selectedInterpretationIndex
   );
+  const transport = useSelector((state: AppState) => state.transport);
+  const scoreSelected = useSelector((state: AppState) => state.currentInterpretation !== null);
 
   const refs: { [id: string]: RefObject<HTMLInputElement> } = {
     mxml: useRef(),
@@ -123,6 +125,23 @@ export const Controls: React.FC<Props> = ({}: Props) => {
       </button>
 
       <input type="button" value="connect" />
+
+      <input
+        type="button"
+        value={transport}
+        disabled={!scoreSelected}
+        onClick={() => {
+          dispatch(updateSongAction(action));
+        }}
+      />
+      <input
+        type="button"
+        value="stop"
+        disabled={!scoreSelected}
+        onClick={() => {
+          dispatch(updateSongAction(SongActions.STOP));
+        }}
+      />
     </div>
   );
 };

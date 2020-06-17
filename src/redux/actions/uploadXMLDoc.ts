@@ -1,7 +1,7 @@
 import { Dispatch, Action, AnyAction } from "redux";
-import { UPLOAD_XMLDOC, MUSICXML_LOADED } from "../../contants";
+import { UPLOAD_XMLDOC, MUSICXML_LOADED } from "../../constants";
 import { ThunkAction } from "redux-thunk";
-import { AppState } from "../store";
+import { AppState } from "../../types";
 import { parseMusicXML } from "../../webdaw/musicxml";
 import { MIDIEvent, TimeSignatureEvent, TempoEvent } from "../../webdaw/midi_events";
 import { Song, Track } from "../../webdaw/types";
