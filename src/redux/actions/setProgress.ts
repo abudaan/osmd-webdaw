@@ -11,7 +11,6 @@ export const setProgress = (progress: number) => {
   const { song } = currentInterpretation;
   const duration = song.events[song.events.length - 1].millis;
 
-  // console.log(millis, durationTimeline);
   if (millis >= duration) {
     return {
       type: SET_PROGRESS,

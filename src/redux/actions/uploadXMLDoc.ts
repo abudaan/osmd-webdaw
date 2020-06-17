@@ -16,7 +16,7 @@ export const uploadXMLDoc = (
   const s = await file.text();
   const mxml = new DOMParser().parseFromString(s, "application/xml");
   const { parts, repeats, timeEvents } = parseMusicXML(mxml);
-
+  console.log(parts);
   let i = timeEvents.findIndex((event: TempoEvent | TimeSignatureEvent) => event.subType === 0x51);
   const firstTempoEvent = timeEvents[i];
   let bpm = 120;
@@ -57,6 +57,7 @@ export const uploadXMLDoc = (
     // timeTrack,
     // tracks: tracks.map(track => ({ events: [...track] })),
   };
+  console.log(song);
 
   dispatch({
     type: MUSICXML_LOADED,

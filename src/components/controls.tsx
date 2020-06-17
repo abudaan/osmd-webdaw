@@ -3,10 +3,10 @@ import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { selectScore } from "../redux/actions/selectScore";
 import { selectInterpretation } from "../redux/actions/selectInterpretation";
 import uniqid from "uniqid";
-import { AppState } from "../redux/store";
 import { uploadXMLDoc } from "../redux/actions/uploadXMLDoc";
 import { uploadMIDIFile } from "../redux/actions/uploadMIDIFile";
-import { AppDispatch, Transport } from "../types";
+import { AppDispatch, Transport, AppState } from "../types";
+import { handleTransport } from "../redux/actions/handleTransport";
 
 type Props = {};
 export const Controls: React.FC<Props> = ({}: Props) => {
@@ -128,10 +128,12 @@ export const Controls: React.FC<Props> = ({}: Props) => {
 
       <input
         type="button"
-        value={transport}
+        value={transport === Transport.PLAY ? "pause" : "play"}
         disabled={!scoreSelected}
         onClick={() => {
-          dispatch(updateSongAction(action));
+          dispatch(
+            handleTransport(transport === Transport.PLAY ? Transport.PAUSE : Transport.PLAY)
+          );
         }}
       />
       <input
@@ -139,7 +141,7 @@ export const Controls: React.FC<Props> = ({}: Props) => {
         value="stop"
         disabled={!scoreSelected}
         onClick={() => {
-          dispatch(updateSongAction(SongActions.STOP));
+          dispatch(handleTransport(Transport.STOP));
         }}
       />
     </div>

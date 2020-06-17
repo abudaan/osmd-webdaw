@@ -2,10 +2,10 @@
 
 import { MIDIEvent } from "./midi_events";
 
-enum NOTE {
-  NOTE_ON,
-  NOTE_OFF,
-}
+// enum NOTE {
+//   NOTE_ON,
+//   NOTE_OFF,
+// }
 
 export interface Song {
   ppq: number;
@@ -40,13 +40,13 @@ export interface Track {
   processor?: (event: MIDIEvent | WebMidi.MIDIMessageEvent) => void; // a function that processes an event into sound or something else
 }
 
-export type NoteEvent = {
-  command: NOTE;
-  channel: number;
-  ticks: number;
-  millis: number;
-  velocity: number;
-  noteNumber: number;
-  octave: number;
-  noteName: string;
-};
+// export type NoteEvent = {
+//   command: NOTE;
+//   channel: number;
+//   ticks: number;
+//   millis: number;
+//   velocity: number;
+//   noteNumber: number;
+//   octave: number;
+//   noteName: string;
+// };

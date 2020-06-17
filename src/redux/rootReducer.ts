@@ -5,6 +5,7 @@ import {
   MUSICXML_SELECTED,
   MIDIFILE_SELECTED,
   SET_TRANSPORT,
+  SET_PROGRESS,
 } from "../constants";
 
 export const rootReducer = (state: AppState, action: any): AppState => {
@@ -37,9 +38,13 @@ export const rootReducer = (state: AppState, action: any): AppState => {
       playheadMillis: action.payload.playheadMillis,
       currentInterpretation: action.payload.currentInterpretation,
     };
-  } else if (action.type === SET_TRANSPORT) {
+  } else if (action.type === SET_PROGRESS) {
+    const { progress, playheadMillis, currentInterpretation } = action.payload;
     return {
       ...state,
+      // progress,
+      playheadMillis,
+      currentInterpretation,
     };
   }
 

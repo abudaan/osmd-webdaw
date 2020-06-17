@@ -1,20 +1,20 @@
 import { getNoteNumber } from "./midi_utils";
-import { NoteEvent } from "./types";
-import { TempoEvent, TimeSignatureEvent } from "./midi_events";
+// import { NoteEvent } from "./types";
+import { TempoEvent, TimeSignatureEvent, MIDIEvent } from "./midi_events";
 
 const NOTE_ON = 0x90; // 144
 const NOTE_OFF = 0x80; // 128
 const TEMPO = 0x51; // 81
 const TIME_SIGNATURE = 0x58; // 88
 
-export type EventData = NoteEvent; // | TempoEvent | SignatureEvent;
+// export type EventData = NoteEvent; // | TempoEvent | SignatureEvent;
 
 export type PartData = {
   id: string;
   name: string;
   instrument: string;
   volume: number;
-  events: EventData[];
+  events: MIDIEvent[];
 };
 
 export type Repeat = {
@@ -364,12 +364,13 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
 
           const noteNumber = getNoteNumber(noteName, octave);
           const note = {
-            command: NOTE_ON,
-            channel,
             ticks,
+            descr: "note on",
+            type: NOTE_ON,
+            channel,
             millis: ticks * millisPerTick,
-            noteName,
-            octave,
+            // noteName,
+            // octave,
             noteNumber,
             velocity,
             // voice,
@@ -387,14 +388,16 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
             // no ties
             //console.log('no ties', measureNumber, voice, noteNumber, tiedNotes);
             parts[index].events.push({
-              command: NOTE_OFF,
-              channel,
+              // command: NOTE_OFF,
               ticks,
+              descr: "note off",
+              type: NOTE_OFF,
+              channel,
               millis: ticks * millisPerTick,
               noteNumber,
               velocity: 0,
-              noteName,
-              octave,
+              // noteName,
+              // octave,
               // voice,
               // staff,
             });
@@ -410,12 +413,14 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
             // end of tie
             tiedNotes[`N_${staff}-${voice}-${noteNumber}`] += noteDurationTicks;
             parts[index].events.push({
-              command: NOTE_OFF,
-              channel,
+              // command: NOTE_OFF,
               ticks: tiedNotes[`N_${staff}-${voice}-${noteNumber}`],
+              descr: "note off",
+              type: NOTE_OFF,
+              channel,
               millis: ticks * millisPerTick,
-              octave,
-              noteName,
+              // octave,
+              // noteName,
               noteNumber,
               velocity: 0,
               // voice,

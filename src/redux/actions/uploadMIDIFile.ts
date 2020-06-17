@@ -11,8 +11,8 @@ export const uploadMIDIFile = (file: File) => {
     const ab = await file.arrayBuffer();
     const song = await createSongFromMIDIFile(ab);
     song.tracks.forEach(track => {
-      // track.outputs.push(...outputs.map(o => o.id));
-      track.outputs = outputs.map(o => o.id);
+      track.outputs.push(...outputs.map(o => o.id));
+      // track.outputs = outputs.map(o => o.id);
     });
 
     dispatch({
