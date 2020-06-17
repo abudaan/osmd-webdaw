@@ -63,7 +63,7 @@ export const Score: React.FC<{}> = ({}) => {
     }
   });
 
-  // console.log("[Score] render (xmlDoc === null) ->", score === null);
+  console.log("[Score] render (xmlDoc === null) ->", score === null);
 
   return (
     <div id="score-container" className={`render-${i++}`}>
