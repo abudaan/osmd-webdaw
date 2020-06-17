@@ -61,10 +61,16 @@ export const uploadXMLDoc = (
   dispatch({
     type: MUSICXML_LOADED,
     payload: {
-      file: mxml,
-      name: file.name,
-      repeats,
-      parts,
+      score: {
+        name: file.name,
+        file: mxml,
+        repeats,
+        parts,
+      },
+      interpretation: {
+        name: `${file.name} (mxml)`,
+        file: song,
+      },
     },
   });
 };

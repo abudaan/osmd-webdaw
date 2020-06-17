@@ -11,10 +11,10 @@ import { AppDispatch } from "./types";
 type Props = {};
 export const Controls: React.FC<Props> = ({}: Props) => {
   const dispatch: AppDispatch = useDispatch();
-  const xmlDocNames = useSelector((state: AppState) => {
+  const scoreNames = useSelector((state: AppState) => {
     return state.scores.map(val => val.name);
   }, shallowEqual);
-  const midiFileNames = useSelector((state: AppState) => {
+  const interpretationNames = useSelector((state: AppState) => {
     return state.interpretations.map(val => val.name);
   }, shallowEqual);
   const selectedScoreIndex = useSelector((state: AppState) => state.selectedScoreIndex);
@@ -35,15 +35,15 @@ export const Controls: React.FC<Props> = ({}: Props) => {
     }
   };
 
-  const select1 = ["select MusicXML file", ...xmlDocNames];
-  const select2 = ["select MIDI file", ...midiFileNames];
+  const select1 = ["select MusicXML file", ...scoreNames];
+  const select2 = ["select MIDI file", ...interpretationNames];
 
-  console.log("[Controls] render");
+  console.log(`[Controls] render ${selectedScoreIndex} ${selectedInterpretationIndex}`);
 
   return (
     <div id="controls">
       <select
-        defaultValue={selectedScoreIndex}
+        value={selectedScoreIndex}
         onChange={e => {
           const index = e.target.selectedIndex;
           if (index === 0) {
@@ -54,7 +54,9 @@ export const Controls: React.FC<Props> = ({}: Props) => {
         }}
       >
         {select1.map((val, i) => (
-          <option key={uniqid()}>{val}</option>
+          <option key={uniqid()} value={i}>
+            {val}
+          </option>
         ))}
       </select>
 
@@ -81,7 +83,7 @@ export const Controls: React.FC<Props> = ({}: Props) => {
       </button>
 
       <select
-        defaultValue={selectedInterpretationIndex}
+        value={selectedInterpretationIndex}
         onChange={e => {
           const index = e.target.selectedIndex;
           if (index === 0) {
@@ -92,7 +94,9 @@ export const Controls: React.FC<Props> = ({}: Props) => {
         }}
       >
         {select2.map((val, i) => (
-          <option key={uniqid()}>{val}</option>
+          <option key={uniqid()} value={i}>
+            {val}
+          </option>
         ))}
       </select>
 

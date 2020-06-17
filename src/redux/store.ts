@@ -60,7 +60,8 @@ const store = createStore(
   //   createLogger()
   // )),
   // applyMiddleware(thunk as ThunkMiddleware<AppState, AnyAction>, createLogger({ collapsed: true }))
-  composeEnhancers(applyMiddleware(thunk as ThunkMiddleware<AppState, AnyAction>))
+  // composeEnhancers(applyMiddleware(thunk as ThunkMiddleware<AppState, AnyAction>))
+  applyMiddleware(thunk as ThunkMiddleware<AppState, AnyAction>)
 );
 
 export { store };

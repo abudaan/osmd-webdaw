@@ -10,12 +10,13 @@ export const rootReducer = (state: AppState, action: any) => {
   if (action.type === MUSICXML_LOADED) {
     return {
       ...state,
-      scores: [...state.scores, action.payload],
+      scores: [...state.scores, action.payload.score],
+      interpretations: [...state.interpretations, action.payload.interpretation],
     };
   } else if (action.type === MIDIFILE_LOADED) {
     return {
       ...state,
-      interpretations: [...state.interpretations, action.payload],
+      interpretations: [...state.interpretations, action.payload.interpretation],
     };
   } else if (action.type === MUSICXML_SELECTED) {
     return {

@@ -17,7 +17,7 @@ export const uploadMIDIFile = (file: File) => {
 
     dispatch({
       type: MIDIFILE_LOADED,
-      payload: { name: file.name, file: song },
+      payload: { interpretation: { name: file.name, file: song } },
     });
   };
 };
