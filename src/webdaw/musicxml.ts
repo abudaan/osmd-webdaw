@@ -138,7 +138,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
     let divisions = 1;
     let numerator = 4;
     let denominator = 4;
-    let bpm = 120;
+    let bpm = 60;
     let millisPerTick = (((1 / playbackSpeed) * 60) / bpm / ppq) * 1000;
     while ((measureNode = measureIterator.iterateNext())) {
       const measureNumber = xmlDoc.evaluate(

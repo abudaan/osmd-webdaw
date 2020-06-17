@@ -79,7 +79,6 @@ export const getMidiMessageEvent = (event: MIDIEvent): number[] => {
 };
 
 export const getNoteNumber = (name: string, octave: number, mode: string = "sharp"): number => {
-  // console.log(name, octave);
   // let index = -1;
   // const modes = Object.getOwnPropertyNames(noteNames);
   // for (let i = 0, maxi = modes.length; i < maxi; i++) {
@@ -98,11 +97,12 @@ export const getNoteNumber = (name: string, octave: number, mode: string = "shar
     for (let j = 0; j < names.length; j++) {
       // console.log(names[j], name);
       if (names[j] === name) {
-        index = i;
+        index = j;
         break;
       }
     }
   }
+  // console.log(name, octave, index);
   if (index === -1) {
     return -1;
   }
