@@ -14,6 +14,7 @@ export const selectInterpretation = (index: number) => {
     index: 0,
     scheduled: [],
   };
+  console.log(currentInterpretation);
   return {
     type: MIDIFILE_SELECTED,
     payload: {

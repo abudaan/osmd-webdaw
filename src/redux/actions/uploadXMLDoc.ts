@@ -29,11 +29,17 @@ export const uploadXMLDoc = (
   const { denominator, numerator: nominator } = firstSignatureEvent as TimeSignatureEvent;
   const { tracks, events }: { tracks: Track[]; events: MIDIEvent[] } = parts.reduce(
     (acc, val) => {
-      acc.events.push(...val.events);
+      acc.events.push(
+        ...val.events.map(e => {
+          e.trackId = val.name;
+          return e;
+        })
+      );
       const t: Track = {
         id: val.name,
         latency: 0,
         inputs: [],
+        // outputs: [...outputs.map(o => o.id)],
         outputs: outputs.map(o => o.id),
       };
 
@@ -57,7 +63,7 @@ export const uploadXMLDoc = (
     // timeTrack,
     // tracks: tracks.map(track => ({ events: [...track] })),
   };
-  console.log(song);
+  // console.log(song);
 
   dispatch({
     type: MUSICXML_LOADED,

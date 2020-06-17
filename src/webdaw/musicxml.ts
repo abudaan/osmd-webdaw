@@ -138,7 +138,8 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
     let divisions = 1;
     let numerator = 4;
     let denominator = 4;
-    let millisPerTick = 0;
+    let bpm = 120;
+    let millisPerTick = (((1 / playbackSpeed) * 60) / bpm / ppq) * 1000;
     while ((measureNode = measureIterator.iterateNext())) {
       const measureNumber = xmlDoc.evaluate(
         "@number",
@@ -198,16 +199,17 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
         null
       ).numberValue;
       if (!isNaN(tmp)) {
-        // console.log('BPM', tmp);
+        // console.log("BPM", tmp);
         const millis = ticks * millisPerTick;
         millisPerTick = (((1 / playbackSpeed) * 60) / tmp / ppq) * 1000;
+        bpm = tmp;
 
         const event: TempoEvent = {
           type: 0xff,
           subType: 0x51,
           descr: "tempo",
           ticks,
-          bpm: tmp,
+          bpm,
           millis,
           millisPerTick,
         };
