@@ -6,6 +6,7 @@ import { parseMusicXML } from "../../webdaw/musicxml";
 import { MIDIEvent, TimeSignatureEvent, TempoEvent, NoteOnEvent } from "../../webdaw/midi_events";
 import { Song, Track } from "../../webdaw/types";
 import { outputs } from "../../media";
+import { sortMIDIEvents } from "../../webdaw/midi_utils";
 
 export const uploadXMLDoc = (
   file: File
@@ -49,10 +50,11 @@ export const uploadXMLDoc = (
     { tracks: [], events: [] }
   );
 
-  events.forEach((e: MIDIEvent) => {
-    const n = e as NoteOnEvent;
-    console.log(n.ticks, n.noteNumber, n.descr, n.millis);
-  });
+  // events.forEach((e: MIDIEvent) => {
+  //   const n = e as NoteOnEvent;
+  //   console.log(n.ticks, n.noteNumber, n.descr, n.millis);
+  // });
+  sortMIDIEvents(events);
 
   const song: Song = {
     ppq: 960,

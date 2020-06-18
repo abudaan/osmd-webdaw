@@ -480,6 +480,16 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
           },
           deltaTime,
         };
+
+      default:
+        return {
+          event: {
+            type: typeByte >> 4,
+            descr: "unrecognized",
+            channel,
+          },
+          deltaTime,
+        };
     }
   }
   // console.log(`Unrecognized MIDI event type byte: ${typeByte} (fix this)`);

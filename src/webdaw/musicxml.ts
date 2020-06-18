@@ -241,7 +241,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
       );
       let noteNode;
       while ((noteNode = noteIterator.iterateNext())) {
-        console.log(noteNode);
+        // console.log(noteNode);
         let noteDuration = 0;
         let noteDurationTicks = 0;
         let voice = -1;
