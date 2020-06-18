@@ -48,7 +48,7 @@ const parseMusicXML = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML |
   return null;
 };
 
-const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
+const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML => {
   if (xmlDoc === null) {
     return null;
   }
@@ -135,10 +135,10 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
     );
     let measureNode;
     let ticks = 0;
-    let divisions = 1;
+    let bpm = 60;
+    let divisions = 24;
     let numerator = 4;
     let denominator = 4;
-    let bpm = 60;
     let millisPerTick = (((1 / playbackSpeed) * 60) / bpm / ppq) * 1000;
     while ((measureNode = measureIterator.iterateNext())) {
       const measureNumber = xmlDoc.evaluate(
@@ -241,7 +241,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number): ParsedMusicXML => {
       );
       let noteNode;
       while ((noteNode = noteIterator.iterateNext())) {
-        // console.log(noteNode);
+        console.log(noteNode);
         let noteDuration = 0;
         let noteDurationTicks = 0;
         let voice = -1;

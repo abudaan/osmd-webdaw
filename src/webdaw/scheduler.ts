@@ -7,7 +7,7 @@ export const getSchedulerIndex = (song: Song, millis: number): number => {
   let i = 0;
   for (; i < events.length; i++) {
     const event = events[i];
-    if (event.millis > millis) {
+    if (event.millis >= millis) {
       break;
     }
   }
@@ -40,7 +40,7 @@ export const schedule = ({
         if (event.descr === NOTE_ON || event.descr === NOTE_OFF) {
           // console.log(event.type, event.channel, event.noteNumber);
           const time = ts + song.latency + track.latency + (event.millis - millis);
-          // console.log(time, ts, time - ts);
+          // console.log(event["noteNumber"], event.descr, event.millis, millis, time, ts, time - ts);
           // console.log(event.type + event.channel, event.noteNumber, event.velocity);
           outputs
             ?.get(id)

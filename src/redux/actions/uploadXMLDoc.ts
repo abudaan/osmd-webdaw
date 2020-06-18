@@ -3,7 +3,7 @@ import { UPLOAD_XMLDOC, MUSICXML_LOADED } from "../../constants";
 import { ThunkAction } from "redux-thunk";
 import { AppState } from "../../types";
 import { parseMusicXML } from "../../webdaw/musicxml";
-import { MIDIEvent, TimeSignatureEvent, TempoEvent } from "../../webdaw/midi_events";
+import { MIDIEvent, TimeSignatureEvent, TempoEvent, NoteOnEvent } from "../../webdaw/midi_events";
 import { Song, Track } from "../../webdaw/types";
 import { outputs } from "../../media";
 
@@ -16,7 +16,7 @@ export const uploadXMLDoc = (
   const s = await file.text();
   const mxml = new DOMParser().parseFromString(s, "application/xml");
   const { parts, repeats, timeEvents } = parseMusicXML(mxml);
-  console.log(parts);
+  // console.log(parts);
   let i = timeEvents.findIndex((event: TempoEvent | TimeSignatureEvent) => event.subType === 0x51);
   const firstTempoEvent = timeEvents[i];
   let bpm = 120;
@@ -48,6 +48,11 @@ export const uploadXMLDoc = (
     },
     { tracks: [], events: [] }
   );
+
+  events.forEach((e: MIDIEvent) => {
+    const n = e as NoteOnEvent;
+    console.log(n.ticks, n.noteNumber, n.descr, n.millis);
+  });
 
   const song: Song = {
     ppq: 960,
