@@ -32,7 +32,10 @@ export type RefMIDI = {
   song: Song;
   timestamp: number;
   millis: number;
-  index: number;
+  indexScheduler: number;
+  indexHighlighter: number;
+  activeEvents: MIDIEvent[];
+  passiveEvents: MIDIEvent[];
   inLoop: boolean;
   scheduled: MIDIEvent[];
 };

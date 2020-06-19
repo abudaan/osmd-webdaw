@@ -45,6 +45,7 @@ export const Score: React.FC<{}> = ({}) => {
                   osmd.render();
                   // idString is not set by osmd which is I believe a bug -> the default value is "random idString, not initialized"
                   // osmd.idString = `score-${new Date().getTime()}`;
+                  console.log(osmd);
                   dispatch(scoreReady(osmd));
                 },
                 e => {
