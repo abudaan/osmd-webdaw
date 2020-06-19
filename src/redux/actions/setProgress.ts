@@ -5,24 +5,40 @@ import { playMIDI } from "../../controlMIDI";
 
 export const setProgress = (progress: number) => {
   const state = store.getState() as AppState;
-  const { playheadMillis, currentInterpretation } = state;
+  const {
+    playheadMillis,
+    currentInterpretation,
+    durationTimeline,
+    loop,
+    loopStart,
+    loopEnd,
+  } = state;
 
-  const millis = playheadMillis + progress;
-  const { song } = currentInterpretation;
-  const duration = song.events[song.events.length - 1].millis;
+  let millis = playheadMillis + progress;
 
-  if (millis >= duration) {
+  if (millis >= durationTimeline) {
     return {
       type: SET_PROGRESS,
       payload: {
         progress,
-        playheadMillis: duration,
+        playheadMillis: durationTimeline,
         currentInterpretation,
       },
     };
   }
 
-  const clone = playMIDI(currentInterpretation);
+  let resetIndex = false;
+
+  if (loop === true) {
+    if (millis >= loopEnd) {
+      const diff = loopEnd - millis;
+      millis = loopStart + diff;
+      resetIndex = true;
+    }
+  }
+
+  // console.log("PROGRESS", progress);
+  const clone = playMIDI(currentInterpretation, millis, resetIndex);
 
   return {
     type: SET_PROGRESS,

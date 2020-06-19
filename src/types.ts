@@ -1,8 +1,8 @@
 import { ThunkDispatch } from "redux-thunk";
 import { AnyAction } from "redux";
-import { PartData } from "../webdaw/musicxml";
-import { Song } from "../webdaw/types";
-import { MIDIEvent } from "../webdaw/midi_events";
+import { PartData } from "./webdaw/musicxml";
+import { Song } from "./webdaw/types";
+import { MIDIEvent } from "./webdaw/midi_events";
 
 export enum Transport {
   PLAY = "play",
@@ -33,6 +33,7 @@ export type RefMIDI = {
   timestamp: number;
   millis: number;
   index: number;
+  inLoop: boolean;
   scheduled: MIDIEvent[];
 };
 
@@ -44,4 +45,8 @@ export type AppState = {
   transport: Transport;
   playheadMillis: number;
   currentInterpretation: RefMIDI;
+  durationTimeline: number;
+  loop: boolean;
+  loopStart: number;
+  loopEnd: number;
 };

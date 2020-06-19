@@ -13,13 +13,13 @@ export const setupClock = () => {
     .pipe(
       distinctUntilKeyChanged("transport"),
       map(app => ({
-        stream: app.stream,
+        // stream: app.stream,
         transport: app.transport,
         position: app.playheadMillis,
         durationTimeline: app.durationTimeline,
       }))
     )
-    .subscribe(({ stream, transport, position, durationTimeline }) => {
+    .subscribe(({ transport, position, durationTimeline }) => {
       let end = position >= durationTimeline;
       // if (end && stream !== null && transport === Transport.PLAY) {
       //   // recording in progress!

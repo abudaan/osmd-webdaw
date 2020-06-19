@@ -7,7 +7,7 @@ import { composeWithDevTools } from "redux-devtools-extension";
 
 import { rootReducer } from "./rootReducer";
 import { Observable, Subscriber } from "rxjs";
-import { Transport } from "../types";
+import { Transport, AppState } from "../types";
 
 // import { data, createDataState } from './data_reducer';
 // import { scanResult, scanResultState } from './scan_result_reducer';
@@ -29,6 +29,10 @@ const initialState: AppState = {
   transport: Transport.STOP,
   currentInterpretation: null,
   playheadMillis: 0,
+  durationTimeline: 60000,
+  loop: true,
+  loopStart: 2000,
+  loopEnd: 6000,
 };
 
 const composeEnhancers = composeWithDevTools({

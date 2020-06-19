@@ -52,9 +52,10 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
   if (xmlDoc === null) {
     return null;
   }
-  const nsResolver = xmlDoc.createNSResolver(
-    xmlDoc.ownerDocument === null ? xmlDoc.documentElement : xmlDoc.ownerDocument.documentElement
-  );
+  // const nsResolver = xmlDoc.createNSResolver(
+  //   xmlDoc.ownerDocument === null ? xmlDoc.documentElement : xmlDoc.ownerDocument.documentElement
+  // );
+  const nsResolver = xmlDoc.createNSResolver(xmlDoc.documentElement);
   const partIterator = xmlDoc.evaluate(
     "//score-part",
     xmlDoc,

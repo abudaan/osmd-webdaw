@@ -121,7 +121,7 @@ function parseTracks(
       }
       ticks += deltaTime;
       // console.log('TICKS', ticks, bpm, numerator);
-      lastTypeByte = event.type[0];
+      lastTypeByte = event.type;
       events.push({
         ...event,
         trackId,
@@ -481,24 +481,24 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
           deltaTime,
         };
 
-      default:
-        return {
-          event: {
-            type: typeByte >> 4,
-            descr: "unrecognized",
-            channel,
-          },
-          deltaTime,
-        };
+      // default:
+      //   return {
+      //     event: {
+      //       type: typeByte >> 4,
+      //       descr: "unrecognized",
+      //       channel,
+      //     },
+      //     deltaTime,
+      //   };
     }
   }
-  // console.log(`Unrecognized MIDI event type byte: ${typeByte} (fix this)`);
-  // return {
-  //   event: {
-  //     type: typeByte === 255 ? 0 : typeByte,
-  //   },
-  //   deltaTime,
-  // };
+  console.log(`Unrecognized MIDI event type byte: ${typeByte} (fix this)`);
+  return {
+    event: {
+      type: typeByte === 255 ? 0 : typeByte,
+    },
+    deltaTime,
+  };
   throw new Error(`Unrecognized MIDI event type byte: ${typeByte}`);
 }
 

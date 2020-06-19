@@ -23,9 +23,8 @@ export interface Song {
   // timeTrack: MIDIEvent[]
   // tracks: Track[]
   // useMetronome?: boolean;
-  // loop?: boolean;
   // loops?: {
-  //   start: number;
+  //   start: number; // in milliseconds
   //   end: number;
   // }[];
 }

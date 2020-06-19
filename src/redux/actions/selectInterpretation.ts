@@ -20,6 +20,7 @@ export const selectInterpretation = (index: number) => {
     payload: {
       index,
       currentInterpretation,
+      durationTimeline: file.events[file.events.length - 1].millis,
     },
   };
 };

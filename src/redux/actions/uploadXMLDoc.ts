@@ -54,7 +54,7 @@ export const uploadXMLDoc = (
   //   const n = e as NoteOnEvent;
   //   console.log(n.ticks, n.noteNumber, n.descr, n.millis);
   // });
-  sortMIDIEvents(events);
+  // sortMIDIEvents(events);
 
   const song: Song = {
     ppq: 960,

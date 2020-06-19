@@ -11,19 +11,26 @@ export const startMIDI = (reference: RefMIDI, position: number): RefMIDI => {
   return reference;
 };
 
-export const playMIDI = (reference: RefMIDI): RefMIDI => {
+export const playMIDI = (
+  reference: RefMIDI,
+  millis: number,
+  resetIndex: boolean = false
+): RefMIDI => {
+  let idx = resetIndex ? getSchedulerIndex(reference.song, millis) : reference.index;
   const { index, scheduled } = schedule({
     song: reference.song,
-    millis: reference.millis,
-    index: reference.index,
+    // millis: reference.millis,
+    millis,
+    index: idx,
     outputs: midiAccess?.outputs,
   });
   const ts = performance.now();
   reference.millis += ts - reference.timestamp;
+  // console.log("MIDI", ts - reference.timestamp);
   reference.timestamp = ts;
   reference.index = index;
   reference.scheduled = scheduled;
-  // console.log(ref.millis, ref.index);
+  // console.log(index);
   return reference;
 };
 

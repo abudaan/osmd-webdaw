@@ -30,6 +30,7 @@ export const rootReducer = (state: AppState, action: any): AppState => {
       ...state,
       selectedInterpretationIndex: action.payload.index,
       currentInterpretation: action.payload.currentInterpretation,
+      durationTimeline: action.payload.durationTimeline,
     };
   } else if (action.type === SET_TRANSPORT) {
     return {

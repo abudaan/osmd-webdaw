@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, RefObject, useState } from "react";
 import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
 import { useSelector, useDispatch, shallowEqual } from "react-redux";
-import { AppState } from "../redux/store";
+import { AppState } from "../types";
 import { createSelector } from "reselect";
 import { scoreReady } from "../redux/actions/scoreReady";
 
