@@ -11,6 +11,8 @@ export const scoreReady = (osmd: OpenSheetMusicDisplay) => {
       scoreContainerOffsetY = scoreContainer.offsetTop;
     }
     const notesPerBar = await getGraphicalNotesPerBar(osmd, 960);
+    // console.log(notesPerBar);
+
     dispatch({
       type: SCORE_READY,
       payload: { notesPerBar, scoreContainerOffsetY, scoreContainer },

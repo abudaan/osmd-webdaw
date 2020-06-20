@@ -1,4 +1,5 @@
 export interface BaseEvent {
+  id?: string;
   ticks: number;
   descr: string;
   type: number;
@@ -10,18 +11,16 @@ export interface BaseEvent {
 }
 
 export interface NoteOnEvent extends BaseEvent {
-  type: 0x80;
+  // type: 0x90;
   // type: number;
   descr: "note on";
-  // descr: string;
-  // ticks: number;
   channel: number;
   noteNumber: number;
   velocity: number;
 }
 
 export interface NoteOffEvent extends BaseEvent {
-  // type: 0x90;
+  // type: 0x80;
   // type: number;
   // descr: "note off";
   // descr: string;
@@ -34,7 +33,7 @@ export interface NoteOffEvent extends BaseEvent {
   velocity: number;
 }
 
-export type AftertouchEvent = {
+export interface AftertouchEvent extends BaseEvent {
   type: 0xa0;
   descr: "note aftertouch";
   ticks: number;
@@ -43,9 +42,9 @@ export type AftertouchEvent = {
   millis: number;
   noteNumber: number;
   amount: number;
-};
+}
 
-export type ControllerEvent = {
+export interface ControllerEvent extends BaseEvent {
   type: 0xb0;
   descr: "controller";
   ticks: number;
@@ -54,9 +53,9 @@ export type ControllerEvent = {
   millis: number;
   value: number;
   controllerNumber: number;
-};
+}
 
-export type ProgramChangeEvent = {
+export interface ProgramChangeEvent extends BaseEvent {
   type: 0xc0;
   descr: "program change";
   ticks: number;
@@ -64,9 +63,9 @@ export type ProgramChangeEvent = {
   channel: number;
   millis: number;
   programNumber: number;
-};
+}
 
-export type ChannelAftertouchEvent = {
+export interface ChannelAftertouchEvent extends BaseEvent {
   type: 0xd0;
   descr: "channel aftertouch";
   ticks: number;
@@ -75,9 +74,9 @@ export type ChannelAftertouchEvent = {
   millis: number;
   noteNumber: number;
   amount: number;
-};
+}
 
-export type PitchBendEvent = {
+export interface PitchBendEvent extends BaseEvent {
   type: 0xe0;
   descr: "pitch bend";
   ticks: number;
@@ -86,11 +85,11 @@ export type PitchBendEvent = {
   millis: number;
   noteNumber: number;
   value: number;
-};
+}
 
 // META
 
-export type SequenceNumberEvent = {
+export interface SequenceNumberEvent extends BaseEvent {
   type: 0xff;
   subType: 0x00;
   descr: "sequence number";
@@ -98,9 +97,9 @@ export type SequenceNumberEvent = {
   trackId: string;
   ticks: 0;
   millis: 0;
-};
+}
 
-export type TextEvent = {
+export interface TextEvent extends BaseEvent {
   type: 0xff;
   subType: 0x01;
   descr: "text";
@@ -108,9 +107,9 @@ export type TextEvent = {
   ticks: number;
   trackId: string;
   millis: number;
-};
+}
 
-export type CopyrightEvent = {
+export interface CopyrightEvent extends BaseEvent {
   type: 0xff;
   subType: 0x02;
   descr: "copyright notice";
@@ -118,9 +117,9 @@ export type CopyrightEvent = {
   ticks: 0;
   trackId: string;
   millis: 0;
-};
+}
 
-export type TrackNameEvent = {
+export interface TrackNameEvent extends BaseEvent {
   type: 0xff;
   subType: 0x03;
   descr: "track name";
@@ -128,9 +127,9 @@ export type TrackNameEvent = {
   ticks: 0;
   trackId: string;
   millis: 0;
-};
+}
 
-export type InstrumentNameEvent = {
+export interface InstrumentNameEvent extends BaseEvent {
   type: 0xff;
   subType: 0x04;
   descr: "instrument name";
@@ -138,9 +137,9 @@ export type InstrumentNameEvent = {
   ticks: number;
   trackId: string;
   millis: number;
-};
+}
 
-export type LyricsEvent = {
+export interface LyricsEvent extends BaseEvent {
   type: 0xff;
   subType: 0x05;
   descr: "lyrics";
@@ -148,9 +147,9 @@ export type LyricsEvent = {
   ticks: number;
   trackId: string;
   millis: number;
-};
+}
 
-export type MarkerEvent = {
+export interface MarkerEvent extends BaseEvent {
   type: 0xff;
   subType: 0x06;
   descr: "marker";
@@ -158,9 +157,9 @@ export type MarkerEvent = {
   ticks: number;
   trackId: string;
   millis: number;
-};
+}
 
-export type CuePointEvent = {
+export interface CuePointEvent extends BaseEvent {
   type: 0xff;
   subType: 0x07;
   descr: "cue point";
@@ -168,9 +167,9 @@ export type CuePointEvent = {
   ticks: number;
   trackId: string;
   millis: number;
-};
+}
 
-export type ChannelPrefixEvent = {
+export interface ChannelPrefixEvent extends BaseEvent {
   type: 0xff;
   subType: 0x20;
   descr: "channel prefix";
@@ -178,9 +177,9 @@ export type ChannelPrefixEvent = {
   ticks: number;
   trackId: string;
   millis: number;
-};
+}
 
-export type EndOfTrackEvent = {
+export interface EndOfTrackEvent extends BaseEvent {
   type: 0xff;
   subType: 0x2f;
   descr: "end of track";
@@ -188,7 +187,7 @@ export type EndOfTrackEvent = {
   trackId: string;
   ticks: number;
   millis: number;
-};
+}
 
 export interface TempoEvent extends BaseEvent {
   type: 0xff;
@@ -198,7 +197,7 @@ export interface TempoEvent extends BaseEvent {
   millisPerTick: number;
 }
 
-export type SMPTEOffsetEvent = {
+export interface SMPTEOffsetEvent extends BaseEvent {
   type: 0xff;
   subType: 0x54;
   descr: "smpte offset";
@@ -211,7 +210,7 @@ export type SMPTEOffsetEvent = {
   sec: number;
   frame: number;
   subFrame: number;
-};
+}
 
 export interface TimeSignatureEvent extends BaseEvent {
   type: 0xff;
@@ -223,7 +222,7 @@ export interface TimeSignatureEvent extends BaseEvent {
   thirtySeconds: number;
 }
 
-export type KeySignatureEvent = {
+export interface KeySignatureEvent extends BaseEvent {
   type: 0xff;
   subType: 0x59;
   descr: "key signature";
@@ -232,9 +231,9 @@ export type KeySignatureEvent = {
   millis: number;
   key: number;
   scale: number;
-};
+}
 
-export type SequenceSpecificEvent = {
+export interface SequenceSpecificEvent extends BaseEvent {
   type: 0xff;
   subType: 0x7f;
   descr: "sequencer specific";
@@ -243,25 +242,25 @@ export type SequenceSpecificEvent = {
   millis: number;
   key: number;
   scale: number;
-};
+}
 
-export type SysexEvent = {
+export interface SysexEvent extends BaseEvent {
   type: 0xf0;
   descr: "system exclusive";
   ticks: number;
   trackId: string;
   millis: number;
   data: number;
-};
+}
 
-export type DividedSysexEvent = {
+export interface DividedSysexEvent extends BaseEvent {
   type: 0xf7;
   descr: "divided system exclusive";
   ticks: number;
   trackId: string;
   millis: number;
   data: number;
-};
+}
 
 // like in Java
 export type ShortMessage =
@@ -324,3 +323,5 @@ export type MIDIEvent =
   // sysex
   | SysexEvent
   | DividedSysexEvent;
+
+export type NoteEvent = NoteOnEvent | NoteOffEvent;

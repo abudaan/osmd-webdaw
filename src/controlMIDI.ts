@@ -2,7 +2,7 @@ import { RefMIDI } from "./types";
 import { getCurrentEventIndex, schedule } from "./webdaw/scheduler";
 import { midiAccess } from "./media";
 import { unschedule } from "./webdaw/unschedule";
-import { getActiveEvents } from "./webdaw/getActiveEvents";
+import { getActiveNotes } from "./webdaw/getActiveNotes";
 
 export const startMIDI = (reference: RefMIDI, position: number): RefMIDI => {
   reference.timestamp = performance.now();
@@ -29,10 +29,11 @@ export const playMIDI = (
     index: resetIndex ? idx : reference.indexScheduler,
     outputs: midiAccess?.outputs,
   });
-  const { index: indexHighlighter, activeEvents, passiveEvents } = getActiveEvents({
+  const { index: indexHighlighter, activeNotes, passiveNotes } = getActiveNotes({
     song: reference.song,
     millis,
     index: resetIndex ? idx : reference.indexHighlighter,
+    activeNotes: reference.activeNotes,
   });
 
   // const ts = performance.now();
@@ -40,13 +41,14 @@ export const playMIDI = (
   // console.log("MIDI", ts - reference.timestamp);
   // reference.timestamp = ts;
   // console.log(index);
+
   return {
     ...reference,
     indexScheduler,
     indexHighlighter,
     scheduled,
-    activeEvents,
-    passiveEvents,
+    activeNotes,
+    passiveNotes,
   };
 };
 

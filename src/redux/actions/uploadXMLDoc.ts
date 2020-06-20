@@ -7,6 +7,7 @@ import { MIDIEvent, TimeSignatureEvent, TempoEvent, NoteOnEvent } from "../../we
 import { Song, Track } from "../../webdaw/types";
 import { outputs } from "../../media";
 import { sortMIDIEvents } from "../../webdaw/midi_utils";
+import { createNotes } from "../../webdaw/create_notes";
 
 export const uploadXMLDoc = (
   file: File
@@ -29,15 +30,16 @@ export const uploadXMLDoc = (
   const firstSignatureEvent = timeEvents[i];
   const { denominator, numerator: nominator } = firstSignatureEvent as TimeSignatureEvent;
   const { tracks, events }: { tracks: Track[]; events: MIDIEvent[] } = parts.reduce(
-    (acc, val) => {
+    (acc, val, i) => {
+      const id = `Track ${i++} (${val.name})`;
       acc.events.push(
         ...val.events.map(e => {
-          e.trackId = val.name;
+          e.trackId = id;
           return e;
         })
       );
       const t: Track = {
-        id: val.name,
+        id,
         latency: 0,
         inputs: [],
         // outputs: [...outputs.map(o => o.id)],
@@ -54,8 +56,7 @@ export const uploadXMLDoc = (
   //   const n = e as NoteOnEvent;
   //   console.log(n.ticks, n.noteNumber, n.descr, n.millis);
   // });
-  // sortMIDIEvents(events);
-
+  sortMIDIEvents(events);
   const song: Song = {
     ppq: 960,
     latency: 17, // value in milliseconds -> the length of a single frame @ 60Hz refresh rate
@@ -66,6 +67,7 @@ export const uploadXMLDoc = (
       return acc;
     }, {}),
     events,
+    notes: createNotes(events),
     initialTempo: bpm,
     // timeTrack,
     // tracks: tracks.map(track => ({ events: [...track] })),

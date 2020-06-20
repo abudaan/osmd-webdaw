@@ -1,8 +1,9 @@
 import { ThunkDispatch } from "redux-thunk";
 import { AnyAction } from "redux";
 import { PartData } from "./webdaw/musicxml";
-import { Song } from "./webdaw/types";
+import { Song, MIDINote } from "./webdaw/types";
 import { MIDIEvent } from "./webdaw/midi_events";
+import { GraphicalNoteData } from "./util/osmd-notes";
 
 export enum Transport {
   PLAY = "play",
@@ -34,10 +35,17 @@ export type RefMIDI = {
   millis: number;
   indexScheduler: number;
   indexHighlighter: number;
-  activeEvents: MIDIEvent[];
-  passiveEvents: MIDIEvent[];
+  activeNotes: MIDINote[];
+  passiveNotes: MIDINote[];
   inLoop: boolean;
   scheduled: MIDIEvent[];
+};
+
+export type RefScore = {
+  notesPerBar: GraphicalNoteData[][];
+  // scoreContainer: HTMLDivElement;
+  scoreContainer: any;
+  scoreContainerOffsetY: number;
 };
 
 export type AppState = {
@@ -48,6 +56,7 @@ export type AppState = {
   transport: Transport;
   playheadMillis: number;
   currentInterpretation: RefMIDI;
+  currentScore: RefScore;
   durationTimeline: number;
   loop: boolean;
   loopStart: number;

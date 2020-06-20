@@ -28,9 +28,10 @@ const initialState: AppState = {
   selectedInterpretationIndex: 0,
   transport: Transport.STOP,
   currentInterpretation: null,
+  currentScore: null,
   playheadMillis: 0,
   durationTimeline: 60000,
-  loop: true,
+  loop: false,
   loopStart: 2000,
   loopEnd: 6000,
 };

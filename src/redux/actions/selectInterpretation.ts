@@ -13,8 +13,14 @@ export const selectInterpretation = (index: number) => {
     millis: 0,
     index: 0,
     scheduled: [],
+    activeNotes: [],
+    passiveNotes: [],
   };
-  console.log(currentInterpretation);
+  file.events.forEach(e => {
+    console.log(e.ticks, e.type, e.noteNumber, e.trackId);
+  });
+
+  // console.log(currentInterpretation);
   return {
     type: MIDIFILE_SELECTED,
     payload: {

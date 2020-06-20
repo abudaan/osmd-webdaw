@@ -24,7 +24,7 @@ type TypeStave = {
   staffEntries: GraphicalStaffEntry[];
 };
 
-export type TypeGraphicalNoteData = {
+export type GraphicalNoteData = {
   vfnote: Vex.Flow.Note;
   ticks: number;
   noteNumber: number;
@@ -35,7 +35,7 @@ export type TypeGraphicalNoteData = {
 const getGraphicalNotesPerBar = (
   osmd: OpenSheetMusicDisplay,
   ppq: number
-): Promise<TypeGraphicalNoteData[][]> =>
+): Promise<GraphicalNoteData[][]> =>
   from(osmd.graphic.measureList)
     .pipe(
       // tap(m => { console.log(m); }),
@@ -62,7 +62,7 @@ const getGraphicalNotesPerBar = (
       }),
       // tap(console.log),
       reduce((acc: any[], val) => {
-        const flat: TypeGraphicalNoteData[] = val.flat(3);
+        const flat: GraphicalNoteData[] = val.flat(3);
         flat.sort((a, b) => {
           if (a.ticks < b.ticks) {
             return -1;

@@ -7,6 +7,7 @@ import { uploadXMLDoc } from "../redux/actions/uploadXMLDoc";
 import { uploadMIDIFile } from "../redux/actions/uploadMIDIFile";
 import { AppDispatch, Transport, AppState } from "../types";
 import { handleTransport } from "../redux/actions/handleTransport";
+import { connectScoreAndInterpretation } from "../redux/actions/connect";
 
 type Props = {};
 export const Controls: React.FC<Props> = ({}: Props) => {
@@ -124,7 +125,14 @@ export const Controls: React.FC<Props> = ({}: Props) => {
         add midi file
       </button>
 
-      <input type="button" value="connect" />
+      <input
+        type="button"
+        value="connect"
+        disabled={selectedScoreIndex === 0 || selectedInterpretationIndex === 0}
+        onClick={() => {
+          dispatch(connectScoreAndInterpretation());
+        }}
+      />
 
       <input
         type="button"

@@ -117,10 +117,12 @@ export const sortMIDIEvents = (events: MIDIEvent[]): MIDIEvent[] =>
       return -1;
     } else if (a.ticks > b.ticks) {
       return 1;
-    } else if (a.descr === NOTE_OFF && b.descr === NOTE_ON) {
-      return -1;
-    } else if (a.descr === TEMPO || a.descr === TIME_SIGNATURE) {
-      return -1;
+      // } else if (a.type === 0x80 && b.type === 0x90) {
+      //   // note off before note on
+      //   return -1;
+      // } else if (a.type === 0x51 || a.type === 0x58) {
+      //   // tempo and time signature events first
+      //   return -1;
     }
     return 0;
   });

@@ -7,6 +7,18 @@ import { MIDIEvent } from "./midi_events";
 //   NOTE_OFF,
 // }
 
+export type MIDINote = {
+  id: string;
+  noteOn: MIDIEvent;
+  noteOff: MIDIEvent;
+  durationTicks?: number;
+  durationMillis?: number;
+  startTicks?: number;
+  endTicks?: number;
+  startMillis?: number;
+  endMillis?: number;
+};
+
 export interface Song {
   ppq: number;
   latency: number;
@@ -15,6 +27,7 @@ export interface Song {
   tracks: Track[];
   tracksById: { [id: string]: Track };
   events: MIDIEvent[];
+  notes: MIDINote[];
   durationTicks?: number;
   durationMillis?: number;
   numBars?: number;

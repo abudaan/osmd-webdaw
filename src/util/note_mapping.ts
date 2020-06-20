@@ -1,5 +1,6 @@
 import { MusicSystem } from "opensheetmusicdisplay";
 import { GraphicalNoteData } from "./osmd-notes";
+import { Song } from "../webdaw/types";
 
 /*
   This method maps the notes in the SVG document of the score to MIDI notes in the sequencer
@@ -12,17 +13,17 @@ export type NoteMapping = {
   };
 };
 
-const mapOSMDToSequencer = (
+export const mapNotes = (
   graphicalNotesPerBar: GraphicalNoteData[][],
   repeats: number[][],
-  song: Heartbeat.Song
+  song: Song
 ): NoteMapping => {
   let barIndex = -1;
   let barOffset = 0;
   let ticksOffset = 0; // not used, keep for reference
   let repeatIndex: number = 0;
   const hasRepeated: { [index: number]: boolean } = {};
-  const events = song.events.filter(event => event.command === 144);
+  const events = song.events.filter(event => event.type === 144);
   // console.log(events);
   const { bars: numBars, ppq } = song;
   const mapping: NoteMapping = {};
@@ -83,5 +84,3 @@ const mapOSMDToSequencer = (
 
   return mapping;
 };
-
-export { mapOSMDToSequencer };

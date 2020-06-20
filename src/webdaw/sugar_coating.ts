@@ -1,6 +1,7 @@
 import { fetchArraybuffer } from "./fetch_helpers";
 import { parseMidiFile } from "./parse_midi_binary";
 import { Song, Track } from "./types";
+import { createNotes } from "./create_notes";
 
 export const createSongFromMIDIFile = async (arg: string | ArrayBuffer): Promise<Song> => {
   let ab: ArrayBuffer;
@@ -21,6 +22,7 @@ export const createSongFromMIDIFile = async (arg: string | ArrayBuffer): Promise
       return acc;
     }, {}),
     events,
+    notes: createNotes(events),
     initialTempo,
     // timeTrack,
     // tracks: tracks.map(track => ({ events: [...track] })),

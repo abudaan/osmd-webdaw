@@ -10,7 +10,7 @@ import {
 } from "./actions1";
 
 import { OpenSheetMusicDisplay } from "opensheetmusicdisplay/build/dist/src";
-import { TypeGraphicalNoteData } from "../util/osmd-notes";
+import { GraphicalNoteData } from "../util/osmd-notes";
 import { NoteMapping } from "src/util/osmd-heartbeat";
 
 export const SongActions = {
@@ -24,13 +24,13 @@ export type SongState = {
   songPositionMillis: number;
   songPositionPercentage: number;
   sliderPositionPercentage: number;
-  notesPerBar: TypeGraphicalNoteData[][];
+  notesPerBar: GraphicalNoteData[][];
   osmd: null | OpenSheetMusicDisplay;
   song: null | Heartbeat.Song;
   keyEditor: null | Heartbeat.KeyEditor;
   songAction: string;
   songIsPlaying: boolean;
-  graphicalNotesPerBar: TypeGraphicalNoteData[][];
+  graphicalNotesPerBar: GraphicalNoteData[][];
   noteMapping: null | NoteMapping;
   songAndScoreReady: boolean;
   playheadSeeking: boolean;

@@ -6,6 +6,7 @@ import {
   MIDIFILE_SELECTED,
   SET_TRANSPORT,
   SET_PROGRESS,
+  SCORE_READY,
 } from "../constants";
 
 export const rootReducer = (state: AppState, action: any): AppState => {
@@ -24,6 +25,7 @@ export const rootReducer = (state: AppState, action: any): AppState => {
     return {
       ...state,
       selectedScoreIndex: action.payload.index,
+      // currentScore
     };
   } else if (action.type === MIDIFILE_SELECTED) {
     return {
@@ -31,6 +33,15 @@ export const rootReducer = (state: AppState, action: any): AppState => {
       selectedInterpretationIndex: action.payload.index,
       currentInterpretation: action.payload.currentInterpretation,
       durationTimeline: action.payload.durationTimeline,
+    };
+  } else if (action.type === SCORE_READY) {
+    return {
+      ...state,
+      currentScore: {
+        notesPerBar: action.payload.notesPerBar,
+        scoreContainer: action.payload.scoreContainer,
+        scoreContainerOffsetY: action.payload.scoreContainerOffsetY,
+      },
     };
   } else if (action.type === SET_TRANSPORT) {
     return {
