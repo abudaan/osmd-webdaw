@@ -1,6 +1,6 @@
 /// <reference types="webmidi" />
 
-import { MIDIEvent } from "./midi_events";
+import { MIDIEvent, NoteOnEvent, NoteOffEvent } from "./midi_events";
 
 // enum NOTE {
 //   NOTE_ON,
@@ -9,8 +9,8 @@ import { MIDIEvent } from "./midi_events";
 
 export type MIDINote = {
   id: string;
-  noteOn: MIDIEvent;
-  noteOff: MIDIEvent;
+  noteOn: NoteOnEvent;
+  noteOff: NoteOffEvent;
   durationTicks?: number;
   durationMillis?: number;
   startTicks?: number;

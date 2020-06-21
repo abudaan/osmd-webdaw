@@ -8,6 +8,7 @@ export interface BaseEvent {
   millis?: number;
   trackId?: string;
   part?: string;
+  bar?: number;
 }
 
 export interface NoteOnEvent extends BaseEvent {

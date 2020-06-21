@@ -1,6 +1,7 @@
 import { MusicSystem } from "opensheetmusicdisplay";
 import { GraphicalNoteData } from "./osmd-notes";
 import { Song } from "../webdaw/types";
+import { NoteEvent } from "../webdaw/midi_events";
 
 /*
   This method maps the notes in the SVG document of the score to MIDI notes in the sequencer
@@ -18,14 +19,14 @@ export const mapNotes = (
   repeats: number[][],
   song: Song
 ): NoteMapping => {
+  // console.log(graphicalNotesPerBar);
   let barIndex = -1;
   let barOffset = 0;
   let ticksOffset = 0; // not used, keep for reference
   let repeatIndex: number = 0;
   const hasRepeated: { [index: number]: boolean } = {};
-  const events = song.events.filter(event => event.type === 144);
-  // console.log(events);
-  const { bars: numBars, ppq } = song;
+  const notes = song.notes;
+  const { numBars, ppq } = song;
   const mapping: NoteMapping = {};
 
   while (true) {
@@ -37,7 +38,7 @@ export const mapNotes = (
         // console.log('REPEAT START', barIndex)
         hasRepeated[repeatIndex] = true;
         barOffset += repeats[repeatIndex][1] - repeats[repeatIndex][0] + 1;
-        ticksOffset += (repeats[repeatIndex][1] - repeats[repeatIndex][0]) * song.nominator * ppq;
+        ticksOffset += (repeats[repeatIndex][1] - repeats[repeatIndex][0]) * song.numerator * ppq;
       } else {
         // console.log('REPEAT END', barIndex, repeatIndex);
         repeatIndex++;
@@ -53,9 +54,9 @@ export const mapNotes = (
     }
 
     // get all sequencer MIDI events in this bar
-    const filtered = events.filter(e => e.bar === barIndex + 1 + barOffset);
+    const filtered = notes.filter(e => e.noteOn.bar === barIndex + 1 + barOffset);
     // console.log(barIndex + 1 + barOffset, filtered.length);
-
+    // console.log(barIndex);
     graphicalNotesPerBar[barIndex]
       .sort((a, b) => {
         if (a.ticks < b.ticks) {
@@ -68,13 +69,13 @@ export const mapNotes = (
       .forEach(bd => {
         const { vfnote, noteNumber, bar, parentMusicSystem } = bd;
         for (let j = 0; j < filtered.length; j++) {
-          const event = filtered[j];
+          const note = filtered[j];
           if (
-            !mapping[event.id] &&
-            event.bar == bar + barOffset &&
-            event.noteNumber == noteNumber
+            !mapping[note.id] &&
+            note.noteOn.bar == bar + barOffset &&
+            note.noteOn.noteNumber == noteNumber
           ) {
-            mapping[event.id] = { vfnote, musicSystem: parentMusicSystem };
+            mapping[note.id] = { vfnote, musicSystem: parentMusicSystem };
             // filtered.splice(j, 1);
             break;
           }

@@ -366,7 +366,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
           }
 
           const noteNumber = getNoteNumber(noteName, octave);
-          console.log(ticks, "ON", index);
+          // console.log(ticks, "ON", index);
           const note = {
             ticks,
             descr: "note on",
@@ -392,7 +392,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
           if (tieStart === false && tieStop === false) {
             // no ties
             //console.log('no ties', measureNumber, voice, noteNumber, tiedNotes);
-            console.log(ticks, "OFF", index);
+            // console.log(ticks, "OFF", index);
 
             parts[index].events.push({
               // command: NOTE_OFF,
@@ -419,7 +419,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
           } else if (tieStart === false && tieStop === true) {
             // end of tie
             tiedNotes[`N_${staff}-${voice}-${noteNumber}`] += noteDurationTicks;
-            console.log(ticks, "OFF", index);
+            // console.log(ticks, "OFF", index);
 
             parts[index].events.push({
               // command: NOTE_OFF,

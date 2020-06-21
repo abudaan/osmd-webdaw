@@ -16,9 +16,9 @@ export const selectInterpretation = (index: number) => {
     activeNotes: [],
     passiveNotes: [],
   };
-  file.events.forEach(e => {
-    console.log(e.ticks, e.type, e.noteNumber, e.trackId);
-  });
+  // file.events.forEach(e => {
+  //   console.log(e.ticks, e.type, e.noteNumber, e.trackId);
+  // });
 
   // console.log(currentInterpretation);
   return {

@@ -16,10 +16,7 @@ export const createNotes = (events: MIDIEvent[]): MIDINote[] => {
   const notes = [];
   const tmp = {};
   filtered.forEach(e => {
-    const id = `${e.trackId
-      .toLowerCase()
-      .replace(/_/g, "")
-      .replace(/,/g, "")}-${e.noteNumber}`;
+    const id = `${e.trackId}-${e.noteNumber}`;
     // console.log(e.ticks, e.type, id);
     if (e.type === 0x90) {
       if (tmp[id]) {

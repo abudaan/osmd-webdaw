@@ -42,6 +42,7 @@ export type ParsedData = {
   deltaTime: number;
   bpm?: number;
   numerator?: number;
+  denominator?: number;
   trackName?: string;
 };
 
@@ -52,6 +53,8 @@ export type ParsedMIDIFile = {
     ticksPerBeat: number;
   };
   initialTempo: number;
+  initialNumerator: number;
+  initialDenominator: number;
   tracks: Track[];
   events: MIDIEvent[];
   // tracks: MIDIEvent[][]
@@ -63,13 +66,18 @@ export function parseMidiFile(buffer: ArrayBufferLike): ParsedMIDIFile {
 
   const header = parseHeader(reader);
   // const { timeTrack, tracks } = parseTracks(reader, header.ticksPerBeat)
-  const { tracks, events, initialTempo } = parseTracks(reader, header.ticksPerBeat);
+  const { tracks, events, initialTempo, initialNumerator, initialDenominator } = parseTracks(
+    reader,
+    header.ticksPerBeat
+  );
 
   // return { header, timeTrack, tracks }
   return {
     header,
     tracks,
     initialTempo,
+    initialNumerator,
+    initialDenominator,
     events: calculateMillis(events, header.ticksPerBeat),
   };
 }
@@ -95,8 +103,16 @@ function parseHeader(reader: BufferReader) {
 function parseTracks(
   reader: BufferReader,
   ppq: number
-): { tracks: Track[]; events: MIDIEvent[]; initialTempo: number } {
+): {
+  tracks: Track[];
+  events: MIDIEvent[];
+  initialTempo: number;
+  initialNumerator: number;
+  initialDenominator: number;
+} {
   let initialTempo = -1;
+  let initialNumerator = -1;
+  let initialDenominator = -1;
   const tracks: Track[] = [];
   const events: MIDIEvent[] = [];
   while (!reader.eof()) {
@@ -112,9 +128,15 @@ function parseTracks(
     let lastTypeByte = null;
     while (!trackTrack.eof()) {
       let data = parseEvent(trackTrack, lastTypeByte);
-      const { event, deltaTime, bpm, trackName } = data;
+      const { event, deltaTime, bpm, numerator, denominator, trackName } = data;
       if (bpm && initialTempo === -1) {
         initialTempo = bpm;
+      }
+      if (numerator && initialNumerator === -1) {
+        initialNumerator = numerator;
+      }
+      if (denominator && initialDenominator === -1) {
+        initialDenominator = denominator;
       }
       if (trackName) {
         track.name = trackName;
@@ -131,7 +153,13 @@ function parseTracks(
     tracks.push(track);
   }
 
-  return { events: sortMIDIEvents(events), tracks, initialTempo };
+  return {
+    events: sortMIDIEvents(events),
+    tracks,
+    initialTempo,
+    initialNumerator,
+    initialDenominator,
+  };
 }
 
 function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedData {
@@ -310,17 +338,19 @@ function parseEvent(reader: BufferReader, lastTypeByte: number | null): ParsedDa
           throw new Error(`Expected length for timeSignature event is 4, got ${length}`);
         }
         const numerator = reader.uint8();
+        const denominator = Math.pow(2, reader.uint8());
         return {
           event: {
             type: typeByte,
             subType: subTypeByte,
             descr: TIME_SIGNATURE,
             numerator,
-            denominator: Math.pow(2, reader.uint8()),
+            denominator,
             metronome: reader.uint8(),
             thirtySeconds: reader.uint8(),
           },
           numerator,
+          denominator,
           deltaTime,
         };
       // key signature

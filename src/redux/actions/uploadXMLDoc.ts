@@ -8,6 +8,7 @@ import { Song, Track } from "../../webdaw/types";
 import { outputs } from "../../media";
 import { sortMIDIEvents } from "../../webdaw/midi_utils";
 import { createNotes } from "../../webdaw/create_notes";
+import { addBarNumber } from "../../webdaw/addBarNumber";
 
 export const uploadXMLDoc = (
   file: File
@@ -28,10 +29,10 @@ export const uploadXMLDoc = (
 
   i = timeEvents.findIndex((event: TempoEvent | TimeSignatureEvent) => event.subType === 0x58);
   const firstSignatureEvent = timeEvents[i];
-  const { denominator, numerator: nominator } = firstSignatureEvent as TimeSignatureEvent;
+  const { denominator, numerator } = firstSignatureEvent as TimeSignatureEvent;
   const { tracks, events }: { tracks: Track[]; events: MIDIEvent[] } = parts.reduce(
     (acc, val, i) => {
-      const id = `Track ${i++} (${val.name})`;
+      const id = `T-${i++}`;
       acc.events.push(
         ...val.events.map(e => {
           e.trackId = id;
@@ -40,6 +41,7 @@ export const uploadXMLDoc = (
       );
       const t: Track = {
         id,
+        name: val.name,
         latency: 0,
         inputs: [],
         // outputs: [...outputs.map(o => o.id)],
@@ -69,9 +71,15 @@ export const uploadXMLDoc = (
     events,
     notes: createNotes(events),
     initialTempo: bpm,
+    numerator,
+    denominator,
     // timeTrack,
     // tracks: tracks.map(track => ({ events: [...track] })),
   };
+  addBarNumber(song.events, song.ppq, song.numerator, song.denominator);
+  // console.log(song.events);
+  song.numBars = song.events[song.events.length - 1].bar;
+
   // console.log(song);
 
   dispatch({
