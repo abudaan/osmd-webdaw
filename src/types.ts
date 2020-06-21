@@ -4,6 +4,7 @@ import { PartData } from "./webdaw/musicxml";
 import { Song, MIDINote } from "./webdaw/types";
 import { MIDIEvent } from "./webdaw/midi_events";
 import { GraphicalNoteData } from "./util/osmd-notes";
+import { NoteMapping } from "./util/note_mapping";
 
 export enum Transport {
   PLAY = "play",
@@ -46,6 +47,7 @@ export type RefScore = {
   // scoreContainer: HTMLDivElement;
   scoreContainer: any;
   scoreContainerOffsetY: number;
+  noteMapping: NoteMapping;
 };
 
 export type AppState = {

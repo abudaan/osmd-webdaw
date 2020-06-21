@@ -1,6 +1,7 @@
 import { mapNotes } from "../../util/note_mapping";
 import { AppState } from "../../types";
 import { store } from "../store";
+import { SET_NOTEMAPPING } from "../../constants";
 
 export const connectScoreAndInterpretation = () => {
   const state = store.getState() as AppState;
@@ -10,9 +11,12 @@ export const connectScoreAndInterpretation = () => {
   // console.log(currentScore.notesPerBar[0]);
   if (currentInterpretation && currentScore) {
     mapping = mapNotes(currentScore.notesPerBar, score.repeats, currentInterpretation.song);
-    console.log(mapping);
+    // console.log(mapping);
   }
   return {
-    type: "NO_ACTION_REQUIRED",
+    type: SET_NOTEMAPPING,
+    payload: {
+      mapping,
+    },
   };
 };

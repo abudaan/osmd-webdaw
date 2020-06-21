@@ -25,13 +25,20 @@ export const getActiveNotes = ({ song, index, millis, activeNotes }: Args) => {
   // }
   const current = notes.filter(n => millis >= n.noteOn.millis && millis <= n.noteOff.millis);
   // console.log(millis, current);
+  // console.log(activeNotes);
   const passiveNotes: MIDINote[] = activeNotes.filter(note => {
-    const i = current.findIndex(n => n.id === note.id);
-    if (i !== -1) {
-      return event;
+    const i = current.findIndex(n => {
+      // console.log("C", n.id, "A", note.id);
+      return n.id === note.id;
+    });
+    // console.log(i);
+    if (i === -1) {
+      return true;
     }
+    return false;
   });
-  // console.log(passiveNotes);
+  // console.log("P", passiveNotes);
+  // console.log("A", current);
 
   return {
     // index: i,

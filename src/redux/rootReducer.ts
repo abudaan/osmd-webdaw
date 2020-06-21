@@ -7,6 +7,7 @@ import {
   SET_TRANSPORT,
   SET_PROGRESS,
   SCORE_READY,
+  SET_NOTEMAPPING,
 } from "../constants";
 
 export const rootReducer = (state: AppState, action: any): AppState => {
@@ -38,9 +39,18 @@ export const rootReducer = (state: AppState, action: any): AppState => {
     return {
       ...state,
       currentScore: {
+        noteMapping: null,
         notesPerBar: action.payload.notesPerBar,
         scoreContainer: action.payload.scoreContainer,
         scoreContainerOffsetY: action.payload.scoreContainerOffsetY,
+      },
+    };
+  } else if (action.type === SET_NOTEMAPPING) {
+    return {
+      ...state,
+      currentScore: {
+        ...state.currentScore,
+        noteMapping: action.payload.mapping,
       },
     };
   } else if (action.type === SET_TRANSPORT) {
