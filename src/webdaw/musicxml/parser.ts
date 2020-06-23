@@ -1,6 +1,11 @@
-import { getNoteNumber } from "./midi_utils";
+import { getNoteNumber } from "../midi_utils";
 // import { NoteEvent } from "./types";
-import { TempoEvent, TimeSignatureEvent, MIDIEvent } from "./midi_events";
+import { TempoEvent, TimeSignatureEvent, MIDIEvent } from "../midi_events";
+import { getVelocity } from "./getVolume";
+import { getPartName } from "./getPartName";
+import { getChannel } from "./getChannel";
+import { getInstrument } from "./getInstrument";
+import { getMeasureNumber } from "./getMeasureNumber";
 
 const NOTE_ON = 0x90; // 144
 const NOTE_OFF = 0x80; // 128
@@ -76,56 +81,11 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
   let partNode;
   while ((partNode = partIterator.iterateNext())) {
     index += 1;
-    // get id and name of the part
-    const partId = xmlDoc.evaluate("@id", partNode, nsResolver, XPathResult.STRING_TYPE, null)
-      .stringValue;
-    const partName = xmlDoc.evaluate(
-      "part-name",
-      partNode,
-      nsResolver,
-      XPathResult.STRING_TYPE,
-      null
-    ).stringValue;
-
-    // let velocity = 100;
-    let volume = 70;
-    tmp = xmlDoc.evaluate(
-      "midi-instrument/volume",
-      partNode,
-      nsResolver,
-      XPathResult.NUMBER_TYPE,
-      null
-    ).numberValue;
-    if (!isNaN(tmp)) {
-      // velocity = (tmp / 100) * 127;
-      volume = tmp;
-    }
+    const [partId, partName] = getPartName(xmlDoc, partNode, nsResolver);
+    const volume = getVelocity(xmlDoc, partNode, nsResolver);
     const velocity = (volume / 100) * 127;
-
-    let channel = 0;
-    tmp = xmlDoc.evaluate(
-      "midi-instrument/midi-channel",
-      partNode,
-      nsResolver,
-      XPathResult.NUMBER_TYPE,
-      null
-    ).numberValue;
-    if (!isNaN(tmp)) {
-      channel = tmp - 1;
-    }
-
-    let instrument = "piano";
-    tmp = xmlDoc.evaluate(
-      "score-instrument/instrument-name",
-      partNode,
-      nsResolver,
-      XPathResult.STRING_TYPE,
-      null
-    ).stringValue;
-    if (!!tmp) {
-      instrument = tmp;
-    }
-
+    const channel = getChannel(xmlDoc, partNode, nsResolver);
+    const instrument = getInstrument(xmlDoc, partNode, nsResolver);
     parts.push({ id: partId, name: partName, volume, instrument, events: [] });
 
     const measureIterator = xmlDoc.evaluate(
@@ -135,7 +95,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
       XPathResult.ANY_TYPE,
       null
     );
-    let measureNode;
+    let measureNode: Node;
     let ticks = 0;
     let bpm = 60;
     let divisions = 24;
@@ -143,14 +103,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
     let denominator = 4;
     let millisPerTick = (((1 / playbackSpeed) * 60) / bpm / ppq) * 1000;
     while ((measureNode = measureIterator.iterateNext())) {
-      const measureNumber = xmlDoc.evaluate(
-        "@number",
-        measureNode,
-        nsResolver,
-        XPathResult.NUMBER_TYPE,
-        null
-      ).numberValue;
-      console.log(measureNumber);
+      const measureNumber = getMeasureNumber(xmlDoc, measureNode, nsResolver);
       tmp = xmlDoc.evaluate(
         "attributes/divisions",
         measureNode,
@@ -158,10 +111,12 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
         XPathResult.NUMBER_TYPE,
         null
       ).numberValue;
+
       if (!isNaN(tmp)) {
         divisions = tmp;
         // console.log('divisions', divisions);
       }
+
       tmp = xmlDoc.evaluate(
         "attributes/time/beats",
         measureNode,
@@ -283,6 +238,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
           XPathResult.FIRST_ORDERED_NODE_TYPE,
           null
         ).singleNodeValue;
+
         const chord = xmlDoc.evaluate(
           "chord",
           noteNode,
@@ -290,6 +246,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
           XPathResult.FIRST_ORDERED_NODE_TYPE,
           null
         ).singleNodeValue;
+
         const grace = xmlDoc.evaluate(
           "grace",
           noteNode,
@@ -387,7 +344,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
           ticks += noteDurationTicks;
           if (chord !== null) {
             ticks -= noteDurationTicks;
-            // console.log("chord", ticks, noteDurationTicks);
+            console.log("chord", ticks, noteDurationTicks, measureNumber);
           }
 
           parts[index].events.push(note);

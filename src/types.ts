@@ -1,6 +1,6 @@
 import { ThunkDispatch } from "redux-thunk";
 import { AnyAction } from "redux";
-import { PartData } from "./webdaw/musicxml";
+import { PartData } from "./webdaw/musicxml/parser";
 import { Song, MIDINote } from "./webdaw/types";
 import { MIDIEvent } from "./webdaw/midi_events";
 import { GraphicalNoteData } from "./util/osmd-notes";

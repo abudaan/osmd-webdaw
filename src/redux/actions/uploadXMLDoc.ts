@@ -2,7 +2,7 @@ import { Dispatch, Action, AnyAction } from "redux";
 import { UPLOAD_XMLDOC, MUSICXML_LOADED } from "../../constants";
 import { ThunkAction } from "redux-thunk";
 import { AppState } from "../../types";
-import { parseMusicXML } from "../../webdaw/musicxml";
+import { parseMusicXML } from "../../webdaw/musicxml/parser";
 import { MIDIEvent, TimeSignatureEvent, TempoEvent, NoteOnEvent } from "../../webdaw/midi_events";
 import { Song, Track } from "../../webdaw/types";
 import { outputs } from "../../media";
@@ -21,13 +21,13 @@ export const uploadXMLDoc = (
   const mxml = new DOMParser().parseFromString(s, "application/xml");
   const { parts, repeats, timeEvents } = parseMusicXML(mxml, 192);
   // console.log(parts);
-  parts[0].events.forEach(e => {
-    if (e.descr === "note on" || e.descr === "note off") {
-      console.log(e.ticks, e.descr, e.noteNumber, getNoteName(e.noteNumber, "flat"));
-    } else {
-      console.log(e.ticks, e.descr);
-    }
-  });
+  // parts[0].events.forEach(e => {
+  //   if (e.descr === "note on" || e.descr === "note off") {
+  //     console.log(e.ticks, e.descr, e.noteNumber, getNoteName(e.noteNumber, "flat"));
+  //   } else {
+  //     console.log(e.ticks, e.descr);
+  //   }
+  // });
   let i = timeEvents.findIndex((event: TempoEvent | TimeSignatureEvent) => event.subType === 0x51);
   const firstTempoEvent = timeEvents[i];
   let bpm = 120;
