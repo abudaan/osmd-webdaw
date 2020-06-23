@@ -9,7 +9,7 @@ export const addBarNumber = (
 ): MIDIEvent[] => {
   let ticks = 0;
   //   const ticksPerBar = (ppq / (denominator / 4)) * numerator;
-  const ticksPerBar = ppq * (numerator * (denominator / 4));
+  const ticksPerBar = ppq * (numerator * (4 / denominator));
   //   console.log(ticksPerBar);
   events.forEach(e => {
     const bar = Math.floor(e.ticks / ticksPerBar);

@@ -7,6 +7,7 @@ const NOTE_OFF = 0x80; // 128
 const TEMPO = 0x51; // 81
 const TIME_SIGNATURE = 0x58; // 88
 
+let n = 0;
 // export type EventData = NoteEvent; // | TempoEvent | SignatureEvent;
 
 export type PartData = {
@@ -149,6 +150,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
         XPathResult.NUMBER_TYPE,
         null
       ).numberValue;
+      console.log(measureNumber);
       tmp = xmlDoc.evaluate(
         "attributes/divisions",
         measureNode,
@@ -187,8 +189,9 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
           denominator,
           metronome: 0, // @TODO: calculate this
           thirtySeconds: 0,
+          bar: measureNumber,
         };
-        // parts[index].events.push(event);
+        parts[index].events.push(event);
         timeEvents.push(event);
       }
 
@@ -214,7 +217,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
           millis,
           millisPerTick,
         };
-        // parts[index].events.push(event);
+        parts[index].events.push(event);
         timeEvents.push(event);
       }
 
@@ -366,7 +369,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
           }
 
           const noteNumber = getNoteNumber(noteName, octave);
-          // console.log(ticks, "ON", index);
+          // console.log("\t", ticks, "ON", n++);
           const note = {
             ticks,
             descr: "note on",
@@ -377,6 +380,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
             // octave,
             noteNumber,
             velocity,
+            bar: measureNumber,
             // voice,
             // staff,
           };
@@ -403,6 +407,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
               millis: ticks * millisPerTick,
               noteNumber,
               velocity: 0,
+              bar: measureNumber,
               // noteName,
               // octave,
               // voice,
@@ -432,6 +437,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
               // noteName,
               noteNumber,
               velocity: 0,
+              bar: measureNumber,
               // voice,
               // staff,
             });

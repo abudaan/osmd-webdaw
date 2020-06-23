@@ -8,10 +8,10 @@ export const connectScoreAndInterpretation = () => {
   const { scores, selectedScoreIndex, currentInterpretation, currentScore } = state;
   const score = scores[selectedScoreIndex - 1];
   let mapping = {};
-  // console.log(currentScore.notesPerBar[0]);
+  console.log(currentScore.notesPerBar[0]);
   if (currentInterpretation && currentScore) {
     mapping = mapNotes(currentScore.notesPerBar, score.repeats, currentInterpretation.song);
-    // console.log(mapping);
+    console.log(mapping);
   }
   return {
     type: SET_NOTEMAPPING,

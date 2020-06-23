@@ -9,6 +9,7 @@ import { outputs } from "../../media";
 import { sortMIDIEvents } from "../../webdaw/midi_utils";
 import { createNotes } from "../../webdaw/create_notes";
 import { addBarNumber } from "../../webdaw/addBarNumber";
+import { getNoteName } from "../../webdaw/getNoteName";
 
 export const uploadXMLDoc = (
   file: File
@@ -18,8 +19,15 @@ export const uploadXMLDoc = (
   });
   const s = await file.text();
   const mxml = new DOMParser().parseFromString(s, "application/xml");
-  const { parts, repeats, timeEvents } = parseMusicXML(mxml);
+  const { parts, repeats, timeEvents } = parseMusicXML(mxml, 192);
   // console.log(parts);
+  parts[0].events.forEach(e => {
+    if (e.descr === "note on" || e.descr === "note off") {
+      console.log(e.ticks, e.descr, e.noteNumber, getNoteName(e.noteNumber, "flat"));
+    } else {
+      console.log(e.ticks, e.descr);
+    }
+  });
   let i = timeEvents.findIndex((event: TempoEvent | TimeSignatureEvent) => event.subType === 0x51);
   const firstTempoEvent = timeEvents[i];
   let bpm = 120;
