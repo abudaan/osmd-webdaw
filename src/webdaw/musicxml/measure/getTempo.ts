@@ -19,8 +19,8 @@ export const getTempo = (
       type: 0xff,
       subType: 0x51,
       descr: "tempo",
-      ticks: -1, // will be set later
-      millisPerTick: -1, // will be set later
+      ticks: -1, // will be set in mxml_parser
+      millisPerTick: -1, // will be set later in calculateMills()
       bpm,
     };
     return event;

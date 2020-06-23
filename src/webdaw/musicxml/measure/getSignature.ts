@@ -30,7 +30,7 @@ export const getSignature = (
       denominator,
       metronome: 0, // @TODO: calculate this
       thirtySeconds: 0,
-      ticks: -1, // will be set later
+      ticks: -1, // will be set in mxml_parser
     };
     return event;
   }

@@ -1,4 +1,4 @@
-export const getVelocity = (
+export const getVolume = (
   xmlDoc: XMLDocument,
   partNode: Node,
   nsResolver: XPathNSResolver

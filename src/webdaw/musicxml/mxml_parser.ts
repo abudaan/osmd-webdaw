@@ -1,7 +1,8 @@
-import { getNoteNumber } from "../midi_utils";
+import { getNoteNumber, sortMIDIEvents } from "../midi_utils";
+import { calculateMillis } from "../calculateMillis";
 // import { NoteEvent } from "./types";
 import { TempoEvent, TimeSignatureEvent, MIDIEvent } from "../midi_events";
-import { getVelocity } from "./part/getVolume";
+import { getVolume } from "./part/getVolume";
 import { getPartName } from "./part/getPartName";
 import { getChannel } from "./part/getChannel";
 import { getInstrument } from "./part/getInstrument";
@@ -10,6 +11,8 @@ import { getDivisions } from "./measure/getDivisions";
 import { getSignature } from "./measure/getSignature";
 import { getTempo } from "./measure/getTempo";
 import { getRepeat } from "./measure/getRepeat";
+import { Track, MIDINote } from "../types";
+import { createNotes } from "../create_notes";
 
 let n = 0;
 // export type EventData = NoteEvent; // | TempoEvent | SignatureEvent;
@@ -28,7 +31,9 @@ export type Repeat = {
 }[];
 
 export type ParsedMusicXML = {
-  parts: PartData[];
+  events: MIDIEvent[];
+  notes: MIDINote[];
+  tracks: Track[];
   repeats: number[][];
   initialTempo: number;
   initialNumerator: number;
@@ -82,7 +87,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
   while ((partNode = partIterator.iterateNext())) {
     index += 1;
     const [partId, partName] = getPartName(xmlDoc, partNode, nsResolver);
-    const volume = getVelocity(xmlDoc, partNode, nsResolver);
+    const volume = getVolume(xmlDoc, partNode, nsResolver);
     const velocity = (volume / 100) * 127;
     const channel = getChannel(xmlDoc, partNode, nsResolver);
     const instrument = getInstrument(xmlDoc, partNode, nsResolver);
@@ -362,7 +367,45 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
     }
   });
 
-  return { parts, repeats: repeats2, initialTempo, initialNumerator, initialDenominator };
+  const { tracks, events }: { tracks: Track[]; events: MIDIEvent[] } = parts.reduce(
+    (acc, val, i) => {
+      const id = `T-${i++}`;
+      acc.events.push(
+        ...val.events.map(e => {
+          e.trackId = id;
+          return e;
+        })
+      );
+      const t: Track = {
+        id,
+        name: val.name,
+        instrument: val.instrument,
+        volume: val.volume,
+        latency: 0,
+        inputs: [],
+        outputs: [],
+      };
+
+      acc.tracks.push(t);
+      return acc;
+    },
+    { tracks: [], events: [] }
+  );
+
+  sortMIDIEvents(events);
+
+  return {
+    events: calculateMillis(events, {
+      ppq,
+      bpm: initialTempo,
+    }),
+    notes: createNotes(events),
+    tracks,
+    repeats: repeats2,
+    initialTempo,
+    initialNumerator,
+    initialDenominator,
+  };
 };
 
 const parseTimeWise = (doc: XMLDocument): ParsedMusicXML | null => {

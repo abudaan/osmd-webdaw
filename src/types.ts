@@ -1,6 +1,6 @@
 import { ThunkDispatch } from "redux-thunk";
 import { AnyAction } from "redux";
-import { PartData } from "./webdaw/musicxml/parser";
+import { PartData } from "./webdaw/musicxml/mxml_parser";
 import { Song, MIDINote } from "./webdaw/types";
 import { MIDIEvent } from "./webdaw/midi_events";
 import { GraphicalNoteData } from "./util/osmd-notes";
@@ -20,7 +20,7 @@ export type Score = {
   // file: XMLDocument;
   file: any;
   repeats: number[][];
-  parts: PartData[];
+  // parts: PartData[];
   interpretations?: string[];
 };
 

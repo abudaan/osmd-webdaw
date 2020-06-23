@@ -18,9 +18,8 @@ export const uploadMIDIFile = (file: File) => {
       // track.outputs = outputs.map(o => o.id);
     });
     addBarNumber(song.events, song.ppq, song.numerator, song.denominator);
-    console.log(song.ppq);
     song.numBars = song.events[song.events.length - 1].bar;
-    song.notes = createNotes(song.events);
+    // song.notes = createNotes(song.events);
     dispatch({
       type: MIDIFILE_LOADED,
       payload: { interpretation: { name: file.name, file: song } },

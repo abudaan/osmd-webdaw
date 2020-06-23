@@ -127,36 +127,6 @@ export const sortMIDIEvents = (events: MIDIEvent[]): MIDIEvent[] =>
     return 0;
   });
 
-export const calculateMillis = (
-  events: MIDIEvent[],
-  data: {
-    ppq: number;
-    bpm: number;
-    denominator: number;
-    playbackSpeed?: number;
-  }
-): MIDIEvent[] => {
-  let millisPerTick = 0;
-  let ticks = 0;
-  let millis = 0;
-  let { ppq, bpm, denominator, playbackSpeed = 1 } = data;
-  return events.map(event => {
-    if ((event as TempoEvent).bpm) {
-      ({ bpm } = event as TempoEvent);
-      millisPerTick = (((1 / playbackSpeed) * 60) / bpm / ppq / (denominator / 4)) * 1000;
-    }
-    if ((event as TimeSignatureEvent).denominator) {
-      ({ denominator } = event as TimeSignatureEvent);
-      millisPerTick = (((1 / playbackSpeed) * 60) / bpm / ppq / (denominator / 4)) * 1000;
-    }
-    const diffTicks = event.ticks - ticks;
-    millis += diffTicks * millisPerTick;
-    event.millis = millis;
-    ticks = event.ticks;
-    return event;
-  });
-};
-
 export const removeDoubleEvents = (events: MIDIEvent[]): MIDIEvent[] => {
   // var i, maxi = events.length,
   //   event, eventId, lastId,

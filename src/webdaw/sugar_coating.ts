@@ -11,16 +11,12 @@ export const createSongFromMIDIFile = async (arg: string | ArrayBuffer): Promise
     ab = arg;
   }
   // const { header, timeTrack, tracks } = parseMidiFile(ab);
-  const {
-    header,
-    initialTempo,
-    initialNumerator,
-    initialDenominator,
-    events,
-    tracks,
-  } = parseMidiFile(ab);
+  const { ppq, initialTempo, initialNumerator, initialDenominator, events, tracks } = parseMidiFile(
+    ab
+  );
+
   const song: Song = {
-    ppq: header.ticksPerBeat,
+    ppq,
     latency: 17, // value in milliseconds -> the length of a single frame @ 60Hz refresh rate
     bufferTime: 100, // value in milliseconds
     tracks,

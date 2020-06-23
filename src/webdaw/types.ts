@@ -46,6 +46,7 @@ export interface Track {
   id: string;
   latency: number;
   name?: string;
+  volume?: number;
   inputs: string[]; // ids of MIDI inputs
   outputs: string[]; // ids of MIDI outputs
   instrument?: string;

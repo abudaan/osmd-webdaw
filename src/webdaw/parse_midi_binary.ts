@@ -30,8 +30,8 @@ import {
   CHANNEL_AFTERTOUCH,
   PITCH_BEND,
   sortMIDIEvents,
-  calculateMillis,
 } from "./midi_utils";
+import { calculateMillis } from "./calculateMillis";
 import { Track } from "./types";
 import { createTrack } from "./sugar_coating";
 
@@ -47,11 +47,12 @@ export type ParsedData = {
 };
 
 export type ParsedMIDIFile = {
-  header: {
-    formatType: number;
-    trackCount: number;
-    ticksPerBeat: number;
-  };
+  // header: {
+  //   formatType: number;
+  //   trackCount: number;
+  //   ticksPerBeat: number;
+  // };
+  ppq: number;
   initialTempo: number;
   initialNumerator: number;
   initialDenominator: number;
@@ -73,12 +74,15 @@ export function parseMidiFile(buffer: ArrayBufferLike): ParsedMIDIFile {
 
   // return { header, timeTrack, tracks }
   return {
-    header,
+    ppq: header.ticksPerBeat,
     tracks,
     initialTempo,
     initialNumerator,
     initialDenominator,
-    events, //: calculateMillis(events, { ppq: header.ticksPerBeat }),
+    events: calculateMillis(events, {
+      ppq: header.ticksPerBeat,
+      bpm: initialTempo,
+    }),
   };
 }
 
