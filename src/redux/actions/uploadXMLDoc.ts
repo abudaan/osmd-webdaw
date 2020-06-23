@@ -19,7 +19,10 @@ export const uploadXMLDoc = (
   });
   const s = await file.text();
   const mxml = new DOMParser().parseFromString(s, "application/xml");
-  const { parts, repeats, timeEvents } = parseMusicXML(mxml, 192);
+  const { parts, repeats, initialTempo, initialNumerator, initialDenominator } = parseMusicXML(
+    mxml,
+    192
+  );
   // console.log(parts);
   // parts[0].events.forEach(e => {
   //   if (e.descr === "note on" || e.descr === "note off") {
@@ -28,16 +31,6 @@ export const uploadXMLDoc = (
   //     console.log(e.ticks, e.descr);
   //   }
   // });
-  let i = timeEvents.findIndex((event: TempoEvent | TimeSignatureEvent) => event.subType === 0x51);
-  const firstTempoEvent = timeEvents[i];
-  let bpm = 120;
-  if (firstTempoEvent) {
-    bpm = ((firstTempoEvent as unknown) as TempoEvent).bpm;
-  }
-
-  i = timeEvents.findIndex((event: TempoEvent | TimeSignatureEvent) => event.subType === 0x58);
-  const firstSignatureEvent = timeEvents[i];
-  const { denominator, numerator } = firstSignatureEvent as TimeSignatureEvent;
   const { tracks, events }: { tracks: Track[]; events: MIDIEvent[] } = parts.reduce(
     (acc, val, i) => {
       const id = `T-${i++}`;
@@ -78,9 +71,9 @@ export const uploadXMLDoc = (
     }, {}),
     events,
     notes: createNotes(events),
-    initialTempo: bpm,
-    numerator,
-    denominator,
+    initialTempo,
+    numerator: initialNumerator,
+    denominator: initialDenominator,
     // timeTrack,
     // tracks: tracks.map(track => ({ events: [...track] })),
   };

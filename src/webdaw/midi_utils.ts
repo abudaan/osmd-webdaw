@@ -1,4 +1,4 @@
-import { MIDIEvent, TempoEvent } from "./midi_events";
+import { MIDIEvent, TempoEvent, TimeSignatureEvent } from "./midi_events";
 
 export const SEQUENCE_NUMBER = "sequence number";
 export const TEXT = "text";
@@ -129,20 +129,29 @@ export const sortMIDIEvents = (events: MIDIEvent[]): MIDIEvent[] =>
 
 export const calculateMillis = (
   events: MIDIEvent[],
-  ppq: number,
-  playbackSpeed: number = 1
+  data: {
+    ppq: number;
+    bpm: number;
+    denominator: number;
+    playbackSpeed?: number;
+  }
 ): MIDIEvent[] => {
   let millisPerTick = 0;
   let ticks = 0;
   let millis = 0;
+  let { ppq, bpm, denominator, playbackSpeed = 1 } = data;
   return events.map(event => {
-    const { bpm } = event as TempoEvent;
+    if ((event as TempoEvent).bpm) {
+      ({ bpm } = event as TempoEvent);
+      millisPerTick = (((1 / playbackSpeed) * 60) / bpm / ppq / (denominator / 4)) * 1000;
+    }
+    if ((event as TimeSignatureEvent).denominator) {
+      ({ denominator } = event as TimeSignatureEvent);
+      millisPerTick = (((1 / playbackSpeed) * 60) / bpm / ppq / (denominator / 4)) * 1000;
+    }
     const diffTicks = event.ticks - ticks;
     millis += diffTicks * millisPerTick;
     event.millis = millis;
-    if (bpm) {
-      millisPerTick = (((1 / playbackSpeed) * 60) / bpm / ppq) * 1000;
-    }
     ticks = event.ticks;
     return event;
   });

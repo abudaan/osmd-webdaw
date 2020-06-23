@@ -78,7 +78,7 @@ export function parseMidiFile(buffer: ArrayBufferLike): ParsedMIDIFile {
     initialTempo,
     initialNumerator,
     initialDenominator,
-    events: calculateMillis(events, header.ticksPerBeat),
+    events, //: calculateMillis(events, { ppq: header.ticksPerBeat }),
   };
 }
 
@@ -128,6 +128,7 @@ function parseTracks(
     let lastTypeByte = null;
     while (!trackTrack.eof()) {
       let data = parseEvent(trackTrack, lastTypeByte);
+      // console.log(data);
       const { event, deltaTime, bpm, numerator, denominator, trackName } = data;
       if (bpm && initialTempo === -1) {
         initialTempo = bpm;
