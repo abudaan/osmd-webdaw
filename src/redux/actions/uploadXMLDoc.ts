@@ -6,8 +6,10 @@ import { parseMusicXML } from "../../webdaw/musicxml";
 import { MIDIEvent, TimeSignatureEvent, TempoEvent, NoteOnEvent } from "../../webdaw/midi_events";
 import { Song, Track } from "../../webdaw/types";
 import { outputs } from "../../media";
-import { sortMIDIEvents } from "../../webdaw/midi_utils";
+import { sortMIDIEvents, calculateMillis } from "../../webdaw/midi_utils";
 import { createNotes } from "../../webdaw/create_notes";
+import { download } from "../../util/general";
+import { createKeyEditorView } from "../../webdaw/create_key_editor_view";
 
 export const uploadXMLDoc = (
   file: File
@@ -17,18 +19,7 @@ export const uploadXMLDoc = (
   });
   const s = await file.text();
   const mxml = new DOMParser().parseFromString(s, "application/xml");
-  const { parts, repeats, timeEvents } = parseMusicXML(mxml);
-  // console.log(parts);
-  let i = timeEvents.findIndex((event: TempoEvent | TimeSignatureEvent) => event.subType === 0x51);
-  const firstTempoEvent = timeEvents[i];
-  let bpm = 120;
-  if (firstTempoEvent) {
-    bpm = ((firstTempoEvent as unknown) as TempoEvent).bpm;
-  }
-
-  i = timeEvents.findIndex((event: TempoEvent | TimeSignatureEvent) => event.subType === 0x58);
-  const firstSignatureEvent = timeEvents[i];
-  const { denominator, numerator: nominator } = firstSignatureEvent as TimeSignatureEvent;
+  const { parts, repeats, bpm, numerator, denominator } = parseMusicXML(mxml);
   const { tracks, events }: { tracks: Track[]; events: MIDIEvent[] } = parts.reduce(
     (acc, val, i) => {
       const id = `Track ${i++} (${val.name})`;
@@ -57,6 +48,8 @@ export const uploadXMLDoc = (
   //   console.log(n.ticks, n.noteNumber, n.descr, n.millis);
   // });
   sortMIDIEvents(events);
+  // download(new Blob([JSON.stringify(events)], { type: "application/json" }));
+  const notes = createNotes(events);
   const song: Song = {
     ppq: 960,
     latency: 17, // value in milliseconds -> the length of a single frame @ 60Hz refresh rate
@@ -66,13 +59,16 @@ export const uploadXMLDoc = (
       acc[value.id] = value;
       return acc;
     }, {}),
-    events,
-    notes: createNotes(events),
+    events: calculateMillis(events, 960, bpm),
+    notes,
     initialTempo: bpm,
+    numerator,
+    denominator,
     // timeTrack,
     // tracks: tracks.map(track => ({ events: [...track] })),
   };
-  // console.log(song);
+  createKeyEditorView(song);
+  console.log(song);
 
   dispatch({
     type: MUSICXML_LOADED,

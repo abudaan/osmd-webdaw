@@ -130,18 +130,21 @@ export const sortMIDIEvents = (events: MIDIEvent[]): MIDIEvent[] =>
 export const calculateMillis = (
   events: MIDIEvent[],
   ppq: number,
+  bpm: number,
   playbackSpeed: number = 1
 ): MIDIEvent[] => {
-  let millisPerTick = 0;
+  let millisPerTick = (((1 / playbackSpeed) * 60) / bpm / ppq) * 1000;
   let ticks = 0;
   let millis = 0;
+  let newBpm = bpm;
   return events.map(event => {
-    const { bpm } = event as TempoEvent;
+    ({ bpm: newBpm } = event as TempoEvent);
+    // console.log(bpm);
     const diffTicks = event.ticks - ticks;
     millis += diffTicks * millisPerTick;
     event.millis = millis;
-    if (bpm) {
-      millisPerTick = (((1 / playbackSpeed) * 60) / bpm / ppq) * 1000;
+    if (newBpm) {
+      millisPerTick = (((1 / playbackSpeed) * 60) / newBpm / ppq) * 1000;
     }
     ticks = event.ticks;
     return event;
