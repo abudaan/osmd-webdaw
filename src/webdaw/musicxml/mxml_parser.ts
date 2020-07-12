@@ -1,7 +1,6 @@
 import { getNoteNumber, sortMIDIEvents } from "../midi_utils";
 import { calculateMillis } from "../calculateMillis";
-// import { NoteEvent } from "./types";
-import { TempoEvent, TimeSignatureEvent, MIDIEvent } from "../midi_events";
+import { MIDIEvent } from "../midi_events";
 import { getVolume } from "./part/getVolume";
 import { getPartName } from "./part/getPartName";
 import { getChannel } from "./part/getChannel";
@@ -15,7 +14,6 @@ import { Track, MIDINote } from "../types";
 import { createNotes } from "../create_notes";
 
 let n = 0;
-// export type EventData = NoteEvent; // | TempoEvent | SignatureEvent;
 
 export type PartData = {
   id: string;
@@ -282,7 +280,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
           ticks += noteDurationTicks;
           if (chord !== null) {
             ticks -= noteDurationTicks;
-            console.log("chord", ticks, noteDurationTicks, measureNumber);
+            // console.log("chord", ticks, noteDurationTicks, measureNumber);
           }
 
           parts[index].events.push(note);
@@ -397,7 +395,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
   return {
     events: calculateMillis(events, {
       ppq,
-      bpm: initialTempo,
+      // bpm: initialTempo,
     }),
     notes: createNotes(events),
     tracks,
