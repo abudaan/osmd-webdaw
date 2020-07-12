@@ -67,7 +67,7 @@ export const Controls: React.FC<Props> = ({}: Props) => {
         ref={refs.mxml}
         type="file"
         id="upload"
-        accept=".xml,.musicxml, .mxl"
+        accept=".xml,.musicxml,.mxl,.mxml"
         style={{ display: "none" }}
         onChange={e => {
           const files = (event.target as HTMLInputElement).files;

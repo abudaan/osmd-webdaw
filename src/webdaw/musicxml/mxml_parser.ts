@@ -102,9 +102,10 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
     let ticks = 0;
     let tmp: any;
     let measureNode: Node;
+    let divisions: number;
     while ((measureNode = measureIterator.iterateNext())) {
       const measureNumber = getMeasureNumber(xmlDoc, measureNode, nsResolver);
-      const divisions = getDivisions(xmlDoc, measureNode, nsResolver);
+      divisions = getDivisions(xmlDoc, measureNode, nsResolver, divisions);
 
       const signatureEvent = getSignature(xmlDoc, measureNode, nsResolver);
       if (signatureEvent !== null) {

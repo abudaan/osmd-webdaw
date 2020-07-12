@@ -1,7 +1,8 @@
 export const getDivisions = (
   xmlDoc: XMLDocument,
   measureNode: Node,
-  nsResolver: XPathNSResolver
+  nsResolver: XPathNSResolver,
+  currentDivision: number = 24
 ): number => {
   const divisions = xmlDoc.evaluate(
     "attributes/divisions",
@@ -16,5 +17,5 @@ export const getDivisions = (
     // console.log('divisions', divisions);
   }
 
-  return 24;
+  return currentDivision;
 };
