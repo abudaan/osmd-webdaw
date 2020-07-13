@@ -128,7 +128,8 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
       }
 
       const repeat = getRepeat(xmlDoc, measureNode, nsResolver);
-      if ((repeat !== null && measureNumber) !== 1) {
+      if (repeat !== null && measureNumber !== 1) {
+        // console.log(repeat, measureNumber);
         repeats.push({ type: repeat, bar: measureNumber });
       }
 
@@ -369,6 +370,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
       j++;
     }
   });
+  // console.log(repeats, repeats2);
 
   const { tracks, events }: { tracks: Track[]; events: MIDIEvent[] } = parts.reduce(
     (acc, val, i) => {

@@ -12,7 +12,6 @@ export const getRepeat = (
   ).stringValue;
 
   if (repeat !== "") {
-    // console.log(tmp, measureNumber);
     return repeat;
   }
 

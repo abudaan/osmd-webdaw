@@ -11,8 +11,8 @@ export const connectScoreAndInterpretation = () => {
   // console.log(currentScore.notesPerBar[0]);
   if (currentInterpretation && currentScore) {
     mapping = mapNotes(currentScore.notesPerBar, score.repeats, currentInterpretation.song);
-    console.log(currentInterpretation.song.notes);
-    console.log(mapping);
+    // console.log(currentInterpretation.song.notes);
+    // console.log(mapping);
   }
   return {
     type: SET_NOTEMAPPING,
