@@ -21,6 +21,8 @@ export const getSignature = (
     null
   ).numberValue;
 
+  // console.log(numerator, denominator);
+
   if (numerator && denominator) {
     const event: TimeSignatureEvent = {
       type: 0xff,

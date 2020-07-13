@@ -247,6 +247,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
             null
           ).numberValue;
           noteDurationTicks = (noteDuration / divisions) * ppq;
+
           // const noteType = xmlDoc.evaluate('type', noteNode, nsResolver, XPathResult.STRING_TYPE, null).stringValue;
           let noteName = step;
 
@@ -267,6 +268,12 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
             }
           }
 
+          // in case of a chord, move the cursor back
+          if (chord !== null) {
+            ticks -= noteDurationTicks;
+          }
+          // console.log(ticks, measureNumber, chord);
+
           const noteNumber = getNoteNumber(noteName, octave);
           // console.log("\t", ticks, "ON", n++);
           const note = {
@@ -278,11 +285,8 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
             velocity,
             bar: measureNumber,
           };
+
           ticks += noteDurationTicks;
-          if (chord !== null) {
-            ticks -= noteDurationTicks;
-            // console.log("chord", ticks, noteDurationTicks, measureNumber);
-          }
 
           parts[index].events.push(note);
           //console.log('tie', tieStart, tieStop);
@@ -396,7 +400,7 @@ const parsePartWise = (xmlDoc: XMLDocument, ppq: number = 960): ParsedMusicXML =
   return {
     events: calculateMillis(events, {
       ppq,
-      // bpm: initialTempo,
+      bpm: initialTempo === -1 ? 120 : initialTempo,
     }),
     notes: createNotes(events),
     tracks,
