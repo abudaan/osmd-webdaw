@@ -13,8 +13,9 @@ export const addBarNumber = (
   //   console.log(ticksPerBar);
   events.forEach(e => {
     const bar = Math.floor(e.ticks / ticksPerBar);
+    // console.log(bar, bar + 1);
     e.bar = bar;
-    // console.log(bar);
+    // console.log(bar, e.ticks, ticksPerBar, ppq);
   });
 
   return events;

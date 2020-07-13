@@ -20,7 +20,7 @@ export const selectInterpretation = (index: number) => {
   //   console.log(e.ticks, e.type, e.noteNumber, e.trackId);
   // });
 
-  // console.log(currentInterpretation);
+  // console.log(currentInterpretation.song.notes);
   return {
     type: MIDIFILE_SELECTED,
     payload: {

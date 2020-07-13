@@ -14,7 +14,7 @@ export const getTempo = (
   ).numberValue;
 
   if (!isNaN(bpm)) {
-    console.log("BPM", bpm);
+    // console.log("BPM", bpm);
     const event: TempoEvent = {
       type: 0xff,
       subType: 0x51,

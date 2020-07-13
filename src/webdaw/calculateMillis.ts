@@ -12,7 +12,7 @@ export const calculateMillis = (
   let millisPerTick = bpm === -1 ? 0 : (((1 / playbackSpeed) * 60) / bpm / ppq) * 1000;
   let ticks = 0;
   let millis = 0;
-  console.log("bpm", bpm, millis);
+  // console.log("bpm", bpm, millis);
   return events.map(event => {
     if ((event as TempoEvent).bpm) {
       ({ bpm } = event as TempoEvent);

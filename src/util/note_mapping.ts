@@ -29,7 +29,7 @@ export const mapNotes = (
   const { numBars, ppq } = song;
   const mapping: NoteMapping = {};
 
-  console.log(numBars, graphicalNotesPerBar.length);
+  // console.log(numBars, graphicalNotesPerBar.length);
   // if (numBars !== graphicalNotesPerBar.length) {
   //   return mapping;
   // }
@@ -37,26 +37,26 @@ export const mapNotes = (
   while (true) {
     barIndex++;
     // console.log(barIndex, repeatIndex, hasRepeated[repeatIndex], repeats[repeatIndex][1]);
-    if (barIndex === repeats[repeatIndex][1]) {
-      if (hasRepeated[repeatIndex] !== true) {
-        barIndex = repeats[repeatIndex][0] - 1;
-        // console.log('REPEAT START', barIndex)
-        hasRepeated[repeatIndex] = true;
-        barOffset += repeats[repeatIndex][1] - repeats[repeatIndex][0] + 1;
-        ticksOffset += (repeats[repeatIndex][1] - repeats[repeatIndex][0]) * song.numerator * ppq;
-      } else {
-        // console.log('REPEAT END', barIndex, repeatIndex);
-        repeatIndex++;
-        if (repeatIndex === repeats.length || barIndex === numBars) {
-          break;
-        }
-      }
-    } else {
-      // console.log('CONTINUE', barIndex)
-      if (barIndex === numBars) {
-        break;
-      }
+    // if (barIndex === repeats[repeatIndex][1]) {
+    //   if (hasRepeated[repeatIndex] !== true) {
+    //     barIndex = repeats[repeatIndex][0] - 1;
+    //     // console.log('REPEAT START', barIndex)
+    //     hasRepeated[repeatIndex] = true;
+    //     barOffset += repeats[repeatIndex][1] - repeats[repeatIndex][0] + 1;
+    //     ticksOffset += (repeats[repeatIndex][1] - repeats[repeatIndex][0]) * song.numerator * ppq;
+    //   } else {
+    //     // console.log('REPEAT END', barIndex, repeatIndex);
+    //     repeatIndex++;
+    //     if (repeatIndex === repeats.length || barIndex === numBars) {
+    //       break;
+    //     }
+    //   }
+    // } else {
+    console.log("CONTINUE", barIndex, numBars, repeats);
+    if (barIndex === numBars) {
+      break;
     }
+    // }
 
     try {
       // get all sequencer MIDI events in this bar
