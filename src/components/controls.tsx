@@ -8,6 +8,7 @@ import { uploadMIDIFile } from "../redux/actions/uploadMIDIFile";
 import { AppDispatch, Transport, AppState } from "../types";
 import { handleTransport } from "../redux/actions/handleTransport";
 import { connectScoreAndInterpretation } from "../redux/actions/connect";
+import { resetScore } from "../redux/actions/resetScore";
 
 type Props = {};
 export const Controls: React.FC<Props> = ({}: Props) => {
@@ -150,6 +151,14 @@ export const Controls: React.FC<Props> = ({}: Props) => {
         disabled={!scoreSelected}
         onClick={() => {
           dispatch(handleTransport(Transport.STOP));
+        }}
+      />
+      <input
+        type="button"
+        value="reset score"
+        disabled={!scoreSelected}
+        onClick={() => {
+          dispatch(resetScore());
         }}
       />
     </div>
