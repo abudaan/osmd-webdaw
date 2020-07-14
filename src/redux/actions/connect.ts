@@ -12,7 +12,15 @@ export const connectScoreAndInterpretation = () => {
   if (currentInterpretation && currentScore) {
     mapping = mapNotes(currentScore.notesPerBar, score.repeats, currentInterpretation.song);
     // console.log(currentInterpretation.song.notes);
-    // console.log(mapping);
+    Object.keys(mapping).forEach(key => {
+      const { vfnote } = mapping[key];
+      vfnote["attrs"].el.addEventListener("click", (e: Event) => {
+        const index = currentInterpretation.song.notes.findIndex(note => note.id === key);
+        // const event: NoteOnEvent = currentInterpretation.song.notes[index].noteOn;
+        const { ticks, noteNumber, channel, bar } = currentInterpretation.song.notes[index].noteOn;
+        console.log(key, ticks, noteNumber, bar, channel);
+      });
+    });
   }
   return {
     type: SET_NOTEMAPPING,
