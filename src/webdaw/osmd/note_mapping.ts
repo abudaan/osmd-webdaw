@@ -1,7 +1,7 @@
 import { MusicSystem } from "opensheetmusicdisplay";
 import { GraphicalNoteData } from "./osmd-notes";
-import { Song } from "../webdaw/types";
-import { NoteEvent } from "../webdaw/midi_events";
+import { Song } from "../types";
+import { NoteEvent } from "../midi_events";
 
 /*
   This method maps the notes in the SVG document of the score to MIDI notes in the sequencer

@@ -13,7 +13,7 @@
     "jasmid.ts": "^2.1.0",
     "jszip": "^3.4.0",
     "jzz": "^0.7.9",
-    "opensheetmusicdisplay": "^0.7.6",
+    "opensheetmusicdisplay": "^0.8.2",
     "ramda": "^0.26.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",

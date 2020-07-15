@@ -8,6 +8,7 @@ import {
   SET_PROGRESS,
   SCORE_READY,
   SET_NOTEMAPPING,
+  SELECTED_NOTE,
 } from "../constants";
 
 export const rootReducer = (state: AppState, action: any): AppState => {
@@ -67,6 +68,21 @@ export const rootReducer = (state: AppState, action: any): AppState => {
       // progress,
       playheadMillis,
       currentInterpretation,
+    };
+  } else if (action.type === SELECTED_NOTE) {
+    let data = null;
+    const { id } = action.payload;
+    if (state.currentInterpretation && state.currentInterpretation.song) {
+      console.log(state.currentInterpretation.song.notes);
+      const index = state.currentInterpretation.song.notes.findIndex(note => note.id === id);
+      if (index !== -1) {
+        const { bar, ticks, noteNumber } = state.currentInterpretation.song.notes[index].noteOn;
+        data = { bar, ticks, noteNumber };
+      }
+    }
+    return {
+      ...state,
+      selectedNoteData: data,
     };
   }
 

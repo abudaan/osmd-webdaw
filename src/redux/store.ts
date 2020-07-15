@@ -34,6 +34,7 @@ const initialState: AppState = {
   loop: false,
   loopStart: 2000,
   loopEnd: 6000,
+  selectedNoteData: null,
 };
 
 const composeEnhancers = composeWithDevTools({

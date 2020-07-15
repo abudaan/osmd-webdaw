@@ -24,42 +24,38 @@ export const Score: React.FC<{}> = ({}) => {
   const refScore: RefObject<HTMLDivElement> = useRef(null);
 
   useEffect(() => {
+    const scoreDiv = refScore.current;
+    if (scoreDiv && osmd === null) {
+      const o = new OpenSheetMusicDisplay(scoreDiv, {
+        backend: "svg",
+        autoResize: true,
+      });
+      setOSMD(o);
+    }
+
     if (score) {
       console.log("[Score] useEffect");
-      const scoreDiv = refScore.current;
-      if (scoreDiv) {
-        if (osmd === null) {
-          const o = new OpenSheetMusicDisplay(scoreDiv, {
-            backend: "svg",
-            autoResize: true,
+      try {
+        osmd
+          .load(score.file)
+          .then(
+            () => {
+              osmd.render();
+              // idString is not set by osmd which is I believe a bug -> the default value is "random idString, not initialized"
+              // osmd.idString = `score-${new Date().getTime()}`;
+              console.log(osmd);
+              dispatch(scoreReady(osmd));
+            },
+            e => {
+              console.log("OSMD reject", e);
+            }
+          )
+          .catch(e => {
+            console.log("OSMD catch", e);
           });
-          setOSMD(o);
-        } else {
-          // window.openSheetMusicDisplay = openSheetMusicDisplay;
-          // osmd.clear();
-          try {
-            osmd
-              .load(score.file)
-              .then(
-                () => {
-                  osmd.render();
-                  // idString is not set by osmd which is I believe a bug -> the default value is "random idString, not initialized"
-                  // osmd.idString = `score-${new Date().getTime()}`;
-                  console.log(osmd);
-                  dispatch(scoreReady(osmd));
-                },
-                e => {
-                  console.log("OSMD reject", e);
-                }
-              )
-              .catch(e => {
-                console.log("OSMD catch", e);
-              });
-          } catch (e) {
-            // osmd's reject and catch don't work!
-            console.log("final catch", e);
-          }
-        }
+      } catch (e) {
+        // osmd's reject and catch don't work!
+        console.log("final catch", e);
       }
     }
   });

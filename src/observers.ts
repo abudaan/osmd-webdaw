@@ -1,7 +1,7 @@
 import "jzz";
 import sequencer from "heartbeat-sequencer";
-import { setStaveNoteColor } from "./util/osmd-stavenote-color";
-import { NoteMapping, mapOSMDToSequencer } from "./util/osmd-heartbeat";
+import { setStaveNoteColor } from "./webdaw/osmd/osmd-stavenote-color";
+import { NoteMapping, mapOSMDToSequencer } from "./webdaw/osmd/osmd-heartbeat";
 import { AppState } from "./redux/store";
 import {
   Observable,
@@ -44,7 +44,7 @@ import { SongState, SongActions } from "./redux/song-reducer";
 import { Dispatch } from "redux";
 import { songReady, updateNoteMapping, updatePlayheadMillis } from "./redux/actions1";
 import { parseMusicXML } from "./util/musicxml";
-import { getGraphicalNotesPerBar } from "./util/osmd-notes";
+import { getGraphicalNotesPerBar } from "./webdaw/osmd/osmd-notes";
 import { flatten } from "ramda";
 import { OpenSheetMusicDisplay } from "opensheetmusicdisplay/build/dist/src";
 

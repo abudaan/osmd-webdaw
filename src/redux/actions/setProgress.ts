@@ -2,7 +2,7 @@ import { store } from "../store";
 import { AppState } from "../../types";
 import { SET_PROGRESS } from "../../constants";
 import { playMIDI } from "../../controlMIDI";
-import { setStaveNoteColor } from "../../util/osmd-stavenote-color";
+import { setStaveNoteColor } from "../../webdaw/osmd/osmd-stavenote-color";
 
 export const setProgress = (progress: number) => {
   const state = store.getState() as AppState;

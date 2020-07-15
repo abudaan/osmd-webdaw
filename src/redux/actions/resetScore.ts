@@ -1,7 +1,7 @@
-import { mapNotes } from "../../util/note_mapping";
+import { mapNotes } from "../../webdaw/osmd/note_mapping";
 import { AppState } from "../../types";
 import { store } from "../store";
-import { setStaveNoteColor } from "../../util/osmd-stavenote-color";
+import { setStaveNoteColor } from "../../webdaw/osmd/osmd-stavenote-color";
 
 export const resetScore = () => {
   const state = store.getState() as AppState;

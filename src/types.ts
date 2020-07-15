@@ -3,8 +3,8 @@ import { AnyAction } from "redux";
 import { PartData } from "./webdaw/musicxml/mxml_parser";
 import { Song, MIDINote } from "./webdaw/types";
 import { MIDIEvent } from "./webdaw/midi_events";
-import { GraphicalNoteData } from "./util/osmd-notes";
-import { NoteMapping } from "./util/note_mapping";
+import { GraphicalNoteData } from "./webdaw/osmd/osmd-notes";
+import { NoteMapping } from "./webdaw/osmd/note_mapping";
 
 export enum Transport {
   PLAY = "play",
@@ -63,4 +63,5 @@ export type AppState = {
   loop: boolean;
   loopStart: number;
   loopEnd: number;
+  selectedNoteData: { bar: number; ticks: number; noteNumber: number };
 };

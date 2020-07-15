@@ -10,7 +10,7 @@ import {
 } from "./actions1";
 
 import { OpenSheetMusicDisplay } from "opensheetmusicdisplay/build/dist/src";
-import { GraphicalNoteData } from "../util/osmd-notes";
+import { GraphicalNoteData } from "../webdaw/osmd/osmd-notes";
 import { NoteMapping } from "src/util/osmd-heartbeat";
 
 export const SongActions = {
