@@ -41551,15 +41551,15 @@ exports.handleTransport = transport => dispatch => __awaiter(void 0, void 0, voi
     }
   });
 });
-},{"../../types":"types.ts","../store":"redux/store.ts","../../media":"media.ts","../../constants":"constants.ts","../../controlMIDI":"controlMIDI.ts"}],"webdaw/osmd/note_mapping.ts":[function(require,module,exports) {
+},{"../../types":"types.ts","../store":"redux/store.ts","../../media":"media.ts","../../constants":"constants.ts","../../controlMIDI":"controlMIDI.ts"}],"webdaw/osmd/mapMIDINoteIdToGraphicalNote.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.mapNotes = void 0;
+exports.mapMIDINoteIdToGraphicalNote = void 0;
 
-exports.mapNotes = (graphicalNotesPerBar, repeats, song) => {
+exports.mapMIDINoteIdToGraphicalNote = (graphicalNotesPerBar, repeats, notes) => {
   // console.log(graphicalNotesPerBar);
   let barIndex = -1;
   let barOffset = 0;
@@ -41567,11 +41567,7 @@ exports.mapNotes = (graphicalNotesPerBar, repeats, song) => {
 
   let repeatIndex = 0;
   const hasRepeated = {};
-  const notes = song.notes;
-  const {
-    numBars,
-    ppq
-  } = song;
+  const numBars = notes[notes.length - 1].noteOff.bar;
   const mapping = {}; // console.log(numBars, graphicalNotesPerBar.length);
   // if (numBars !== graphicalNotesPerBar.length) {
   //   return mapping;
@@ -41585,8 +41581,7 @@ exports.mapNotes = (graphicalNotesPerBar, repeats, song) => {
         barIndex = repeats[repeatIndex][0] - 1; // console.log('REPEAT START', barIndex)
 
         hasRepeated[repeatIndex] = true;
-        barOffset += repeats[repeatIndex][1] - repeats[repeatIndex][0] + 1;
-        ticksOffset += (repeats[repeatIndex][1] - repeats[repeatIndex][0]) * song.numerator * ppq;
+        barOffset += repeats[repeatIndex][1] - repeats[repeatIndex][0] + 1; // ticksOffset += (repeats[repeatIndex][1] - repeats[repeatIndex][0]) * song.numerator * ppq;
       } else {
         // console.log('REPEAT END', barIndex, repeatIndex);
         repeatIndex++;
@@ -41618,7 +41613,7 @@ exports.mapNotes = (graphicalNotesPerBar, repeats, song) => {
         return 0;
       }).forEach(bd => {
         const {
-          vfnote,
+          element,
           noteNumber,
           bar,
           parentMusicSystem
@@ -41629,7 +41624,7 @@ exports.mapNotes = (graphicalNotesPerBar, repeats, song) => {
 
           if (!mapping[note.id] && note.noteOn.bar == bar + barOffset - 1 && note.noteOn.noteNumber == noteNumber) {
             mapping[note.id] = {
-              vfnote,
+              element,
               musicSystem: parentMusicSystem
             }; // filtered.splice(j, 1);
 
@@ -41652,7 +41647,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.connectScoreAndInterpretation = void 0;
 
-const note_mapping_1 = require("../../webdaw/osmd/note_mapping");
+const mapMIDINoteIdToGraphicalNote_1 = require("../../webdaw/osmd/mapMIDINoteIdToGraphicalNote");
 
 const store_1 = require("../store");
 
@@ -41670,7 +41665,7 @@ exports.connectScoreAndInterpretation = () => {
   let mapping = {}; // console.log(currentScore.notesPerBar[0]);
 
   if (currentInterpretation && currentScore) {
-    mapping = note_mapping_1.mapNotes(currentScore.notesPerBar, score.repeats, currentInterpretation.song); // console.log(currentInterpretation.song.notes);
+    mapping = mapMIDINoteIdToGraphicalNote_1.mapMIDINoteIdToGraphicalNote(currentScore.notesPerBar, score.repeats, currentInterpretation.song.notes); // console.log(currentInterpretation.song.notes);
     // Object.keys(mapping).forEach(key => {
     //   const { vfnote } = mapping[key];
     //   vfnote["attrs"].el.addEventListener("click", (e: Event) => {
@@ -41689,7 +41684,7 @@ exports.connectScoreAndInterpretation = () => {
     }
   };
 };
-},{"../../webdaw/osmd/note_mapping":"webdaw/osmd/note_mapping.ts","../store":"redux/store.ts","../../constants":"constants.ts"}],"webdaw/osmd/osmd-stavenote-color.ts":[function(require,module,exports) {
+},{"../../webdaw/osmd/mapMIDINoteIdToGraphicalNote":"webdaw/osmd/mapMIDINoteIdToGraphicalNote.ts","../store":"redux/store.ts","../../constants":"constants.ts"}],"webdaw/osmd/setGraphicalNoteColor.ts":[function(require,module,exports) {
 "use strict";
 /*
   Simple function that changes the color of a note in the SVG document of the OSMD score; by accessing
@@ -41736,7 +41731,7 @@ exports.resetScore = void 0;
 
 const store_1 = require("../store");
 
-const osmd_stavenote_color_1 = require("../../webdaw/osmd/osmd-stavenote-color");
+const setGraphicalNoteColor_1 = require("../../webdaw/osmd/setGraphicalNoteColor");
 
 exports.resetScore = () => {
   const state = store_1.store.getState();
@@ -41751,7 +41746,7 @@ exports.resetScore = () => {
     const {
       vfnote
     } = noteMapping[key];
-    osmd_stavenote_color_1.setStaveNoteColor(vfnote["attrs"].el, "black");
+    setGraphicalNoteColor_1.setStaveNoteColor(vfnote["attrs"].el, "black");
   });
   return {
     type: "",
@@ -41759,7 +41754,7 @@ exports.resetScore = () => {
     }
   };
 };
-},{"../store":"redux/store.ts","../../webdaw/osmd/osmd-stavenote-color":"webdaw/osmd/osmd-stavenote-color.ts"}],"components/controls.tsx":[function(require,module,exports) {
+},{"../store":"redux/store.ts","../../webdaw/osmd/setGraphicalNoteColor":"webdaw/osmd/setGraphicalNoteColor.ts"}],"components/controls.tsx":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -49911,7 +49906,7 @@ var _withLatestFrom = require("../internal/operators/withLatestFrom");
 var _zip = require("../internal/operators/zip");
 
 var _zipAll = require("../internal/operators/zipAll");
-},{"../internal/operators/audit":"../node_modules/rxjs/_esm5/internal/operators/audit.js","../internal/operators/auditTime":"../node_modules/rxjs/_esm5/internal/operators/auditTime.js","../internal/operators/buffer":"../node_modules/rxjs/_esm5/internal/operators/buffer.js","../internal/operators/bufferCount":"../node_modules/rxjs/_esm5/internal/operators/bufferCount.js","../internal/operators/bufferTime":"../node_modules/rxjs/_esm5/internal/operators/bufferTime.js","../internal/operators/bufferToggle":"../node_modules/rxjs/_esm5/internal/operators/bufferToggle.js","../internal/operators/bufferWhen":"../node_modules/rxjs/_esm5/internal/operators/bufferWhen.js","../internal/operators/catchError":"../node_modules/rxjs/_esm5/internal/operators/catchError.js","../internal/operators/combineAll":"../node_modules/rxjs/_esm5/internal/operators/combineAll.js","../internal/operators/combineLatest":"../node_modules/rxjs/_esm5/internal/operators/combineLatest.js","../internal/operators/concat":"../node_modules/rxjs/_esm5/internal/operators/concat.js","../internal/operators/concatAll":"../node_modules/rxjs/_esm5/internal/operators/concatAll.js","../internal/operators/concatMap":"../node_modules/rxjs/_esm5/internal/operators/concatMap.js","../internal/operators/concatMapTo":"../node_modules/rxjs/_esm5/internal/operators/concatMapTo.js","../internal/operators/count":"../node_modules/rxjs/_esm5/internal/operators/count.js","../internal/operators/debounce":"../node_modules/rxjs/_esm5/internal/operators/debounce.js","../internal/operators/debounceTime":"../node_modules/rxjs/_esm5/internal/operators/debounceTime.js","../internal/operators/defaultIfEmpty":"../node_modules/rxjs/_esm5/internal/operators/defaultIfEmpty.js","../internal/operators/delay":"../node_modules/rxjs/_esm5/internal/operators/delay.js","../internal/operators/delayWhen":"../node_modules/rxjs/_esm5/internal/operators/delayWhen.js","../internal/operators/dematerialize":"../node_modules/rxjs/_esm5/internal/operators/dematerialize.js","../internal/operators/distinct":"../node_modules/rxjs/_esm5/internal/operators/distinct.js","../internal/operators/distinctUntilChanged":"../node_modules/rxjs/_esm5/internal/operators/distinctUntilChanged.js","../internal/operators/distinctUntilKeyChanged":"../node_modules/rxjs/_esm5/internal/operators/distinctUntilKeyChanged.js","../internal/operators/elementAt":"../node_modules/rxjs/_esm5/internal/operators/elementAt.js","../internal/operators/endWith":"../node_modules/rxjs/_esm5/internal/operators/endWith.js","../internal/operators/every":"../node_modules/rxjs/_esm5/internal/operators/every.js","../internal/operators/exhaust":"../node_modules/rxjs/_esm5/internal/operators/exhaust.js","../internal/operators/exhaustMap":"../node_modules/rxjs/_esm5/internal/operators/exhaustMap.js","../internal/operators/expand":"../node_modules/rxjs/_esm5/internal/operators/expand.js","../internal/operators/filter":"../node_modules/rxjs/_esm5/internal/operators/filter.js","../internal/operators/finalize":"../node_modules/rxjs/_esm5/internal/operators/finalize.js","../internal/operators/find":"../node_modules/rxjs/_esm5/internal/operators/find.js","../internal/operators/findIndex":"../node_modules/rxjs/_esm5/internal/operators/findIndex.js","../internal/operators/first":"../node_modules/rxjs/_esm5/internal/operators/first.js","../internal/operators/groupBy":"../node_modules/rxjs/_esm5/internal/operators/groupBy.js","../internal/operators/ignoreElements":"../node_modules/rxjs/_esm5/internal/operators/ignoreElements.js","../internal/operators/isEmpty":"../node_modules/rxjs/_esm5/internal/operators/isEmpty.js","../internal/operators/last":"../node_modules/rxjs/_esm5/internal/operators/last.js","../internal/operators/map":"../node_modules/rxjs/_esm5/internal/operators/map.js","../internal/operators/mapTo":"../node_modules/rxjs/_esm5/internal/operators/mapTo.js","../internal/operators/materialize":"../node_modules/rxjs/_esm5/internal/operators/materialize.js","../internal/operators/max":"../node_modules/rxjs/_esm5/internal/operators/max.js","../internal/operators/merge":"../node_modules/rxjs/_esm5/internal/operators/merge.js","../internal/operators/mergeAll":"../node_modules/rxjs/_esm5/internal/operators/mergeAll.js","../internal/operators/mergeMap":"../node_modules/rxjs/_esm5/internal/operators/mergeMap.js","../internal/operators/mergeMapTo":"../node_modules/rxjs/_esm5/internal/operators/mergeMapTo.js","../internal/operators/mergeScan":"../node_modules/rxjs/_esm5/internal/operators/mergeScan.js","../internal/operators/min":"../node_modules/rxjs/_esm5/internal/operators/min.js","../internal/operators/multicast":"../node_modules/rxjs/_esm5/internal/operators/multicast.js","../internal/operators/observeOn":"../node_modules/rxjs/_esm5/internal/operators/observeOn.js","../internal/operators/onErrorResumeNext":"../node_modules/rxjs/_esm5/internal/operators/onErrorResumeNext.js","../internal/operators/pairwise":"../node_modules/rxjs/_esm5/internal/operators/pairwise.js","../internal/operators/partition":"../node_modules/rxjs/_esm5/internal/operators/partition.js","../internal/operators/pluck":"../node_modules/rxjs/_esm5/internal/operators/pluck.js","../internal/operators/publish":"../node_modules/rxjs/_esm5/internal/operators/publish.js","../internal/operators/publishBehavior":"../node_modules/rxjs/_esm5/internal/operators/publishBehavior.js","../internal/operators/publishLast":"../node_modules/rxjs/_esm5/internal/operators/publishLast.js","../internal/operators/publishReplay":"../node_modules/rxjs/_esm5/internal/operators/publishReplay.js","../internal/operators/race":"../node_modules/rxjs/_esm5/internal/operators/race.js","../internal/operators/reduce":"../node_modules/rxjs/_esm5/internal/operators/reduce.js","../internal/operators/repeat":"../node_modules/rxjs/_esm5/internal/operators/repeat.js","../internal/operators/repeatWhen":"../node_modules/rxjs/_esm5/internal/operators/repeatWhen.js","../internal/operators/retry":"../node_modules/rxjs/_esm5/internal/operators/retry.js","../internal/operators/retryWhen":"../node_modules/rxjs/_esm5/internal/operators/retryWhen.js","../internal/operators/refCount":"../node_modules/rxjs/_esm5/internal/operators/refCount.js","../internal/operators/sample":"../node_modules/rxjs/_esm5/internal/operators/sample.js","../internal/operators/sampleTime":"../node_modules/rxjs/_esm5/internal/operators/sampleTime.js","../internal/operators/scan":"../node_modules/rxjs/_esm5/internal/operators/scan.js","../internal/operators/sequenceEqual":"../node_modules/rxjs/_esm5/internal/operators/sequenceEqual.js","../internal/operators/share":"../node_modules/rxjs/_esm5/internal/operators/share.js","../internal/operators/shareReplay":"../node_modules/rxjs/_esm5/internal/operators/shareReplay.js","../internal/operators/single":"../node_modules/rxjs/_esm5/internal/operators/single.js","../internal/operators/skip":"../node_modules/rxjs/_esm5/internal/operators/skip.js","../internal/operators/skipLast":"../node_modules/rxjs/_esm5/internal/operators/skipLast.js","../internal/operators/skipUntil":"../node_modules/rxjs/_esm5/internal/operators/skipUntil.js","../internal/operators/skipWhile":"../node_modules/rxjs/_esm5/internal/operators/skipWhile.js","../internal/operators/startWith":"../node_modules/rxjs/_esm5/internal/operators/startWith.js","../internal/operators/subscribeOn":"../node_modules/rxjs/_esm5/internal/operators/subscribeOn.js","../internal/operators/switchAll":"../node_modules/rxjs/_esm5/internal/operators/switchAll.js","../internal/operators/switchMap":"../node_modules/rxjs/_esm5/internal/operators/switchMap.js","../internal/operators/switchMapTo":"../node_modules/rxjs/_esm5/internal/operators/switchMapTo.js","../internal/operators/take":"../node_modules/rxjs/_esm5/internal/operators/take.js","../internal/operators/takeLast":"../node_modules/rxjs/_esm5/internal/operators/takeLast.js","../internal/operators/takeUntil":"../node_modules/rxjs/_esm5/internal/operators/takeUntil.js","../internal/operators/takeWhile":"../node_modules/rxjs/_esm5/internal/operators/takeWhile.js","../internal/operators/tap":"../node_modules/rxjs/_esm5/internal/operators/tap.js","../internal/operators/throttle":"../node_modules/rxjs/_esm5/internal/operators/throttle.js","../internal/operators/throttleTime":"../node_modules/rxjs/_esm5/internal/operators/throttleTime.js","../internal/operators/throwIfEmpty":"../node_modules/rxjs/_esm5/internal/operators/throwIfEmpty.js","../internal/operators/timeInterval":"../node_modules/rxjs/_esm5/internal/operators/timeInterval.js","../internal/operators/timeout":"../node_modules/rxjs/_esm5/internal/operators/timeout.js","../internal/operators/timeoutWith":"../node_modules/rxjs/_esm5/internal/operators/timeoutWith.js","../internal/operators/timestamp":"../node_modules/rxjs/_esm5/internal/operators/timestamp.js","../internal/operators/toArray":"../node_modules/rxjs/_esm5/internal/operators/toArray.js","../internal/operators/window":"../node_modules/rxjs/_esm5/internal/operators/window.js","../internal/operators/windowCount":"../node_modules/rxjs/_esm5/internal/operators/windowCount.js","../internal/operators/windowTime":"../node_modules/rxjs/_esm5/internal/operators/windowTime.js","../internal/operators/windowToggle":"../node_modules/rxjs/_esm5/internal/operators/windowToggle.js","../internal/operators/windowWhen":"../node_modules/rxjs/_esm5/internal/operators/windowWhen.js","../internal/operators/withLatestFrom":"../node_modules/rxjs/_esm5/internal/operators/withLatestFrom.js","../internal/operators/zip":"../node_modules/rxjs/_esm5/internal/operators/zip.js","../internal/operators/zipAll":"../node_modules/rxjs/_esm5/internal/operators/zipAll.js"}],"webdaw/osmd/osmd-notes.ts":[function(require,module,exports) {
+},{"../internal/operators/audit":"../node_modules/rxjs/_esm5/internal/operators/audit.js","../internal/operators/auditTime":"../node_modules/rxjs/_esm5/internal/operators/auditTime.js","../internal/operators/buffer":"../node_modules/rxjs/_esm5/internal/operators/buffer.js","../internal/operators/bufferCount":"../node_modules/rxjs/_esm5/internal/operators/bufferCount.js","../internal/operators/bufferTime":"../node_modules/rxjs/_esm5/internal/operators/bufferTime.js","../internal/operators/bufferToggle":"../node_modules/rxjs/_esm5/internal/operators/bufferToggle.js","../internal/operators/bufferWhen":"../node_modules/rxjs/_esm5/internal/operators/bufferWhen.js","../internal/operators/catchError":"../node_modules/rxjs/_esm5/internal/operators/catchError.js","../internal/operators/combineAll":"../node_modules/rxjs/_esm5/internal/operators/combineAll.js","../internal/operators/combineLatest":"../node_modules/rxjs/_esm5/internal/operators/combineLatest.js","../internal/operators/concat":"../node_modules/rxjs/_esm5/internal/operators/concat.js","../internal/operators/concatAll":"../node_modules/rxjs/_esm5/internal/operators/concatAll.js","../internal/operators/concatMap":"../node_modules/rxjs/_esm5/internal/operators/concatMap.js","../internal/operators/concatMapTo":"../node_modules/rxjs/_esm5/internal/operators/concatMapTo.js","../internal/operators/count":"../node_modules/rxjs/_esm5/internal/operators/count.js","../internal/operators/debounce":"../node_modules/rxjs/_esm5/internal/operators/debounce.js","../internal/operators/debounceTime":"../node_modules/rxjs/_esm5/internal/operators/debounceTime.js","../internal/operators/defaultIfEmpty":"../node_modules/rxjs/_esm5/internal/operators/defaultIfEmpty.js","../internal/operators/delay":"../node_modules/rxjs/_esm5/internal/operators/delay.js","../internal/operators/delayWhen":"../node_modules/rxjs/_esm5/internal/operators/delayWhen.js","../internal/operators/dematerialize":"../node_modules/rxjs/_esm5/internal/operators/dematerialize.js","../internal/operators/distinct":"../node_modules/rxjs/_esm5/internal/operators/distinct.js","../internal/operators/distinctUntilChanged":"../node_modules/rxjs/_esm5/internal/operators/distinctUntilChanged.js","../internal/operators/distinctUntilKeyChanged":"../node_modules/rxjs/_esm5/internal/operators/distinctUntilKeyChanged.js","../internal/operators/elementAt":"../node_modules/rxjs/_esm5/internal/operators/elementAt.js","../internal/operators/endWith":"../node_modules/rxjs/_esm5/internal/operators/endWith.js","../internal/operators/every":"../node_modules/rxjs/_esm5/internal/operators/every.js","../internal/operators/exhaust":"../node_modules/rxjs/_esm5/internal/operators/exhaust.js","../internal/operators/exhaustMap":"../node_modules/rxjs/_esm5/internal/operators/exhaustMap.js","../internal/operators/expand":"../node_modules/rxjs/_esm5/internal/operators/expand.js","../internal/operators/filter":"../node_modules/rxjs/_esm5/internal/operators/filter.js","../internal/operators/finalize":"../node_modules/rxjs/_esm5/internal/operators/finalize.js","../internal/operators/find":"../node_modules/rxjs/_esm5/internal/operators/find.js","../internal/operators/findIndex":"../node_modules/rxjs/_esm5/internal/operators/findIndex.js","../internal/operators/first":"../node_modules/rxjs/_esm5/internal/operators/first.js","../internal/operators/groupBy":"../node_modules/rxjs/_esm5/internal/operators/groupBy.js","../internal/operators/ignoreElements":"../node_modules/rxjs/_esm5/internal/operators/ignoreElements.js","../internal/operators/isEmpty":"../node_modules/rxjs/_esm5/internal/operators/isEmpty.js","../internal/operators/last":"../node_modules/rxjs/_esm5/internal/operators/last.js","../internal/operators/map":"../node_modules/rxjs/_esm5/internal/operators/map.js","../internal/operators/mapTo":"../node_modules/rxjs/_esm5/internal/operators/mapTo.js","../internal/operators/materialize":"../node_modules/rxjs/_esm5/internal/operators/materialize.js","../internal/operators/max":"../node_modules/rxjs/_esm5/internal/operators/max.js","../internal/operators/merge":"../node_modules/rxjs/_esm5/internal/operators/merge.js","../internal/operators/mergeAll":"../node_modules/rxjs/_esm5/internal/operators/mergeAll.js","../internal/operators/mergeMap":"../node_modules/rxjs/_esm5/internal/operators/mergeMap.js","../internal/operators/mergeMapTo":"../node_modules/rxjs/_esm5/internal/operators/mergeMapTo.js","../internal/operators/mergeScan":"../node_modules/rxjs/_esm5/internal/operators/mergeScan.js","../internal/operators/min":"../node_modules/rxjs/_esm5/internal/operators/min.js","../internal/operators/multicast":"../node_modules/rxjs/_esm5/internal/operators/multicast.js","../internal/operators/observeOn":"../node_modules/rxjs/_esm5/internal/operators/observeOn.js","../internal/operators/onErrorResumeNext":"../node_modules/rxjs/_esm5/internal/operators/onErrorResumeNext.js","../internal/operators/pairwise":"../node_modules/rxjs/_esm5/internal/operators/pairwise.js","../internal/operators/partition":"../node_modules/rxjs/_esm5/internal/operators/partition.js","../internal/operators/pluck":"../node_modules/rxjs/_esm5/internal/operators/pluck.js","../internal/operators/publish":"../node_modules/rxjs/_esm5/internal/operators/publish.js","../internal/operators/publishBehavior":"../node_modules/rxjs/_esm5/internal/operators/publishBehavior.js","../internal/operators/publishLast":"../node_modules/rxjs/_esm5/internal/operators/publishLast.js","../internal/operators/publishReplay":"../node_modules/rxjs/_esm5/internal/operators/publishReplay.js","../internal/operators/race":"../node_modules/rxjs/_esm5/internal/operators/race.js","../internal/operators/reduce":"../node_modules/rxjs/_esm5/internal/operators/reduce.js","../internal/operators/repeat":"../node_modules/rxjs/_esm5/internal/operators/repeat.js","../internal/operators/repeatWhen":"../node_modules/rxjs/_esm5/internal/operators/repeatWhen.js","../internal/operators/retry":"../node_modules/rxjs/_esm5/internal/operators/retry.js","../internal/operators/retryWhen":"../node_modules/rxjs/_esm5/internal/operators/retryWhen.js","../internal/operators/refCount":"../node_modules/rxjs/_esm5/internal/operators/refCount.js","../internal/operators/sample":"../node_modules/rxjs/_esm5/internal/operators/sample.js","../internal/operators/sampleTime":"../node_modules/rxjs/_esm5/internal/operators/sampleTime.js","../internal/operators/scan":"../node_modules/rxjs/_esm5/internal/operators/scan.js","../internal/operators/sequenceEqual":"../node_modules/rxjs/_esm5/internal/operators/sequenceEqual.js","../internal/operators/share":"../node_modules/rxjs/_esm5/internal/operators/share.js","../internal/operators/shareReplay":"../node_modules/rxjs/_esm5/internal/operators/shareReplay.js","../internal/operators/single":"../node_modules/rxjs/_esm5/internal/operators/single.js","../internal/operators/skip":"../node_modules/rxjs/_esm5/internal/operators/skip.js","../internal/operators/skipLast":"../node_modules/rxjs/_esm5/internal/operators/skipLast.js","../internal/operators/skipUntil":"../node_modules/rxjs/_esm5/internal/operators/skipUntil.js","../internal/operators/skipWhile":"../node_modules/rxjs/_esm5/internal/operators/skipWhile.js","../internal/operators/startWith":"../node_modules/rxjs/_esm5/internal/operators/startWith.js","../internal/operators/subscribeOn":"../node_modules/rxjs/_esm5/internal/operators/subscribeOn.js","../internal/operators/switchAll":"../node_modules/rxjs/_esm5/internal/operators/switchAll.js","../internal/operators/switchMap":"../node_modules/rxjs/_esm5/internal/operators/switchMap.js","../internal/operators/switchMapTo":"../node_modules/rxjs/_esm5/internal/operators/switchMapTo.js","../internal/operators/take":"../node_modules/rxjs/_esm5/internal/operators/take.js","../internal/operators/takeLast":"../node_modules/rxjs/_esm5/internal/operators/takeLast.js","../internal/operators/takeUntil":"../node_modules/rxjs/_esm5/internal/operators/takeUntil.js","../internal/operators/takeWhile":"../node_modules/rxjs/_esm5/internal/operators/takeWhile.js","../internal/operators/tap":"../node_modules/rxjs/_esm5/internal/operators/tap.js","../internal/operators/throttle":"../node_modules/rxjs/_esm5/internal/operators/throttle.js","../internal/operators/throttleTime":"../node_modules/rxjs/_esm5/internal/operators/throttleTime.js","../internal/operators/throwIfEmpty":"../node_modules/rxjs/_esm5/internal/operators/throwIfEmpty.js","../internal/operators/timeInterval":"../node_modules/rxjs/_esm5/internal/operators/timeInterval.js","../internal/operators/timeout":"../node_modules/rxjs/_esm5/internal/operators/timeout.js","../internal/operators/timeoutWith":"../node_modules/rxjs/_esm5/internal/operators/timeoutWith.js","../internal/operators/timestamp":"../node_modules/rxjs/_esm5/internal/operators/timestamp.js","../internal/operators/toArray":"../node_modules/rxjs/_esm5/internal/operators/toArray.js","../internal/operators/window":"../node_modules/rxjs/_esm5/internal/operators/window.js","../internal/operators/windowCount":"../node_modules/rxjs/_esm5/internal/operators/windowCount.js","../internal/operators/windowTime":"../node_modules/rxjs/_esm5/internal/operators/windowTime.js","../internal/operators/windowToggle":"../node_modules/rxjs/_esm5/internal/operators/windowToggle.js","../internal/operators/windowWhen":"../node_modules/rxjs/_esm5/internal/operators/windowWhen.js","../internal/operators/withLatestFrom":"../node_modules/rxjs/_esm5/internal/operators/withLatestFrom.js","../internal/operators/zip":"../node_modules/rxjs/_esm5/internal/operators/zip.js","../internal/operators/zipAll":"../node_modules/rxjs/_esm5/internal/operators/zipAll.js"}],"webdaw/osmd/getGraphicalNotesPerBar.ts":[function(require,module,exports) {
 "use strict";
 /*
   This method parses the SVG document as rendered by OSMD and stores the graphical representations of the notes
@@ -49934,7 +49929,7 @@ const rxjs_1 = require("rxjs");
 
 const operators_1 = require("rxjs/operators");
 
-const getGraphicalNotesPerBar = (osmd, ppq) => rxjs_1.from(osmd.graphic.measureList).pipe( // tap(m => { console.log(m); }),
+const getGraphicalNotesPerBar = (osmd, ppq) => rxjs_1.from(osmd["graphic"].measureList).pipe( // tap(m => { console.log(m); }),
 operators_1.map((staves, i) => {
   return staves.map(s => {
     const parentMusicSystem = staves[0].parentMusicSystem;
@@ -49942,10 +49937,10 @@ operators_1.map((staves, i) => {
       return se.graphicalVoiceEntries.map(ve => {
         // return ve.notes;
         return ve.notes.map(n => {
-          const relPosInMeasure = n.sourceNote.voiceEntry.timestamp.realValue;
+          const relPosInMeasure = n.sourceNote["voiceEntry"].timestamp.realValue;
           const vfnote = n.vfnote[0];
           return {
-            vfnote,
+            element: vfnote["attrs"].el,
             ticks: i * ppq * 4 + relPosInMeasure * ppq * 4,
             noteNumber: n.sourceNote.halfTone + 12,
             bar: i + 1,
@@ -50012,7 +50007,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.scoreReady = void 0;
 
-const osmd_notes_1 = require("../../webdaw/osmd/osmd-notes");
+const getGraphicalNotesPerBar_1 = require("../../webdaw/osmd/getGraphicalNotesPerBar");
 
 const constants_1 = require("../../constants");
 
@@ -50025,17 +50020,17 @@ exports.scoreReady = osmd => {
       scoreContainerOffsetY = scoreContainer.offsetTop;
     }
 
-    const notesPerBar = yield osmd_notes_1.getGraphicalNotesPerBar(osmd, 960); // console.log(notesPerBar);
+    const notesPerBar = yield getGraphicalNotesPerBar_1.getGraphicalNotesPerBar(osmd, 960); // console.log(notesPerBar);
     // console.log("notePerBar calculated");
 
     notesPerBar.forEach(notes => {
       notes.forEach(note => {
         const {
-          vfnote
+          element
         } = note; // console.log(vfnote["attrs"].el);
 
-        const id = vfnote["attrs"].el.id;
-        vfnote["attrs"].el.addEventListener("mousedown", e => {
+        const id = element.id;
+        element.addEventListener("mousedown", e => {
           // console.log(id);
           dispatch({
             type: constants_1.SELECTED_NOTE,
@@ -50056,7 +50051,7 @@ exports.scoreReady = osmd => {
     });
   });
 };
-},{"../../webdaw/osmd/osmd-notes":"webdaw/osmd/osmd-notes.ts","../../constants":"constants.ts"}],"components/score.tsx":[function(require,module,exports) {
+},{"../../webdaw/osmd/getGraphicalNotesPerBar":"webdaw/osmd/getGraphicalNotesPerBar.ts","../../constants":"constants.ts"}],"components/score.tsx":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -50248,7 +50243,7 @@ const constants_1 = require("../../constants");
 
 const controlMIDI_1 = require("../../controlMIDI");
 
-const osmd_stavenote_color_1 = require("../../webdaw/osmd/osmd-stavenote-color");
+const setGraphicalNoteColor_1 = require("../../webdaw/osmd/setGraphicalNoteColor");
 
 exports.setProgress = progress => {
   const state = store_1.store.getState();
@@ -50304,18 +50299,18 @@ exports.setProgress = progress => {
         activeNotes.forEach(n => {
           // console.log(n, noteMapping);
           const {
-            vfnote,
+            element,
             musicSystem
           } = noteMapping[n.id];
-          osmd_stavenote_color_1.setStaveNoteColor(vfnote.attrs.el, "red");
+          setGraphicalNoteColor_1.setStaveNoteColor(element, "red");
         });
         passiveNotes.forEach(n => {
           const {
-            vfnote,
+            element,
             musicSystem
           } = noteMapping[n.id]; // console.log("passive", n.id);
 
-          osmd_stavenote_color_1.setStaveNoteColor(vfnote.attrs.el, "black");
+          setGraphicalNoteColor_1.setStaveNoteColor(element, "black");
         });
       } catch (e) {// console.warn("no match");
       }
@@ -50331,7 +50326,7 @@ exports.setProgress = progress => {
     }
   };
 };
-},{"../store":"redux/store.ts","../../constants":"constants.ts","../../controlMIDI":"controlMIDI.ts","../../webdaw/osmd/osmd-stavenote-color":"webdaw/osmd/osmd-stavenote-color.ts"}],"clock.ts":[function(require,module,exports) {
+},{"../store":"redux/store.ts","../../constants":"constants.ts","../../controlMIDI":"controlMIDI.ts","../../webdaw/osmd/setGraphicalNoteColor":"webdaw/osmd/setGraphicalNoteColor.ts"}],"clock.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

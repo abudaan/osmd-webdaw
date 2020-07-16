@@ -5,7 +5,7 @@ import { loadXML, addMIDIFile, loadJSON, addAssetPack, loadBinary } from "../uti
 import { Observable } from "rxjs";
 import { AppState } from "./store";
 import { NoteMapping } from "../webdaw/osmd/osmd-heartbeat";
-import { getGraphicalNotesPerBar } from "../webdaw/osmd/osmd-notes";
+import { getGraphicalNotesPerBar } from "../webdaw/osmd/getGraphicalNotesPerBar";
 import { parseMusicXML, TempoEvent, SignatureEvent } from "../util/musicxml";
 import { find } from "ramda";
 import { parseMidiFile } from "../util/parse_midi_binary";

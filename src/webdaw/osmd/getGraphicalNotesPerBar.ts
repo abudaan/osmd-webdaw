@@ -25,7 +25,8 @@ type TypeStave = {
 };
 
 export type GraphicalNoteData = {
-  vfnote: Vex.Flow.Note;
+  // vfnote: Vex.Flow.Note;
+  element: SVGElement;
   ticks: number;
   noteNumber: number;
   bar: number;
@@ -36,7 +37,7 @@ const getGraphicalNotesPerBar = (
   osmd: OpenSheetMusicDisplay,
   ppq: number
 ): Promise<GraphicalNoteData[][]> =>
-  from(osmd.graphic.measureList)
+  from(osmd["graphic"].measureList)
     .pipe(
       // tap(m => { console.log(m); }),
       map((staves: any, i) => {
@@ -46,10 +47,10 @@ const getGraphicalNotesPerBar = (
             return se.graphicalVoiceEntries.map(ve => {
               // return ve.notes;
               return ve.notes.map((n: GraphicalNote) => {
-                const relPosInMeasure = n.sourceNote.voiceEntry.timestamp.realValue;
+                const relPosInMeasure = n.sourceNote["voiceEntry"].timestamp.realValue;
                 const vfnote = (n as VexFlowGraphicalNote).vfnote[0];
                 return {
-                  vfnote,
+                  element: vfnote["attrs"].el,
                   ticks: i * ppq * 4 + relPosInMeasure * ppq * 4,
                   noteNumber: n.sourceNote.halfTone + 12, // heartbeat uses a different MIDI note number mapping
                   bar: i + 1,

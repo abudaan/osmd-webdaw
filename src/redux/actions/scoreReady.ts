@@ -1,6 +1,6 @@
 import { OpenSheetMusicDisplay } from "opensheetmusicdisplay/build/dist/src";
 import { Dispatch } from "redux";
-import { getGraphicalNotesPerBar } from "../../webdaw/osmd/osmd-notes";
+import { getGraphicalNotesPerBar } from "../../webdaw/osmd/getGraphicalNotesPerBar";
 import { SCORE_READY, SELECTED_NOTE } from "../../constants";
 import { download } from "../../util/download";
 
@@ -16,10 +16,10 @@ export const scoreReady = (osmd: OpenSheetMusicDisplay) => {
     // console.log("notePerBar calculated");
     notesPerBar.forEach(notes => {
       notes.forEach(note => {
-        const { vfnote } = note;
+        const { element } = note;
         // console.log(vfnote["attrs"].el);
-        const id = vfnote["attrs"].el.id;
-        vfnote["attrs"].el.addEventListener("mousedown", (e: Event) => {
+        const id = element.id;
+        element.addEventListener("mousedown", (e: Event) => {
           // console.log(id);
           dispatch({
             type: SELECTED_NOTE,

@@ -2,7 +2,7 @@ import { store } from "../store";
 import { AppState } from "../../types";
 import { SET_PROGRESS } from "../../constants";
 import { playMIDI } from "../../controlMIDI";
-import { setStaveNoteColor } from "../../webdaw/osmd/osmd-stavenote-color";
+import { setStaveNoteColor } from "../../webdaw/osmd/setGraphicalNoteColor";
 
 export const setProgress = (progress: number) => {
   const state = store.getState() as AppState;
@@ -50,13 +50,13 @@ export const setProgress = (progress: number) => {
       try {
         activeNotes.forEach(n => {
           // console.log(n, noteMapping);
-          const { vfnote, musicSystem } = noteMapping[n.id];
-          setStaveNoteColor(vfnote.attrs.el, "red");
+          const { element, musicSystem } = noteMapping[n.id];
+          setStaveNoteColor(element, "red");
         });
         passiveNotes.forEach(n => {
-          const { vfnote, musicSystem } = noteMapping[n.id];
+          const { element, musicSystem } = noteMapping[n.id];
           // console.log("passive", n.id);
-          setStaveNoteColor(vfnote.attrs.el, "black");
+          setStaveNoteColor(element, "black");
         });
       } catch (e) {
         // console.warn("no match");

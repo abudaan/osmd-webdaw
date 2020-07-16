@@ -1,6 +1,6 @@
 import { MusicSystem } from "opensheetmusicdisplay";
-import { GraphicalNoteData } from "./osmd-notes";
-import { Song } from "../types";
+import { GraphicalNoteData } from "./getGraphicalNotesPerBar";
+import { Song, MIDINote } from "../types";
 import { NoteEvent } from "../midi_events";
 
 /*
@@ -9,15 +9,16 @@ import { NoteEvent } from "../midi_events";
 
 export type NoteMapping = {
   [index: string]: {
-    vfnote: Vex.Flow.Note;
+    // vfnote: Vex.Flow.Note;
+    element: SVGElement;
     musicSystem: MusicSystem;
   };
 };
 
-export const mapNotes = (
+export const mapMIDINoteIdToGraphicalNote = (
   graphicalNotesPerBar: GraphicalNoteData[][],
   repeats: number[][],
-  song: Song
+  notes: MIDINote[]
 ): NoteMapping => {
   // console.log(graphicalNotesPerBar);
   let barIndex = -1;
@@ -25,8 +26,7 @@ export const mapNotes = (
   let ticksOffset = 0; // not used, keep for reference
   let repeatIndex: number = 0;
   const hasRepeated: { [index: number]: boolean } = {};
-  const notes = song.notes;
-  const { numBars, ppq } = song;
+  const numBars = notes[notes.length - 1].noteOff.bar;
   const mapping: NoteMapping = {};
 
   // console.log(numBars, graphicalNotesPerBar.length);
@@ -43,7 +43,7 @@ export const mapNotes = (
         // console.log('REPEAT START', barIndex)
         hasRepeated[repeatIndex] = true;
         barOffset += repeats[repeatIndex][1] - repeats[repeatIndex][0] + 1;
-        ticksOffset += (repeats[repeatIndex][1] - repeats[repeatIndex][0]) * song.numerator * ppq;
+        // ticksOffset += (repeats[repeatIndex][1] - repeats[repeatIndex][0]) * song.numerator * ppq;
       } else {
         // console.log('REPEAT END', barIndex, repeatIndex);
         repeatIndex++;
@@ -74,7 +74,7 @@ export const mapNotes = (
           return 0;
         })
         .forEach(bd => {
-          const { vfnote, noteNumber, bar, parentMusicSystem } = bd;
+          const { element, noteNumber, bar, parentMusicSystem } = bd;
           for (let j = 0; j < filtered.length; j++) {
             const note = filtered[j];
             if (
@@ -82,7 +82,7 @@ export const mapNotes = (
               note.noteOn.bar == bar + barOffset - 1 &&
               note.noteOn.noteNumber == noteNumber
             ) {
-              mapping[note.id] = { vfnote, musicSystem: parentMusicSystem };
+              mapping[note.id] = { element, musicSystem: parentMusicSystem };
               // filtered.splice(j, 1);
               break;
             }

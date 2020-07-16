@@ -1,6 +1,6 @@
 import { manageSong, setupSongListeners } from "./observers";
 import { createScore } from "./create-score";
-import { getGraphicalNotesPerBar } from "./webdaw/osmd/osmd-notes";
+import { getGraphicalNotesPerBar } from "./webdaw/osmd/getGraphicalNotesPerBar";
 import { parseMusicXML } from "./util/musicxml";
 import { mapOSMDToSequencer } from "./webdaw/osmd/osmd-heartbeat";
 

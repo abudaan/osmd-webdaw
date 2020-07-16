@@ -3,8 +3,8 @@ import { AnyAction } from "redux";
 import { PartData } from "./webdaw/musicxml/mxml_parser";
 import { Song, MIDINote } from "./webdaw/types";
 import { MIDIEvent } from "./webdaw/midi_events";
-import { GraphicalNoteData } from "./webdaw/osmd/osmd-notes";
-import { NoteMapping } from "./webdaw/osmd/note_mapping";
+import { GraphicalNoteData } from "./webdaw/osmd/getGraphicalNotesPerBar";
+import { NoteMapping } from "./webdaw/osmd/mapMIDINoteIdToGraphicalNote";
 
 export enum Transport {
   PLAY = "play",

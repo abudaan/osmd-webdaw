@@ -1,4 +1,4 @@
-import { mapNotes } from "../../webdaw/osmd/note_mapping";
+import { mapMIDINoteIdToGraphicalNote } from "../../webdaw/osmd/mapMIDINoteIdToGraphicalNote";
 import { AppState } from "../../types";
 import { store } from "../store";
 import { SET_NOTEMAPPING } from "../../constants";
@@ -10,7 +10,11 @@ export const connectScoreAndInterpretation = () => {
   let mapping = {};
   // console.log(currentScore.notesPerBar[0]);
   if (currentInterpretation && currentScore) {
-    mapping = mapNotes(currentScore.notesPerBar, score.repeats, currentInterpretation.song);
+    mapping = mapMIDINoteIdToGraphicalNote(
+      currentScore.notesPerBar,
+      score.repeats,
+      currentInterpretation.song.notes
+    );
     // console.log(currentInterpretation.song.notes);
     // Object.keys(mapping).forEach(key => {
     //   const { vfnote } = mapping[key];
