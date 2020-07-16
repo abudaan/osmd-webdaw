@@ -50310,6 +50310,7 @@ exports.setProgress = progress => {
             musicSystem
           } = noteMapping[n.id]; // console.log("passive", n.id);
 
+          console.log(musicSystem);
           setGraphicalNoteColor_1.setStaveNoteColor(element, "black");
         });
       } catch (e) {// console.warn("no match");

@@ -56,6 +56,7 @@ export const setProgress = (progress: number) => {
         passiveNotes.forEach(n => {
           const { element, musicSystem } = noteMapping[n.id];
           // console.log("passive", n.id);
+          console.log(musicSystem);
           setStaveNoteColor(element, "black");
         });
       } catch (e) {
