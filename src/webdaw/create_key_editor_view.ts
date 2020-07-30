@@ -1,5 +1,5 @@
 import { Song, MIDINote } from "./types";
-import { download } from "../util/general";
+// import { download } from "../util/download";
 
 export const createKeyEditorView = (song: Song, tickWidth: number = 0.1): void => {
   if (!song.notes) {
@@ -33,8 +33,8 @@ export const createKeyEditorView = (song: Song, tickWidth: number = 0.1): void =
   for (let i = 1; i <= 128; i++) {
     ctx.fillRect(0, i * noteHeight, width, 0.7);
   }
-  canvas.toBlob((b: Blob) => {
-    // , { type: "image/png" }
-    download(b, "tmp");
-  });
+  // canvas.toBlob((b: Blob) => {
+  //   // , { type: "image/png" }
+  //   download(b, "tmp");
+  // });
 };

@@ -1,4 +1,5 @@
-import { AppState } from "../types";
+import { AppState, Transport } from "../types";
+import { initialState } from "./store";
 import {
   MUSICXML_LOADED,
   MIDIFILE_LOADED,
@@ -10,8 +11,13 @@ import {
   SET_NOTEMAPPING,
   SELECTED_NOTE,
 } from "../constants";
+import { NoteMapping } from "../webdaw/osmd/mapMIDINoteIdToGraphicalNote";
+import { AnyAction } from "redux";
 
-export const rootReducer = (state: AppState, action: any): AppState => {
+export const rootReducer = (state: AppState, action: AnyAction): AppState => {
+  if (typeof state === "undefined") {
+    return initialState;
+  }
   if (action.type === MUSICXML_LOADED) {
     return {
       ...state,
@@ -47,13 +53,16 @@ export const rootReducer = (state: AppState, action: any): AppState => {
       },
     };
   } else if (action.type === SET_NOTEMAPPING) {
-    return {
-      ...state,
-      currentScore: {
-        ...state.currentScore,
-        noteMapping: action.payload.mapping,
-      },
-    };
+    if (state.currentScore !== null) {
+      return {
+        ...state,
+        currentScore: {
+          ...state.currentScore,
+          noteMapping: action.payload.mapping as NoteMapping,
+        },
+      };
+    }
+    return state;
   } else if (action.type === SET_TRANSPORT) {
     return {
       ...state,
@@ -76,7 +85,9 @@ export const rootReducer = (state: AppState, action: any): AppState => {
       console.log(state.currentInterpretation.song.notes);
       const index = state.currentInterpretation.song.notes.findIndex(note => note.id === id);
       if (index !== -1) {
-        const { bar, ticks, noteNumber } = state.currentInterpretation.song.notes[index].noteOn;
+        const { bar = -1, ticks, noteNumber } = state.currentInterpretation.song.notes[
+          index
+        ].noteOn;
         data = { bar, ticks, noteNumber };
       }
     }

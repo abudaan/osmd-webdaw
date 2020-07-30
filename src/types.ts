@@ -1,6 +1,5 @@
 import { ThunkDispatch } from "redux-thunk";
 import { AnyAction } from "redux";
-import { PartData } from "./webdaw/musicxml/mxml_parser";
 import { Song, MIDINote } from "./webdaw/types";
 import { MIDIEvent } from "./webdaw/midi_events";
 import { GraphicalNoteData } from "./webdaw/osmd/getGraphicalNotesPerBar";
@@ -43,11 +42,12 @@ export type RefMIDI = {
 };
 
 export type RefScore = {
-  notesPerBar: GraphicalNoteData[][];
+  // notesPerBar: GraphicalNoteData[][];
+  notesPerBar: Array<Array<GraphicalNoteData>>;
   // scoreContainer: HTMLDivElement;
   scoreContainer: any;
   scoreContainerOffsetY: number;
-  noteMapping: NoteMapping;
+  noteMapping: NoteMapping | null;
 };
 
 export type AppState = {
@@ -57,11 +57,11 @@ export type AppState = {
   selectedInterpretationIndex: number;
   transport: Transport;
   playheadMillis: number;
-  currentInterpretation: RefMIDI;
-  currentScore: RefScore;
+  currentInterpretation: RefMIDI | null;
+  currentScore: RefScore | null;
   durationTimeline: number;
   loop: boolean;
   loopStart: number;
   loopEnd: number;
-  selectedNoteData: { bar: number; ticks: number; noteNumber: number };
+  selectedNoteData: { bar: number; ticks: number; noteNumber: number } | null;
 };
